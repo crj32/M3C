@@ -23,9 +23,9 @@
 #' @export
 #'
 #' @examples
-#' res <- M3C(mydata, cores=1, iters=10, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
-#' maxK = 10, showheatmaps = FALSE, repsreal = 10, repsref = 10,printheatmaps = FALSE, seed = 123, des = desx)
-M3C <- function(mydata, montecarlo = TRUE, cores = 16, iters = 100, maxK = 10,
+#' res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = FALSE,printres = FALSE, 
+#' maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = FALSE, seed = 123, des = desx)
+M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                               des = NULL, ref_method = 'reverse-pca', repsref = 100, repsreal = 100,
                               clusteralg = 'pam', distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
                               printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL){

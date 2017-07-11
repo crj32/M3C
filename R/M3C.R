@@ -1,18 +1,18 @@
 #' M3C: Monte Carlo Consensus Clustering
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
-#' @param montecarlo Logical flag: whether to run the monte carlo simulation or not
+#' @param montecarlo Logical flag: whether to run the monte carlo simulation or not (recommended: TRUE)
 #' @param cores Numerical value: how many cores to split the monte carlo simulation over
-#' @param iters Numerical value: how many monte carlo iterations to perform (default 100, recommend 100-1000)
-#' @param maxK Numerical value: the maximum number of clusters to test for, K (default 10)
+#' @param iters Numerical value: how many monte carlo iterations to perform (default: 100, recommended: 100-1000)
+#' @param maxK Numerical value: the maximum number of clusters to test for, K (default: 10)
 #' @param des Data frame: contains annotation data for the input data for automatic reordering (optional)
-#' @param ref_method Character string: refers to which reference method to use (suggest leaving this alone)
+#' @param ref_method Character string: refers to which reference method to use (recommended: leaving this alone)
 #' @param repsref Numerical value: how many reps to use for the monte carlo reference data (suggest 100)
-#' @param repsreal Numerical value: how many reps to use for the real data (suggest 100)
-#' @param clusteralg String: dictates which algorithm to use for M3C (suggest leaving this alone)
-#' @param distance String: dictates which distance metric to use for M3C (suggest leaving this alone)
-#' @param pacx1 Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default 0.1)
-#' @param pacx2 Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default 0.9)
+#' @param repsreal Numerical value: how many reps to use for the real data (recommended: 100)
+#' @param clusteralg String: dictates which algorithm to use for M3C (recommended: leaving this alone)
+#' @param distance String: dictates which distance metric to use for M3C (recommended: leaving this alone)
+#' @param pacx1 Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)
+#' @param pacx2 Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default: 0.9)
 #' @param printres Logical flag: whether to print all results into current directory
 #' @param printheatmaps Logical flag: whether to print all the heatmaps into current directory
 #' @param showheatmaps Logical flag: whether to show the heatmaps on screen (can be slow)
@@ -23,8 +23,8 @@
 #' @export
 #'
 #' @examples
-#' res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = TRUE, 
-#' maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = TRUE, seed = 123, des = desx)
+#' res <- M3C(mydata, cores=1, iters=50, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
+#' maxK = 10, showheatmaps = FALSE, repsreal = 50, repsref = 50,printheatmaps = FALSE, seed = 123, des = desx)
 M3C <- function(mydata, montecarlo = TRUE, cores = 16, iters = 100, maxK = 10,
                               des = NULL, ref_method = 'reverse-pca', repsref = 100, repsreal = 100,
                               clusteralg = 'pam', distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,

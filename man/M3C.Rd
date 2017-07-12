@@ -4,7 +4,7 @@
 \alias{M3C}
 \title{M3C: Monte Carlo Consensus Clustering}
 \usage{
-M3C(mydata, montecarlo = TRUE, cores = 16, iters = 100, maxK = 10,
+M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   des = NULL, ref_method = "reverse-pca", repsref = 100, repsreal = 100,
   clusteralg = "pam", distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9,
   printres = FALSE, printheatmaps = FALSE, showheatmaps = FALSE,
@@ -13,29 +13,29 @@ M3C(mydata, montecarlo = TRUE, cores = 16, iters = 100, maxK = 10,
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
 
-\item{montecarlo}{Logical flag: whether to run the monte carlo simulation or not}
+\item{montecarlo}{Logical flag: whether to run the monte carlo simulation or not (recommended: TRUE)}
 
 \item{cores}{Numerical value: how many cores to split the monte carlo simulation over}
 
-\item{iters}{Numerical value: how many monte carlo iterations to perform (default 100, recommend 100-1000)}
+\item{iters}{Numerical value: how many monte carlo iterations to perform (default: 100, recommended: 100-1000)}
 
-\item{maxK}{Numerical value: the maximum number of clusters to test for, K (default 10)}
+\item{maxK}{Numerical value: the maximum number of clusters to test for, K (default: 10)}
 
 \item{des}{Data frame: contains annotation data for the input data for automatic reordering (optional)}
 
-\item{ref_method}{Character string: refers to which reference method to use (suggest leaving this alone)}
+\item{ref_method}{Character string: refers to which reference method to use (recommended: leaving this alone)}
 
 \item{repsref}{Numerical value: how many reps to use for the monte carlo reference data (suggest 100)}
 
-\item{repsreal}{Numerical value: how many reps to use for the real data (suggest 100)}
+\item{repsreal}{Numerical value: how many reps to use for the real data (recommended: 100)}
 
-\item{clusteralg}{String: dictates which algorithm to use for M3C (suggest leaving this alone)}
+\item{clusteralg}{String: dictates which algorithm to use for M3C (recommended: leaving this alone)}
 
-\item{distance}{String: dictates which distance metric to use for M3C (suggest leaving this alone)}
+\item{distance}{String: dictates which distance metric to use for M3C (recommended: leaving this alone)}
 
-\item{pacx1}{Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default 0.1)}
+\item{pacx1}{Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)}
 
-\item{pacx2}{Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default 0.9)}
+\item{pacx2}{Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default: 0.9)}
 
 \item{printres}{Logical flag: whether to print all results into current directory}
 
@@ -53,6 +53,6 @@ A list: containing 1) the stability results and 2) all the output data (in anoth
 M3C: Monte Carlo Consensus Clustering
 }
 \examples{
-res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = TRUE, 
-maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = TRUE, seed = 123, des = desx)
+res <- M3C(mydata, cores=1, iters=10, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
+maxK = 10, showheatmaps = FALSE, repsreal = 10, repsref = 10,printheatmaps = FALSE, seed = 123, des = desx)
 }

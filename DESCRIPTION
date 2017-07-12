@@ -1,6 +1,6 @@
 Package: M3C
 Title: Monte Carlo Consensus Clustering
-Version: 0.99.4
+Version: 0.99.5
 Authors@R: person("Christopher", "John", email = "chris.r.john86@gmail.com", role = c("aut", "cre"))
 Description: M3C: Monte Carlo Consensus Clustering, is based on the importance of comparing stability of the real dataset with that expected under the null hypothesis, i.e. there is no structure. We chose to maintain the correlation structure of the original data and use a monte carlo simulation from a normal distribution to create random datasets for comparison with the real. By generating a distribution of stability scores from the null dataset we use this for calculation of 2 metrics, 1) the pac-statistic - which compares the mean 2) an empirical p value.
 Depends: R (>= 3.4.0)

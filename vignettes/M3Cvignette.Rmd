@@ -22,7 +22,7 @@ A relatively new and fast multi-core computer or cluster.
 
 **M3C requires:**   
 
-A matrix or data frame of normalised expression data (e.g. microarray or RNA-seq) where columns equal samples and rows equal features. The requirement of the reference generation method is the features should be approximately normal, e.g. log(TPM) or rlog transformed data for RNA-seq.
+A matrix or data frame of normalised expression data (e.g. microarray or RNA-seq) where columns equal samples and rows equal features. 
 
 The data should be filtered to remove features with no or very low signal, and filtered for variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised).
 

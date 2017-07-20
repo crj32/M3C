@@ -12,7 +12,7 @@ vignette: >
 
 ### Abstract
 
-An critical task in genomic data analyses is class discovery which is typically accomplished through clustering. We have created a new consensus clustering algorithm and implementation based on the work by Monti et al. (2001) and Șenbabaoğlu et al. (2014). The original algorithm aimed to solve class number decision using a resampling method and produced a consensus rate (a measure of cluster solution stability). However, this approach did not use a reference datset and test the null hypothesis. This is why we developed Monte Carlo Consensus Clustering (M3C). M3C use a multi-enabled monte carlo simulation to generate a distribution of PAC (proportion of unambiguous clustering) scores from a null dataset, with the same gene-gene correlation structure as the real, for deriving A) the PAC statistic and B) an empirical p value. These two metrics substantially improve accuracy, allow rejection of the null hypothesis K = 1, and provide confidence in the form of a p value for different clustering solutions. We believe this approach deals with a number of pitfalls in current clustering approaches in stratified medicine.
+An critical task in genomic data analyses for stratified medicine is class discovery which is accomplished through clustering. Consensus clustering has emerged as a very popular and effective approach (Monti et al., 2001; Șenbabaoğlu et al., 2014). The algorithm aims to solve class number decision using a resampling method that produces a consensus rate between samples (a measure of stability). However, a critical problem with this, and other clustering approaches, is it does not use a reference datset and test the null hypothesis. This was the basis for the development of Monte Carlo Consensus Clustering (M3C). M3C use a multi-enabled monte carlo simulation to generate a distribution of PAC (proportion of unambiguous clustering) scores from a null dataset with the same gene-gene correlation structure as the real, for deriving A) the PAC statistic and B) an empirical p value. These two metrics substantially improve accuracy, allow rejection of the null hypothesis K = 1, and provide confidence in the form of a p value for different clustering solutions. This approach sovles a number of pitfalls in current clustering approaches in stratified medicine.
 
 ### Prerequisites
 
@@ -22,7 +22,7 @@ A relatively new and fast multi-core computer or cluster.
 
 **M3C requires:**   
 
-A matrix or data frame of normalised expression data (e.g. microarray or RNA-seq) where columns equal samples and rows equal features. 
+A matrix or data frame of normalised expression data (e.g. microarray or RNA-seq) where columns equal samples and rows equal features.
 
 The data should be filtered to remove features with no or very low signal, and filtered for variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised).
 
@@ -32,24 +32,24 @@ Annotation data frame, where every row is a patient/sample, columns refer to met
 
 ### Example workflow
 
-The M3C package contains the GBM cancer microarray dataset. There is an accepted cluster solution of 4. First we load the package which also loads the GBM data.
+The M3C package contains the GBM cancer microarray dataset for testing. There is an accepted cluster solution of 4. First we load the package which also loads the GBM data.
 
 ```{r, eval = FALSE}
 library(M3C)
 library(NMF) # loading for aheatmap plotting function
-library(gplots) # loads for cool colour scale
-library(ggsci) # more colours
+library(gplots) # loading this for nice colour scale
+library(ggsci) # more cool colours
 
-# now we have loaded the mydata and desx objects
+# now we have loaded the mydata and desx objects (with the package automatically)
 # mydata is the expression data for GBM
 # desx is the annotation for this data
 ```
 
 ### Running M3C
 
-Next, we run the algorithm with 100x monte carlo simulations and 100x inner replications for the real data and reference. These parameters can be increased later for added stability. A final analysis can be done with 1000x monte carlo simulations later. Plots from the tool and an .csv file with the numerical outputs are printed into the working directory (printres = T). We will set the seed in this example, incase you wish to repeat our results exactly. We will add the annotation file for easy plotting later on (des = desx).
+Next, we run the algorithm with 100x monte carlo iterations and 100x inner replications for the real data and reference. The iterations parameter can be increased to 1000 later for a final analysis. Plots from the tool and an .csv file with the numerical outputs are printed into the working directory (printres = T). We will set the seed in this example, incase you wish to repeat our results exactly. We will add the annotation file for easier plotting later on (des = desx).
 
-We always recommend saving the workspace after M3C if running higher numbers of iterations, because the runtimes can be long. We have removed hierarchical clustering and k means from this algorithm, because they performed poorly in our simulations or too slow relative to PAM. M3C uses PAM with Euclidean distance. The reference method that generates the null datasets is best left to the default setting which is 'reverse-PCA'.
+We always recommend saving the workspace after M3C if running higher numbers of iterations, because the runtimes can be quite long. We have removed hierarchical clustering and k means from this algorithm, because they performed poorly in our simulations or too slow relative to PAM. M3C uses PAM with Euclidean distance. The reference method that generates the null datasets is best left to the default setting which is 'reverse-PCA' that maintains the correlation structure of the data using the principle component loadings.
 
 ```{r, eval = FALSE}
 res <- M3C(mydata, cores=8, iters=100, ref_method = 'reverse-pca', montecarlo = T,
@@ -57,21 +57,20 @@ res <- M3C(mydata, cores=8, iters=100, ref_method = 'reverse-pca', montecarlo = 
                          printheatmaps = T, seed = 123, des = desx)
 ```
 
-The scores and p values are contained within the res$pac_scores object. So we can see the PAC_STAT reaches a maxima at K = 4 (pac_stat=0.45), and the p value supports this decision (p=0.0099). This means we can reject the null hypothesis that K = 1 for this dataset because we have achieved significance versus a dataset with no clusters, but with the same gene-gene correlation structure. For more accurate p values 1000 iterations may be used. Extrapolated p values are provided which estimate the p value when the observed statistic exceeds all those in the simulations, estimation is via a non parametric method that uses the extreme tail end of the distribution (Davis et al., 1984).
-
-We can see the automated decision making for K which is simply the lowest P_VALUE. If the p values are tied we take the lowest p value with the higher PAC_STAT. In this case it is straightforward, however, we may also want to look at K=5 and base our choice on the biology as well.
+The scores and p values are contained within the res$scores object. So we can see the PAC_STAT reaches a maxima at K = 4 (pac_stat=0.45), the monte carlo p value supports this decision (p=0.0099). This means we can reject the null hypothesis that K = 1 for this dataset because we have achieved significance versus a dataset with no clusters, but with the same gene-gene correlation structure. For p values that can extend beyond the lower limits imposed by the monte carlo simulation we use estimated parameters from the simulation to generate a beta distribution, the BETA_P in this case study is 0.00059. We may of course want to take a look at other significant or near significant clustering solutions and how they relate to our variables of investigation.
 
 ```{r, eval = FALSE}
-   K  PAC_REAL   PAC_REF   PAC_STAT    P_VALUE   P_SCORE P_EXTRAPOLATED    decision
-1  2 0.4837761 0.4997701 0.03252604 0.44554455 0.3511089             NA sub optimal
-2  3 0.4755906 0.5266180 0.10191793 0.21782178 0.6618987             NA sub optimal
-3  4 0.2999706 0.4722204 0.45376132 0.00990099 2.0043214    0.003504677     optimal
-4  5 0.3152142 0.4136991 0.27188662 0.01980198 1.7032914             NA sub optimal
-5  6 0.3302617 0.3616464 0.09078147 0.14851485 0.8282301             NA sub optimal
-6  7 0.3020782 0.3179424 0.05118409 0.25742574 0.5893480             NA sub optimal
-7  8 0.2761004 0.2838727 0.02776125 0.38613861 0.4132568             NA sub optimal
-8  9 0.2484070 0.2568552 0.03344394 0.32673267 0.4858074             NA sub optimal
-9 10 0.2213018 0.2343599 0.05733030 0.25742574 0.5893480             NA sub optimal
+> res$scores
+   K  PAC_REAL   PAC_REF   PAC_STAT MONTECARLO_P      BETA_P   P_SCORE
+1  2 0.4861829 0.5022565 0.03252604   0.44554455 0.447431509 0.3492734
+2  3 0.4779568 0.5292380 0.10191793   0.21782178 0.266541261 0.5742356
+3  4 0.3014630 0.4745697 0.45376132   0.00990099 0.000588657 3.2301377
+4  5 0.3167824 0.4157574 0.27188662   0.01980198 0.007105172 2.1484254
+5  6 0.3319048 0.3634456 0.09078147   0.14851485 0.152229837 0.8175002
+6  7 0.3035811 0.3195242 0.05118409   0.25742574 0.262329057 0.5811536
+7  8 0.2774740 0.2852850 0.02776125   0.38613861 0.365307455 0.4373415
+8  9 0.2496429 0.2581331 0.03344394   0.32673267 0.337985695 0.4711017
+9 10 0.2224028 0.2355258 0.05733030   0.25742574 0.230759712 0.6368400
 ```
 
 Next, we will take a look at some of the plots M3C generates.  
@@ -132,11 +131,11 @@ NMF::aheatmap(ccmatrix, annCol = annon, Colv = NA, Rowv = NA, color = rev(pal), 
 
 ![*Figure 6: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin-adj.png){width=56%}
 
-So we have now covered how to use the tool. Generally we recommend complexheatmap for publication clustering as it is more customisable, however, aheatmap (from the NMF package) is also nice and easy to use. 
+So we have now covered the basic use of M3C. Generally we recommend complexheatmap for rendering of heatmaps as it is more customisable for publications, however, aheatmap (from the NMF package) is also nice and easy to use. 
 
 Happy cluster hunting!
 
-Note: we will now turn to an extra function of the package, which is not necessary to learn how to use in order to find clusters in your data, but we have used in our benchmarking.
+We will now turn to an extra function of the package, which can be used for benchmarking clustering tools.
 
 ### Generating simulated data
 
@@ -148,7 +147,7 @@ We have included a function for generating simulated data as part of the package
   mydata <- as.data.frame(sim) # convert to data frame
 ```
 
-![*Figure 7: PCA of a 4 cluster simulated dataset *](PCAsim 225 900 8 4 0.75 0.025 .png){width=42%}
+![*Figure 7: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=42%}
 
 We can now run M3C to evaluate the clusters in this well seperated example.
 
@@ -158,11 +157,22 @@ res <- M3C(mydata, cores=8, iters=100, ref_method = 'reverse-pca', montecarlo = 
                          printheatmaps = F, seed = 123)
 ```
 
-Now let's take a look at the results. Below we can see because these are very well seperated clusters that the p values reach a minimum quite easily and we have 4 and 5 both as optimal solutions using 100 iterations. However, in these situations we can just use the PAC-statistic to work out the optimal number of clusters.
+Now let's take a look at the results. We can see in the below example why the monte carlo p value method falls down when the clusters are very well seperated (which usually they are not in real datasets). We can see the monte carlo p value has hit a minimum for K=4 or K=5, we could solve this by more iterations, but another way is just to use the beta distribution to estimate the p value. In this below example either the PAC-statistic or beta-p value would suffice for identifying the correct number of clusters as K=4 in reality.
+
+```{r, eval = FALSE}
+   K  PAC_REAL   PAC_REF   PAC_STAT MONTECARLO_P       BETA_P    P_SCORE
+1  2 0.4007448 0.4625918  0.1435201   0.42574257 3.933832e-01  0.4051842
+2  3 0.3856865 0.3446665 -0.1124478   0.59405941 6.429476e-01  0.1918244
+3  4 0.0000001 0.3194117 14.9768212   0.00990099 5.355499e-69 68.2712001
+4  5 0.1208441 0.2659278  0.7887233   0.00990099 9.068126e-04  3.0424825
+5  6 0.1640220 0.2209796  0.2980697   0.10891089 8.625574e-02  1.0642120
+6  7 0.1797280 0.2075664  0.1440067   0.14851485 1.598063e-01  0.7964060
+7  8 0.1703368 0.1887970  0.1028945   0.22772277 2.337410e-01  0.6312650
+8  9 0.1364421 0.1691964  0.2151592   0.07920792 7.384395e-02  1.1316851
+9 10 0.1281844 0.1528816  0.1761940   0.11881188 9.367458e-02  1.0283783
+```
 
 ![*Figure 8: P values for 4 cluster simulated dataset *](pscore2.png){width=40%}
-
-Now, using the PAC-statistic, we can see that 4 is clearly the number of clusters in this toy dataset. Normally, biological datasets are noisy and the groups are not well seperated so the p value method would be more effective, as we can seen in our own analyses.
 
 ![*Figure 9: PAC-statistic for 4 cluster simulated dataset *](pacdiff2.png){width=37.5%}
 

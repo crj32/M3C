@@ -116,17 +116,6 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                     mydata2 <- sorted3
                   }
 
-                  if (ref_method == 'within-range'){ # generate random data within the range of each variable
-                    random <- matrix(nrow = nrow(mydata), ncol = ncol(mydata))
-                    temp <- as.matrix(mydata)
-                    for (jj in seq(1:nrow(temp))){
-                      minv <- min(temp[jj,])
-                      maxv <- max(temp[jj,])
-                      random[jj,] <- runif(length(temp[jj,]), minv, maxv)
-                    }
-                    mydata2 <- as.data.frame(random)
-                  }
-
                   m_matrix <- as.matrix(mydata2)
                   results <- ConsensusClusterRef(m_matrix,maxK=maxK,reps=repsref,pItem=0.8,pFeature=1, # only use 100x iterations
                                                  clusterAlg=clusteralg, # use pam it is fast
@@ -150,16 +139,15 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                                      x1=pacx1, x2=pacx2, seed=seed) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
-    copres <- results2$copres # alternative metric
 
     ## process reference data and calculate scores and p values (simulations are in ls matrix)
     colnames(real)[2] <- 'PAC_REAL'
     real$PAC_REF <- colMeans(ls)
     real$PAC_STAT <- real$PAC_REF - real$PAC_REAL # alternative pac statistic without taking log
 
-    # need to log it because pac real can reach 0
+    ## if PAC is zero set it to really really small 
+    real$PAC_REAL[real$PAC_REAL==0] <- 0.0000001
     pacreal <- real$PAC_REAL
-    pacreal[pacreal==0] <- 0.01 # set zero really small
     PACREALLOG <- log(pacreal)
     PACREFLOG <- log(real$PAC_REF)
     real$PAC_STAT <- PACREFLOG - PACREALLOG # replace non log with log
@@ -172,48 +160,23 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       pvals <- c(pvals,((length(distribution[distribution < real$PAC_REAL[x]])) + 1)/ (iters+1)) # (b+1)/(m+1)=pval
       x = x + 1
     }
-    real$P_VALUE <- pvals # this object contains all the results
-    real$P_SCORE <- -log10(real$P_VALUE)
+    real$MONTECARLO_P <- pvals # this object contains all the results
 
-    ## extrapolated p values, only use when observed PAC values is lower than all simulated PAC values
-    ## really needs 1000 simulations
-    ## using 10 lowest PAC scores to fit model to
-    ## https://genepi.qimr.edu.au/staff/davidD/Sib-pair/Documents/extrapolatedMCPvalues2011.pdf (references and maths in here)
-    extraps <- c() # results
-    indices <- c() # store indices of p values to replace with extrapolated
-    x = 1
-    m = 10 # between 10 and 20 (number of top values used to calc)
-    for (var in real$PAC_REAL){
-      if (var < min(as.numeric(ls[,x]))){
-        indices <- c(indices, x)
-        distribution <- as.numeric(ls[,x])
-        # invert
-        distribution = 1 - distribution
-        #
-        lowestpacs <- sort(distribution, decreasing = TRUE)[1:(m+1)]
-        summedvals <- 0
-        finalval <- lowestpacs[(m+1)]
-        for (val in lowestpacs[1:m]){
-          ans <- log(val) - log(finalval)
-          summedvals = summedvals + ans
-        }
-        pacobs <- real$PAC_REAL[x]
-        # invert
-        pacobs = 1 - pacobs
-        #
-        astar = (1/m)*summedvals
-        pextra = (m/iters)*(pacobs/finalval)^(-1/astar)
-        extraps <- c(extraps, pextra)
-      }
-      if (var >= min(as.numeric(ls[,x]))){
-        extraps <- c(extraps, NA)
-      }
-      x = x + 1
+    ## calculate variance - required for beta distribution
+    variance <- apply(ls, 2, var)
+    
+    ## estimate p values using a beta distribution
+    pvals2 <- c()
+    for (i in 1:nrow(real)){
+      mean <- real$PAC_REF[i]
+      var <- variance[[i]]
+      realpac <- real$PAC_REAL[i]
+      params2 <- estBetaParams(mu=mean, var=var) # estimate parameters using mean and variance
+      newpval <- pbeta(realpac, params2[[1]], params2[[2]])
+      pvals2 <- c(pvals2, newpval)
     }
-    # don't replace actual p values with extrapolated, but code is here
-    real$P_EXTRAPOLATED <- extraps # attach extrapolated p values to results
-    #real$P_VALUE[indices] <- extraps[indices]
-    #real$P_SCORE <- -log10(real$P_VALUE)
+    real$BETA_P <- pvals2
+    real$P_SCORE <- -log10(real$BETA_P)
 
     # plot real vs reference results
     # pac statistic
@@ -283,7 +246,6 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                                      seed=seed) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
-    copres <- results2$copres # alternative metric
   }
 
   if (file.exists('Rplots.pdf') == TRUE){ # random file pops up
@@ -295,38 +257,18 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     write.csv(real, file = 'pacresultfile.csv', row.names = FALSE)
   }
 
-  # calinski code was here (in version18)
-  # close(cl)
-
-  # make an automated decision if running the monte carlo distribution
   if (montecarlo == TRUE){
-    real$decision <- 'sub optimal'
-    if (length(which(signif(real$P_VALUE, digits = 7) == min(signif(real$P_VALUE, digits = 7)))) > 1){ # multiple top hits
-      message('we have multiple lowest p values, using pac stat to break the tie')
-      pacstats <- real$PAC_STAT[(which(signif(real$P_VALUE, digits = 7) == min(signif(real$P_VALUE, digits = 7))))]
-      real$decision[which(real$PAC_STAT == pacstats[(which(signif(pacstats, digits = 7) == max(signif(pacstats, digits = 7))))])] <- 'optimal'
-      if (length(  (which(signif(pacstats, digits = 7) == max(signif(pacstats, digits = 7))))) > 2){
-        message('multiple lowest p values and multiple highest pac stats, consider adding more iterations')
-        real$decision <- 'tie'
-      }
-    }
-    if (length(which(signif(real$P_VALUE, digits = 7) == min(signif(real$P_VALUE, digits = 7)))) == 1){ # just one top hit
-      real$decision[which(signif(real$P_VALUE, digits = 7) == min(signif(real$P_VALUE, digits = 7)))] <- 'optimal'
-    }
-    # print the decision
-    if (length(which(signif(real$P_VALUE, digits = 7) == min(signif(real$P_VALUE, digits = 7)))) > 1){ # multiple top hits
-      message(c('optimal decision: ', which(real$decision == 'optimal')+1))
-      if (length(  (which(signif(pacstats, digits = 7) == max(signif(pacstats, digits = 7))))) > 2){
-        message('optimal decision: none')
-      }
-    }
-    if (length(which(signif(real$P_VALUE, digits = 7) == min(signif(real$P_VALUE, digits = 7)))) == 1){ # just one top hit
-      message(c('optimal decision: ', which(real$decision == 'optimal')+1))
-    }
+    # return results with monte carlo
+    ls <- data.frame(ls)
+    row.names(ls) <- gsub('result', 'iteration', row.names(ls))
+    colnames(ls) <- c(2:maxK)
+    return(list("realdataresults" = allresults, 'scores' = real)) 
+  }
+  if (montecarlo == FALSE){
+    # return results without monte carlo
+    return(list("realdataresults" = allresults, 'scores' = real)) 
   }
 
-  # return results with or without monte carlo
-  return(list("allresults" = allresults, 'pac_scores' = real)) # contains pac scores, and cc matrices, reordered data + annotation
 }
 
 ConsensusClusterReal <- function( d=NULL, # function for real data
@@ -344,7 +286,6 @@ ConsensusClusterReal <- function( d=NULL, # function for real data
                                   seed=NULL,
                                   weightsItem=NULL,
                                   weightsFeature=NULL,
-                                  verbose=FALSE,
                                   corUse="everything",
                                   showheatmaps=FALSE,
                                   printheatmaps=FALSE,
@@ -369,7 +310,6 @@ ConsensusClusterReal <- function( d=NULL, # function for real data
                  weightsFeature=weightsFeature,
                  weightsItem=weightsItem,
                  distance=distance,
-                 verbose=verbose,
                  corUse=corUse)
     message('finished')
   res=list();
@@ -477,9 +417,8 @@ ConsensusClusterReal <- function( d=NULL, # function for real data
     resultslist[[tk]] <- newList
   }
   pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2) # this runs the new CDF function with PAC score
-  copres <- COP(ml) # this runs the new COP function
   res[[1]] = colorM
-  listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res, 'copres' = copres) # use a name list, one item is a list of results
+  listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res) # use a name list, one item is a list of results
   return(listxyx)
 
   print('finished this function')
@@ -508,10 +447,6 @@ ConsensusClusterRef <- function( d=NULL, # function for reference data
   if (is.null(seed) == FALSE){
     set.seed(seed)
   }
-  verbose=FALSE
-  showheatmaps=FALSE
-  printheatmaps=FALSE
-  printres=FALSE
   message('running consensus cluster algorithm for reference data...') # this is the main function that takes the vast majority of the time
     ml <- ccRun( d=d,
                  maxK=maxK,
@@ -524,55 +459,10 @@ ConsensusClusterRef <- function( d=NULL, # function for reference data
                  weightsFeature=weightsFeature,
                  weightsItem=weightsItem,
                  distance=distance,
-                 verbose=verbose,
                  corUse=corUse)
     message('finished.')
-  res=list();
-  colorList=list()
-  colorM = rbind() #matrix of colors.
-  #18 colors for marking different clusters
-  thisPal <- c("#A6CEE3","#1F78B4","#B2DF8A","#33A02C","#FB9A99","#E31A1C","#FDBF6F","#FF7F00","#CAB2D6","#6A3D9A","#FFFF99","#B15928",
-               "#bd18ea", "#2ef4ca", "#f4cced", "#f4cc03", "#05188a", "#e5a25a", "#06f106", "#85848f", "#000000", "#076f25", "#93cd7f", "#4d0776", "#ffffff")
-  for (tk in 2:maxK){
-    if(verbose){
-      message(paste("consensus ",tk))
-    }
-    fm = ml[[tk]]
-    hc=hclust( as.dist( 1 - fm ), method=finalLinkage);
-    ct = cutree(hc,tk)
-    names(ct) = colnames(d)
-    if(class(d)=="dist"){
-      names(ct) = colnames(as.matrix(d))
-    }
-    c = fm
-    colorList = setClusterColors(res[[tk-1]][[3]],ct,thisPal,colorList)
-    pc = c
-    pc=pc[hc$order,] #pc is matrix for plotting, same as c but is row-ordered and has names and extra row of zeros.
-    pc = rbind(pc,0)
-    colcols <- as.factor(as.numeric(as.factor(colorList[[1]]))) # CHRIS: this is for aheatmap/ other non heatmap engines
-    cols <- colorRampPalette(RColorBrewer::brewer.pal(9,'Reds')[1:6])(256)
-    if (showheatmaps == TRUE & printheatmaps == FALSE){
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-    }
-    if (showheatmaps == TRUE & printheatmaps == TRUE){
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-      tiff(paste('K=',tk,'heatmap.tiff'), height = 12, width = 12, units = 'cm',
-           compression = "lzw", res = 600)
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-      dev.off()
-    }
-    if (showheatmaps == FALSE & printheatmaps == TRUE){
-      tiff(paste('K=',tk,'heatmap.tiff'), height = 12, width = 12, units = 'cm',
-           compression = "lzw", res = 600)
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-      dev.off()
-    }
-    res[[tk]] = list(consensusMatrix=c,consensusTree=hc,consensusClass=ct,ml=ml[[tk]],clrs=colorList)
-    colorM = rbind(colorM,colorList[[1]])
-  }
   pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2) # this runs the new CDF function with PAC score
-  res[[1]] = colorM
-  newList <- list("consensus_matrices" = res, 'pac_scores' = pac_res) # now returning a fairly coherant list of results
+  newList <- list('pac_scores' = pac_res) # now returning a fairly coherant list of results
   return(newList)
 }
 
@@ -587,7 +477,6 @@ ccRun <- function( d=d,
                    clusterAlg=NULL,
                    weightsItem=NULL,
                    weightsFeature=NULL,
-                   verbose=NULL,
                    corUse=NULL) {
   m = vector(mode='list', repCount)
   ml = vector(mode="list",maxK)
@@ -635,9 +524,6 @@ ccRun <- function( d=d,
   }
 
   for (i in 1:repCount){
-    if(verbose){
-      message(paste("random subsample",i));
-    }
     ## take expression matrix sample, samples and genes
     sample_x = sampleCols( d, pItem, pFeature, weightsItem, weightsFeature )
     this_dist = NA
@@ -695,9 +581,6 @@ ccRun <- function( d=d,
                                   sample_x[[3]] )
     ##use samples for each k
     for (k in 2:maxK){
-      if(verbose){
-        message(paste("  k =",k))
-      }
       if (i==1){
         ml[[k]] = mConsist #initialize
       }
@@ -745,6 +628,12 @@ ccRun <- function( d=d,
   return(res)
 }
 
+estBetaParams <- function(mu, var) {
+  alpha <- ((1 - mu) / var - 1 / mu) * mu ^ 2
+  beta <- alpha * (1 / mu - 1)
+  return(params = list(alpha = alpha, beta = beta))
+}
+
 connectivityMatrix <- function( clusterAssignments, m, sampleKey){
   ##input: named vector of cluster assignments, matrix to add connectivities
   ##output: connectivity matrix
@@ -790,30 +679,13 @@ sampleCols <- function( d,
                 subcols=sampCols ) )
 }
 
-COP=function(ml){ # calculates cophenetic distance
-  maxK = length(ml)
-  copres <- matrix(nrow=(maxK - 1),ncol=2)
-  for (ccm in seq(2,maxK,1)){
-    x <- ml[[ccm]] # this should be the CC matrix
-    d1 <- dist(x)
-    hc <- hclust(d1, "average")
-    d2 <- cophenetic(hc)
-    ans <- cor(d1, d2) # for every cc matrix
-    copres[ccm-1,1] <- ccm
-    copres[ccm-1,2] <- ans
-  }
-  copres <- data.frame(copres)
-  colnames(copres) <- c('K', 'Cophenetic Coeff')
-  return(copres)
-}
-
 CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2){ # calculates CDF and PAC
   maxK = length(ml) # match with max K
   cdf_res <- matrix(nrow = 10000, ncol = 3)
   i = 1
   for (ccm in seq(2,maxK,1)){
     x <- ml[[ccm]] # this should be the CC matrix
-    #x <- unlist(x)
+    x <- x[lower.tri(x)]
     p <- stats::ecdf(x)
     for (index in seq(0,1,0.01)){
       answer <- p(index)

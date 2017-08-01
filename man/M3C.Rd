@@ -53,6 +53,6 @@ A list: containing 1) the stability results and 2) all the output data (in anoth
 M3C: Monte Carlo Consensus Clustering
 }
 \examples{
-res <- M3C(mydata, cores=1, iters=10, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
-maxK = 10, showheatmaps = FALSE, repsreal = 10, repsref = 10,printheatmaps = FALSE, seed = 123, des = desx)
+res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
+maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = FALSE, seed = 123, des = desx)
 }

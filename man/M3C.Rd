@@ -5,10 +5,10 @@
 \title{M3C: Monte Carlo Consensus Clustering}
 \usage{
 M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
-  des = NULL, ref_method = "reverse-pca", repsref = 100, repsreal = 100,
-  clusteralg = "pam", distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9,
-  printres = FALSE, printheatmaps = FALSE, showheatmaps = FALSE,
-  seed = NULL)
+  des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
+  repsreal = 100, clusteralg = c("pam", "km"), distance = "euclidean",
+  pacx1 = 0.1, pacx2 = 0.9, printres = FALSE, printheatmaps = FALSE,
+  showheatmaps = FALSE, seed = NULL)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -23,15 +23,15 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{des}{Data frame: contains annotation data for the input data for automatic reordering (optional)}
 
-\item{ref_method}{Character string: refers to which reference method to use (recommended: leaving this alone)}
+\item{ref_method}{Character string: refers to which reference method to use (recommended: leaving as default)}
 
 \item{repsref}{Numerical value: how many reps to use for the monte carlo reference data (suggest 100)}
 
 \item{repsreal}{Numerical value: how many reps to use for the real data (recommended: 100)}
 
-\item{clusteralg}{String: dictates which algorithm to use for M3C (recommended: leaving this alone)}
+\item{clusteralg}{String: dictates which algorithm to use for M3C (recommended: leaving as default)}
 
-\item{distance}{String: dictates which distance metric to use for M3C (recommended: leaving this alone)}
+\item{distance}{String: dictates which distance metric to use for M3C (recommended: leaving as default)}
 
 \item{pacx1}{Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)}
 
@@ -46,11 +46,21 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 \item{seed}{Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here}
 }
 \value{
-A list: containing 1) the stability results and 2) all the output data (in another list) 
-(see vignette for more details on how to access)
+A list, containing: 
+1) the stability results and 
+2) all the output data (another list) 
+3) reference stability scores
+(see vignette for more details on how to easily access)
 }
 \description{
-M3C: Monte Carlo Consensus Clustering
+This function runs M3C, which is a hypothesis testing framework for consensus clustering. The basic
+idea is to use a multi-core enabled monte carlo simulation to drive the creation of a null distribution
+of stability scores. The monte carlo simulations maintains the correlation structure of the input data.
+Then the null distribution is used to compare the reference scores with the real scores
+and a empirical p value is calculated for every value of K. We also use the relative cluster stability
+index as an alternative metric which is just based on a comparison against the reference mean, the advantage 
+being it requires fewer iterations. Small p values are estimated cheaply using a beta distribution that is
+inferred using parameter estimates from the monte carlo simulation.
 }
 \examples{
 res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 

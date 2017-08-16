@@ -5,7 +5,7 @@
 \alias{mydata}
 \title{GBM expression data}
 \description{
-This is the expression data from the GBM dataset
+This is the expression data from the GBM dataset. It is a data frame with 50 columns and 1740 rows.
 }
 \references{
 Verhaak, Roel GW, et al. "Integrated genomic analysis identifies clinically 

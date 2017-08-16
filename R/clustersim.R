@@ -40,12 +40,11 @@ clustersim <- function(n, n2, r, K, alpha, wobble, print = FALSE, seed=NULL){
   # remove points outside of r size
   x1 <- (cluster::pam(data.frame(matrix)[,1:2], 1)$medoids)[1]
   y1 <- (cluster::pam(data.frame(matrix)[,1:2], 1)$medoids)[2]
-  for (q in seq(1,n,1)){ # compute distance from origin
-    x2 <- matrix[q,1]
-    y2 <- matrix[q,2]
-    answer <- sqrt(((x2-x1)*(x2-x1)) + ((y2-y1)*(y2-y1)))
-    matrix[q,3] <- answer
-  }
+  # compute distance from origin
+  x2 <- matrix[,1]
+  y2 <- matrix[,2]
+  answer <- sqrt(((x2-x1)^2) + ((y2-y1)^2))
+  matrix[,3] <- answer
   
   matrix2 <- subset(data.frame(matrix), X3 < r)
   #plot(matrix2[,1], matrix2[,2])
@@ -55,16 +54,14 @@ clustersim <- function(n, n2, r, K, alpha, wobble, print = FALSE, seed=NULL){
   # start with eigenvectors (rnorm created), and co ordinates which represent PCs
   # and this loop will simulate the data (n,n2) dimensions
   message('computing simulated data using linear combination...')
-  res = matrix(nrow = nrow(matrix2), ncol = n2) # create the simulated data in circle shape
+  res = matrix(nrow = nrow(matrix2), ncol = n2)
   for (i in seq(1,nrow(matrix2),1)){
-    a <- matrix2[i,1]
-    b <- matrix2[i,2]
-    for (k in seq(1,n2,1)){
-      xk <- x[k]
-      yk <- y[k]
-      answer <- a*xk + b*yk
-      res[i,k] <- answer
-    }
+    a <- matrix2[i,1] # get fixed co ordinate1 for entire row
+    b <- matrix2[i,2] # get fixed co ordinate2 for entire row
+    xk <- x
+    yk <- y
+    answer <- a*xk + b*yk
+    res[i,] <- answer
   }
 
   # take res (your simulated circle) and pull apart the data using K clusters
@@ -95,10 +92,8 @@ clustersim <- function(n, n2, r, K, alpha, wobble, print = FALSE, seed=NULL){
     # manipulate data frame, xxx, for cluster i
     xxx$PC1shifted <- NA
     xxx$PC2shifted <- NA
-    for (j in seq(1:nrow(xxx))){
-      xxx[j,4] <- xxx[j,1]+(alpha*x) # shift x co ordinate
-      xxx[j,5] <- xxx[j,2]+(alpha*y) # shift y co ordinate
-    }
+    xxx[,4] <- xxx[,1]+(alpha*x)
+    xxx[,5] <- xxx[,2]+(alpha*y)
     mylist[[i]] <- xxx # add the transformed data for cluster i into mylist
     if (i == K){
       final_df <- do.call("rbind", mylist)

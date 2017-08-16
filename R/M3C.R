@@ -320,9 +320,9 @@ M3Creal <- function( d=NULL, # function for real data
                                   weightsItem=NULL,
                                   weightsFeature=NULL,
                                   corUse="everything",
-                                  showheatmaps=F,
-                                  printheatmaps=F,
-                                  printres=F,
+                                  showheatmaps=FALSE,
+                                  printheatmaps=FALSE,
+                                  printres=FALSE,
                                   x1=0.1,
                                   x2=0.9,
                                   des = NULL) {
@@ -380,11 +380,11 @@ M3Creal <- function( d=NULL, # function for real data
     pc = rbind(pc,0)
     colcols <- as.factor(as.numeric(as.factor(colorList[[1]])))
     cols <- colorRampPalette(RColorBrewer::brewer.pal(9,'Reds')[1:6])(256)
-    if (showheatmaps == T & printheatmaps == F){
+    if (showheatmaps == TRUE & printheatmaps == FALSE){
       NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
                     col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
     }
-    if (showheatmaps == T & printheatmaps == T){
+    if (showheatmaps == TRUE & printheatmaps == TRUE){
       NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
                     col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
       png(paste('K=',tk,'heatmap.png'), height = 12, width = 12, units = 'cm', 
@@ -393,7 +393,7 @@ M3Creal <- function( d=NULL, # function for real data
                     col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
       dev.off()
     }
-    if (showheatmaps == F & printheatmaps == T){
+    if (showheatmaps == FALSE & printheatmaps == TRUE){
       png(paste('K=',tk,'heatmap.png'), height = 12, width = 12, units = 'cm', 
           res = 900, type = 'cairo')
       NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
@@ -470,7 +470,7 @@ M3Cref <- function( d=NULL, # function for reference data
                                  corUse="everything",
                                  x1=0.1,
                                  x2=0.9,
-                                 printres=F, 
+                                 printres=FALSE, 
                                  seed=NULL) {
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -489,7 +489,7 @@ M3Cref <- function( d=NULL, # function for reference data
               distance=distance,
               corUse=corUse)
   message('finished.')
-  pac_res <- CDF(ml, printres=F, x1=x1, x2=x2) # this runs the new CDF function with PAC score
+  pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2) # this runs the new CDF function with PAC score
   newList <- list('pac_scores' = pac_res) # now returning a fairly coherant list of results
   return(newList)
 }
@@ -521,7 +521,8 @@ ccRun <- function( d=d,
     main.dist.obj <- dist( t(d), method=distance )
   }
   
-  for (i in 1:repCount){ # start the resampling loop
+  ## start the resampling loop
+  for (i in 1:repCount){ 
     ## sample the input data matrix
     sample_x = sampleCols(d, pItem, pFeature, weightsItem, weightsFeature)
     this_dist = NA
@@ -636,12 +637,12 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2){ # calculate CDF and P
                    plot.title = ggplot2::element_text(size = 26, colour = 'black', hjust = 0.5),
                    panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
     ggplot2::labs(title = "Real Data")
-  if (printres == T){
+  if (printres == TRUE){
     png('CDF.png', height = 14, width = 23, units = 'cm', 
         type = 'cairo', res = 900)
   }
   print(p) # print ggplot CDF in main plotting window
-  if (printres == T){
+  if (printres == TRUE){
     dev.off()
   }
   
@@ -667,15 +668,15 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2){ # calculate CDF and P
     ggplot2::ylab('PAC Score') +
     ggplot2::xlab('Number of Clusters') +
     ggplot2::labs(title = "Real Data")
-  if (printres == T){
+  if (printres == TRUE){
     png('PACscore.png', height = 14, width = 20, units = 'cm', 
         type = 'cairo', res = 900)
   }
   print(p2)
-  if (printres == T){
+  if (printres == TRUE){
     dev.off()
   }
-  if (printres == T){
+  if (printres == TRUE){
     print(p)
     print(p2)
   }

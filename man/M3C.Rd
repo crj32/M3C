@@ -8,7 +8,7 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
   repsreal = 100, clusteralg = c("pam", "km"), distance = "euclidean",
   pacx1 = 0.1, pacx2 = 0.9, printres = FALSE, printheatmaps = FALSE,
-  showheatmaps = FALSE, seed = NULL)
+  showheatmaps = FALSE, seed = NULL, removeplots = FALSE)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -44,6 +44,8 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 \item{showheatmaps}{Logical flag: whether to show the heatmaps on screen (can be slow)}
 
 \item{seed}{Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here}
+
+\item{removeplots}{Logical flag: whether to remove all plots (recommended: leaving as default)}
 }
 \value{
 A list, containing: 

@@ -25,6 +25,7 @@
 #' @param printres Logical flag: whether to print all results into current directory
 #' @param printheatmaps Logical flag: whether to print all the heatmaps into current directory
 #' @param showheatmaps Logical flag: whether to show the heatmaps on screen (can be slow)
+#' @param removeplots Logical flag: whether to remove all plots (recommended: leaving as default)
 #' @param seed Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here
 #'
 #' @return A list, containing: 
@@ -40,7 +41,7 @@
 M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                               des = NULL, ref_method = c('reverse-pca', 'chol'), repsref = 100, repsreal = 100,
                               clusteralg = c('pam', 'km'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
-                              printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL){
+                              printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL, removeplots = FALSE){
 
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -161,7 +162,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                                      title = '/home/christopher/Desktop/',
                                      printres = printres,
                                      showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
-                                     x1=pacx1, x2=pacx2, seed=seed) # png to file
+                                     x1=pacx1, x2=pacx2, seed=seed, removeplots=removeplots) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
 
@@ -195,7 +196,8 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     }, numeric(1))
     real$BETA_P <- pvals2
     real$P_SCORE <- -log10(real$BETA_P)
-
+    
+  if (removeplots == FALSE){ # we are doing the plots
     # plot real vs reference results
     # pac statistic
     px <- ggplot(data=real, aes(x=K, y=RCSI)) + geom_line(colour = "purple", size = 2) + 
@@ -212,7 +214,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       scale_x_continuous(breaks=c(seq(0,maxK,1))) +
       ylab('RCSI') +
       xlab('K')
-
+    
     # pval score
     col = ifelse(real$P_SCORE > 1.30103,'tomato','black')
     py <- ggplot(data=real, aes(x=K, y=P_SCORE)) + geom_point(colour = col, size = 3) +
@@ -229,10 +231,10 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       ylab(expression('-log'[10]*'p')) +
       xlab('K') +
       geom_hline(yintercept=1.30103, size=0.75, linetype='dashed', colour='tomato') # 0.05 sig threshold
-
+    
     if (printres == TRUE){
       png(paste('pscore.png'), height = 14, width = 20, units = 'cm',
-           res = 900, type = 'cairo')
+          res = 900, type = 'cairo')
     }
     print(py) # print ggplot CDF in main plotting window
     if (printres == TRUE){
@@ -251,6 +253,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       print(px)
     }
   }
+  }
 
   if (montecarlo == FALSE){
     message('running without monte carlo simulations...')
@@ -260,7 +263,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                                      title = '/home/christopher/Desktop/',
                                      printres = printres, x1=pacx1, x2=pacx2,
                                      showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
-                                     seed=seed) # png to file
+                                     seed=seed, removeplots=removeplots) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
   }
@@ -325,7 +328,8 @@ M3Creal <- function( d=NULL, # function for real data
                                   printres=FALSE,
                                   x1=0.1,
                                   x2=0.9,
-                                  des = NULL) {
+                                  des = NULL,
+                                  removeplots=removeplots) {
   message('running consensus cluster algorithm for real data...')
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -446,7 +450,7 @@ M3Creal <- function( d=NULL, # function for real data
     newList <- list("consensus_matrix" = pc, 'ordered_data' = data, 'ordered_annotation' = annotation) # you can remove ml
     resultslist[[tk]] <- newList
   }
-  pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2) # this runs the new CDF function with PAC score
+  pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots) # this runs the new CDF function with PAC score
   res[[1]] = colorM
   listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res) # use a name list, one item is a list of results
   return(listxyx)
@@ -489,7 +493,7 @@ M3Cref <- function( d=NULL, # function for reference data
               distance=distance,
               corUse=corUse)
   message('finished.')
-  pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2) # this runs the new CDF function with PAC score
+  pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2, removeplots=TRUE) # this runs the new CDF function with PAC score
   newList <- list('pac_scores' = pac_res) # now returning a fairly coherant list of results
   return(newList)
 }
@@ -605,7 +609,8 @@ sampleCols <- function( d,
                 subcols=sampCols ) )
 }
 
-CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2){ # calculate CDF and PAC score
+CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
+             removeplots=removeplots){ # calculate CDF and PAC score
   
   ## calculate CDF
   maxK = length(ml) # match with max K
@@ -627,25 +632,28 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2){ # calculate CDF and P
   cdf_res2 <- as.data.frame(cdf_res)
   colnames(cdf_res2) <- c('consensusindex', 'CDF', 'k')
   cdf_res2 <- cdf_res2[complete.cases(cdf_res2),]
-  p <- ggplot2::ggplot(cdf_res2, ggplot2::aes(x=consensusindex, y=CDF, group=k)) + ggplot2::geom_line(ggplot2::aes(colour = factor(k)), size = 2) + ggplot2::theme_bw() + 
-    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 26, colour = 'black'),
-                   axis.text.x = ggplot2::element_text(size = 26, colour = 'black'),
-                   axis.title.x = ggplot2::element_text(size = 26),
-                   axis.title.y = ggplot2::element_text(size = 26),
-                   legend.title = ggplot2::element_blank(),
-                   legend.text = ggplot2::element_text(size = 26),
-                   plot.title = ggplot2::element_text(size = 26, colour = 'black', hjust = 0.5),
-                   panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
-    ggplot2::labs(title = "Real Data")
-  if (printres == TRUE){
-    png('CDF.png', height = 14, width = 23, units = 'cm', 
-        type = 'cairo', res = 900)
-  }
-  print(p) # print ggplot CDF in main plotting window
-  if (printres == TRUE){
-    dev.off()
-  }
   
+  if (removeplots==FALSE){
+    p <- ggplot2::ggplot(cdf_res2, ggplot2::aes(x=consensusindex, y=CDF, group=k)) + ggplot2::geom_line(ggplot2::aes(colour = factor(k)), size = 2) + ggplot2::theme_bw() + 
+      ggplot2::theme(axis.text.y = ggplot2::element_text(size = 26, colour = 'black'),
+                     axis.text.x = ggplot2::element_text(size = 26, colour = 'black'),
+                     axis.title.x = ggplot2::element_text(size = 26),
+                     axis.title.y = ggplot2::element_text(size = 26),
+                     legend.title = ggplot2::element_blank(),
+                     legend.text = ggplot2::element_text(size = 26),
+                     plot.title = ggplot2::element_text(size = 26, colour = 'black', hjust = 0.5),
+                     panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
+      ggplot2::labs(title = "Real Data")
+    if (printres == TRUE){
+      png('CDF.png', height = 14, width = 23, units = 'cm', 
+          type = 'cairo', res = 900)
+    }
+    print(p) # print ggplot CDF in main plotting window
+    if (printres == TRUE){
+      dev.off()
+    }
+  }
+
   ## vectorised PAC score calculation
   cdf_res3 <- subset(cdf_res2, consensusindex %in% c(x1, x2)) # select the consensus index vals to determine the PAC score
   value1 <- cdf_res3[seq(2, nrow(cdf_res3), 2), 2]
@@ -653,33 +661,36 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2){ # calculate CDF and P
   PAC <- value1 - value2
   PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC)
   
-  # do PAC plot
-  p2 <- ggplot2::ggplot(data=PAC_res_df, ggplot2::aes(x=K, y=PAC_SCORE)) + ggplot2::geom_line(colour = "sky blue", size = 2) + ggplot2::geom_point(colour = "black", size = 3) +
-    ggplot2::theme_bw() + 
-    ggplot2::theme(axis.text.y = ggplot2::element_text(size = 26, colour = 'black'),
-                   axis.text.x = ggplot2::element_text(size = 26, colour = 'black'),
-                   axis.title.x = ggplot2::element_text(size = 26),
-                   axis.title.y = ggplot2::element_text(size = 26),
-                   legend.text = ggplot2::element_text(size = 26),
-                   legend.title = ggplot2::element_text(size = 26),
-                   plot.title = ggplot2::element_text(size = 26, colour = 'black', hjust = 0.5),
-                   panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
-    ggplot2::scale_x_continuous(breaks=c(seq(0,maxK,1))) +
-    ggplot2::ylab('PAC Score') +
-    ggplot2::xlab('Number of Clusters') +
-    ggplot2::labs(title = "Real Data")
-  if (printres == TRUE){
-    png('PACscore.png', height = 14, width = 20, units = 'cm', 
-        type = 'cairo', res = 900)
-  }
-  print(p2)
-  if (printres == TRUE){
-    dev.off()
-  }
-  if (printres == TRUE){
-    print(p)
+  if (removeplots==FALSE){
+    # do PAC plot
+    p2 <- ggplot2::ggplot(data=PAC_res_df, ggplot2::aes(x=K, y=PAC_SCORE)) + ggplot2::geom_line(colour = "sky blue", size = 2) + ggplot2::geom_point(colour = "black", size = 3) +
+      ggplot2::theme_bw() + 
+      ggplot2::theme(axis.text.y = ggplot2::element_text(size = 26, colour = 'black'),
+                     axis.text.x = ggplot2::element_text(size = 26, colour = 'black'),
+                     axis.title.x = ggplot2::element_text(size = 26),
+                     axis.title.y = ggplot2::element_text(size = 26),
+                     legend.text = ggplot2::element_text(size = 26),
+                     legend.title = ggplot2::element_text(size = 26),
+                     plot.title = ggplot2::element_text(size = 26, colour = 'black', hjust = 0.5),
+                     panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
+      ggplot2::scale_x_continuous(breaks=c(seq(0,maxK,1))) +
+      ggplot2::ylab('PAC Score') +
+      ggplot2::xlab('Number of Clusters') +
+      ggplot2::labs(title = "Real Data")
+    if (printres == TRUE){
+      png('PACscore.png', height = 14, width = 20, units = 'cm', 
+          type = 'cairo', res = 900)
+    }
     print(p2)
+    if (printres == TRUE){
+      dev.off()
+    }
+    if (printres == TRUE){
+      print(p)
+      print(p2)
+    }
   }
+  
   return(PAC_res_df)
 }
 

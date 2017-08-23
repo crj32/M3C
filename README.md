@@ -1,6 +1,6 @@
 # M3C: Monte Carlo Consensus Clustering
 
-Novel hypothesis testing framework for clustering that uses the consensus clustering algorithm. It takes into account expectation under the null hypothesis using a multi core enabled monte carlo simulation that maintains the correlation structure of the data, this is based on the original algorithm by Monti et al. (2003) and subsequent work by Șenbabaoğlu et al. (2014).
+Novel clustering hypothesis testing framework that uses the consensus clustering algorithm. It takes into account expectation under the null hypothesis using a multi core enabled monte carlo simulation that maintains the correlation structure of the data, this is based on the original algorithm by Monti et al. (2003) and subsequent work by Șenbabaoğlu et al. (2014). The result is empirical p values along the range of K which can be used either to reject or accept the null hypothesis.
 
 Algorithm:  
   

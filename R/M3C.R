@@ -447,6 +447,32 @@ M3Creal <- function( d=NULL, # function for real data
       row.names(annotation) <- newerdes$ID
       annotation$ID <- NULL
     }
+    
+    # change the numbering of the consensus clusters so they make sense
+    vec <- annotation$consensuscluster
+    maximum <- length(levels(vec))
+    seq <- seq(1,maximum)
+    j = 1
+    vec <- as.character(vec)
+    vec2 <- c()
+    for (i in seq(1,length(vec))){
+      if (i == 1){ # if we are at the first element
+        vec2[i] <- 1
+      }
+      if (i > 1){ # if we are at any other element
+        x <- vec[i]
+        y <- vec[i-1]
+        if (x == y){
+          vec2[i] <- seq[j]
+        }
+        if (x != y){
+          j = j + 1
+          vec2[i] <- seq[j]
+        }
+      }
+    }
+    annotation$consensuscluster <- as.factor(vec2)
+    
     newList <- list("consensus_matrix" = pc, 'ordered_data' = data, 'ordered_annotation' = annotation) # you can remove ml
     resultslist[[tk]] <- newList
   }

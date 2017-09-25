@@ -181,7 +181,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     ## usual p value derivation
     pvals <- vapply(seq_len(ncol(ls)), function(i) {
       distribution <- as.numeric(ls[,i])
-      ((length(distribution[distribution < real$PAC_REAL[i]])) + 1)/(50+1) # (b+1)/(m+1)=pval
+      ((length(distribution[distribution < real$PAC_REAL[i]])) + 1)/(iters+1) # (b+1)/(m+1)=pval
     }, numeric(1))
     real$MONTECARLO_P <- pvals
     

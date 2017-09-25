@@ -72,7 +72,7 @@ This is a CDF plot of the GBM data we feed into the algorithm. We are looking fo
 
 This figure below is the PAC score, we can see an elbow at K = 4 which is suggestive this is the best K. However, we are not able to quantify how confident we are in this value without comparison versus a null dataset. Indeed, this may just be the result of random noise.
 
-![*Figure 2: PAC score for real data*](PACscore.png)
+![*Figure 2: PAC score for real data*](PACscore.png){width=95%}
 
 We then derive the RCSI which takes into account the reference PAC scores, but not the shape of the distribution. This metric is better than the PAC score for deciding class number, where the maxima is the number of clusters in the data. In this example the RCSI has an optima at K=4. It generally requires fewer iterations than deriving the empirical p values and it inspired by the GAP-statistic.
 
@@ -120,7 +120,7 @@ NMF::aheatmap(ccmatrix, annCol = annon, Colv = NA, Rowv = NA,
               color = rev(pal), scale = 'none') # plot the heatmap
 ```
 
-![*Figure 6: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
+![*Figure 6: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png){width=95%}
 
 So we have now covered the basic use of M3C. Generally, we recommend complexheatmap for rendering of heatmaps as it is more customisable for publications, however, aheatmap (from the NMF package) is also nice and easier to use. 
 
@@ -136,7 +136,7 @@ We have included a function for generating simulated data as part of the package
   res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = FALSE, seed=123)
 ```
 
-![*Figure 7: PCA of a 4 cluster simulated dataset *](PCAsim.png)
+![*Figure 7: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
 ### Conclusions
 

@@ -1,6 +1,6 @@
 Package: M3C
 Title: Monte Carlo Consensus Clustering
-Version: 0.99.95
+Version: 0.99.96
 Authors@R: person("Christopher", "John", email = "chris.r.john86@gmail.com", role = c("aut", "cre"))
 Description: M3C or Monte Carlo Consensus Clustering is a novel framework for consensus clustering that enables hypothesis testing. Previous clustering tools have not taken into account the null hypothesis during cluster number decision making. We chose to use a multi-core enabled Monte Carlo simulation that maintains the correlation structure of the original data to generate an ensembl of null datasets, from which stability score distributions are calculated. The distributions that M3C generates enable hypothesis testing along the range of K and produce p values. We find this approach eliminates systematic bias, enables confidence estimation of the results, and allows rejection of the null. The framework described here may have relevance for other clustering tools and represents a more rigourous methodology for class discovery in stratified medicine.
 Depends: R (>= 3.4.0)

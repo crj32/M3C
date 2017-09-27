@@ -72,15 +72,15 @@ This is a CDF plot of the GBM data we feed into the algorithm. We are looking fo
 
 This figure below is the PAC score, we can see an elbow at K = 4 which is suggestive this is the best K. However, we are not able to quantify how confident we are in this value without comparison versus a null dataset. Indeed, this may just be the result of random noise.
 
-![*Figure 2: PAC score for real data*](PACscore.png){width=95%}
+![*Figure 2: PAC score for real data*](PACscore.png){width=90%}
 
 We then derive the RCSI which takes into account the reference PAC scores, but not the shape of the distribution. This metric is better than the PAC score for deciding class number, where the maxima is the number of clusters in the data. In this example the RCSI has an optima at K=4. It generally requires fewer iterations than deriving the empirical p values and it inspired by the GAP-statistic.
 
-![*Figure 3: RCSI*](pacdiff.png)
+![*Figure 3: RCSI*](pacdiff.png){width=90%}
 
 Finally we calculate a p value from the distribution, here we display the p values from the beta distribution, note the monte carlo p values are slightly better, but the method tends to take longer to compute. If none of the p values reach significance over a reasonable range of K (e.g. 10), then we accept the null hypothesis. In the GBM dataset we can see K = 4 reaches signfiicance with an alpha of 0.05 (red dotted line), therefore we can reject the null hypothesis for the GBM dataset.
 
-![*Figure 4: Empirical p values*](pscore.png)
+![*Figure 4: Empirical p values*](pscore.png){width=90%}
 
 Now we are convinced there are 4 clusters within this dataset which are not likely simply to have occurred by chance alone we can turn to examine the output objects that M3C generates. These facilitate clustering and heatmap rendering for publication.
 
@@ -120,7 +120,7 @@ NMF::aheatmap(ccmatrix, annCol = annon, Colv = NA, Rowv = NA,
               color = rev(pal), scale = 'none') # plot the heatmap
 ```
 
-![*Figure 6: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png){width=95%}
+![*Figure 6: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png){width=90%}
 
 So we have now covered the basic use of M3C. Generally, we recommend complexheatmap for rendering of heatmaps as it is more customisable for publications, however, aheatmap (from the NMF package) is also nice and easier to use. 
 

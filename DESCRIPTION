@@ -1,8 +1,8 @@
 Package: M3C
 Title: Monte Carlo Consensus Clustering
-Version: 0.99.96
+Version: 0.99.97
 Authors@R: person("Christopher", "John", email = "chris.r.john86@gmail.com", role = c("aut", "cre"))
-Description: M3C or Monte Carlo Consensus Clustering is a novel framework for consensus clustering that enables hypothesis testing. Previous clustering tools have not taken into account the null hypothesis during cluster number decision making. We chose to use a multi-core enabled Monte Carlo simulation that maintains the correlation structure of the original data to generate an ensembl of null datasets, from which stability score distributions are calculated. The distributions that M3C generates enable hypothesis testing along the range of K and produce p values. We find this approach eliminates systematic bias, enables confidence estimation of the results, and allows rejection of the null. The framework described here may have relevance for other clustering tools and represents a more rigourous methodology for class discovery in stratified medicine.
+Description: A central task in genomic data analyses for stratified medicine is class discovery which is accomplished through clustering. However, a unresolved problem with current clustering algorithms is they do not test the null hypothesis and derive p values for different values of K. To solve this, we developed a novel hypothesis testing framework that uses consensus clustering called Monte Carlo Consensus Clustering (M3C). M3C use a multi-enabled Monte Carlo simulation to generate a distribution of stability scores from null datasets with the same gene-gene correlation structure as the real. This distribution is used to derive p values and also a beta distribution is fitted to the data to cheaply estimate p values beyond the limits of the simulation. M3C improves accuracy, allows rejection of the null hypothesis, removes systematic bias, and generates p values for different values of K. We believe M3C deals with a major pitfall in current automated cluster discovery tools.
 Depends: R (>= 3.4.0)
 License: AGPL-3
 Encoding: UTF-8

@@ -12,7 +12,7 @@ vignette: >
 
 ### Abstract
 
-A central task in genomic data analyses for stratified medicine is class discovery which is accomplished through clustering. However, a unresolved problem with current clustering algorithms is they do not test the null hypothesis and derive p values for different values of K. To solve this, we developed a novel hypothesis testing framework that uses consensus clustering called Monte Carlo Consensus Clustering (M3C). M3C use a multi-enabled monte carlo simulation to generate a distribution of stability scores from null datasets with the same gene-gene correlation structure as the real. This distribution is used to derive p values and also a beta distribution is fitted to the data to cheaply estimate p values beyond the limits of the simulation. M3C improves accuracy, allows rejection of the null hypothesis, removes systematic bias, and generates p values for different values of K. We believe M3C deals with a major pitfall in current automated cluster discovery tools.
+A central task in genomic data analyses for stratified medicine is class discovery which is accomplished through clustering. However, an unresolved problem with current clustering algorithms is they do not test the null hypothesis and derive p values. To solve this, we developed a novel hypothesis testing framework that uses consensus clustering called Monte Carlo Consensus Clustering (M3C). M3C use a multi-core enabled Monte Carlo simulation to generate a distribution of stability scores for each number of clusters using null datasets with the same gene-gene correlation structure as the real one. These distributions are used to derive p values and a beta distribution is fitted to the data to cheaply estimate p values beyond the limits of the simulation. M3C improves accuracy, allows rejection of the null hypothesis, removes systematic bias, and uses p values to make class number decisions. We believe M3C deals with a major pitfall in current automated class discovery tools.
 
 ### Prerequisites
 
@@ -138,7 +138,7 @@ We have included a function for generating simulated data to test various cluste
 
 ### Conclusions
 
-In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data opposed to just relying on relative scores. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. We believe M3C represents a step forward in class discovery tools for stratified medicine.
+In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data opposed to relying on relative scores. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. We believe M3C represents a conceptual step forward in class discovery algorithms with clear applications in stratified medicine.
 
 ### References
 

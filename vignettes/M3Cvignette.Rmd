@@ -12,7 +12,7 @@ vignette: >
 
 ### Abstract
 
-A central task in genomic data analyses for stratified medicine is class discovery which is accomplished through clustering. However, an unresolved problem with current clustering algorithms is they do not test the null hypothesis and derive p values. To solve this, we developed a novel hypothesis testing framework that uses consensus clustering called Monte Carlo Consensus Clustering (M3C). M3C use a multi-core enabled Monte Carlo simulation to generate a distribution of stability scores for each number of clusters using null datasets with the same gene-gene correlation structure as the real one. These distributions are used to derive p values and a beta distribution is fitted to the data to cheaply estimate p values beyond the limits of the simulation. M3C improves accuracy, allows rejection of the null hypothesis, removes systematic bias, and uses p values to make class number decisions. We believe M3C deals with a major pitfall in current automated class discovery tools.
+A central task in genomic data analyses is class discovery which is accomplished through clustering. However, an unresolved problem with current clustering algorithms is they do not not have a hypothesis testing framework that derives p values for each value of the number of clusters (K). To solve this, we developed a clustering tool with a hypothesis testing framework that uses consensus clustering called Monte Carlo Consensus Clustering (M3C). M3C use a multi-core enabled Monte Carlo simulation to generate a distribution of stability scores for each value of K using null datasets with the same gene-gene correlation structure as the real one. These distributions are used to derive p values and a beta distribution is fitted to the data to cheaply estimate p values beyond the limits of the simulation. M3C improves accuracy, allows rejection of the null hypothesis, removes systematic bias, and uses p values to make class number decisions.
 
 ### Prerequisites
 
@@ -120,9 +120,7 @@ NMF::aheatmap(ccmatrix, annCol = annon, Colv = NA, Rowv = NA,
 
 ![*Figure 6: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
 
-So we have now covered the basic use of M3C. Generally, we recommend the complexheatmap package for rendering of heatmaps as it is more customisable for publications, however, the aheatmap function (from the NMF package) is also nice and easier to use. 
-
-Happy cluster hunting!
+So we have now covered the basic use of M3C. Generally, we recommend the complexheatmap package for rendering of heatmaps as it is more customisable for publications, however, the aheatmap function (from the NMF package) is also nice and easier to use.
 
 Lastly, we will now examine an extra function of the package, which can be used for benchmarking clustering tools.
 
@@ -138,13 +136,15 @@ We have included a function for generating simulated data to test various cluste
 
 ### Conclusions
 
-In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data opposed to relying on relative scores. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. We believe M3C represents a conceptual step forward in class discovery algorithms with clear applications in stratified medicine.
+In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data opposed to relying on relative scores. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. Building on prior work (Tibshirani et al., 2001; Șenbabaoğlu et al., 2014), M3C represents a conceptual step forward for class discovery algorithms.
 
 ### References
 
 Monti, Stefano, et al. "Consensus clustering: a resampling-based method for class discovery and visualization of gene expression microarray data." Machine learning 52.1 (2003): 91-118.
 
 Șenbabaoğlu, Yasin, George Michailidis, and Jun Z. Li. "Critical limitations of consensus clustering in class discovery." Scientific reports 4 (2014): 6207.
+
+Tibshirani, Robert, Guenther Walther, and Trevor Hastie. "Estimating the number of clusters in a data set via the gap statistic." Journal of the Royal Statistical Society: Series B (Statistical Methodology) 63.2 (2001): 411-423.
 
 
 

@@ -1,9 +1,6 @@
 Package: M3C
 Title: Monte Carlo Consensus Clustering
-<<<<<<< HEAD
 Version: 1.1.1
-=======
->>>>>>> upstream/master
 Authors@R: person("Christopher", "John", email = "chris.r.john86@gmail.com", role = c("aut", "cre"))
 Description: A central task in genomic data analyses is class discovery which is accomplished through clustering. However, an unresolved problem with current clustering algorithms is they do not not have a hypothesis testing framework that derives p values for each value of the number of clusters (K). To solve this, we developed a clustering tool with a hypothesis testing framework that uses consensus clustering called Monte Carlo Consensus Clustering (M3C). M3C use a multi-core enabled Monte Carlo simulation to generate a distribution of stability scores for each value of K using null datasets with the same gene-gene correlation structure as the real one. These distributions are used to derive p values and a beta distribution is fitted to the data to cheaply estimate p values beyond the limits of the simulation. M3C improves accuracy, allows rejection of the null hypothesis, removes systematic bias, and uses p values to make class number decisions.
 Depends: R (>= 3.4.0)

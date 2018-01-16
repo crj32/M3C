@@ -407,7 +407,7 @@ M3Creal <- function( d=NULL, # function for real data
     res[[tk]] = list(consensusMatrix=c,consensusTree=hc,consensusClass=ct,ml=ml[[tk]],clrs=colorList)
     colorM = rbind(colorM,colorList[[1]])
     
-    ## start code for extracting ordered data out for user
+    ## start code for extracting ordered data out for user (removed the X reformatting)
     usethisorder <- hc$order
     colnames(pc) <- seq(1,ncol(pc))
     pc <- pc[,usethisorder] # get the consensus matrices in the correct order
@@ -418,28 +418,28 @@ M3Creal <- function( d=NULL, # function for real data
     neworder2 <- gsub('-', '.', neworder1)
     df <- data.frame(m_matrix)
     newdes <- data.frame(ID = colnames(df), consensuscluster = factor(clusteringdf$cluster))
-    colnames(df) <- gsub('X', '', colnames(df))
-    neworder2 <- gsub('X', '', neworder2)
+    #colnames(df) <- gsub('X', '', colnames(df))
+    #neworder2 <- gsub('X', '', neworder2)
     data <- df[neworder2]
     if (is.null(des) == TRUE){ 
       neworder1 <- gsub('-', '.', neworder1) # cc code is changing - to . so change back
-      vec <- grepl('X', colnames(d)) # check for X's in original colnames if dont exist run this code
-      if (all(vec == FALSE)){ # just changed this to FALSE
-        newdes$ID <- gsub('X', '', newdes$ID) # this creates problem if X in original names
-      }
+      #vec <- grepl('X', colnames(d)) # check for X's in original colnames if dont exist run this code
+      #if (all(vec == FALSE)){ # just changed this to FALSE
+        #newdes$ID <- gsub('X', '', newdes$ID) # this creates problem if X in original names
+      #}
       newerdes <- newdes[match(neworder1, newdes$ID),]
       annotation <- data.frame(newerdes$consensuscluster)
       row.names(annotation) <- newerdes$ID
-      colnames(annotation) <- c('CONSENSUS CLUSTER')
+      colnames(annotation) <- c('consensuscluster')
     }
     if (is.null(des) == FALSE){
       neworder1 <- gsub('-', '.', neworder1)
-      neworder1 <- gsub('X', '', neworder1)
+      #neworder1 <- gsub('X', '', neworder1)
       des$ID <- gsub('-', '.', des$ID) # this is a problem with formatting of the ids - check out later
-      vec <- grepl('X', colnames(d)) # check for X's in original colnames if dont exist run this code
-      if (all(vec == FALSE)){ # changed to true** then back to false, problems here
-        newdes$ID <- gsub('X', '', newdes$ID) # this creates problem if X in original names
-      }
+      #vec <- grepl('X', colnames(d)) # check for X's in original colnames if dont exist run this code
+      #if (all(vec == FALSE)){ # changed to true** then back to false, problems here
+      #  newdes$ID <- gsub('X', '', newdes$ID) # this creates problem if X in original names
+      #}
       merged <- merge(newdes, des, by = 'ID') # name to merge by
       newdes <- merged
       newerdes <- newdes[match(neworder1, newdes$ID),]

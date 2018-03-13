@@ -1,25 +1,19 @@
 # M3C: Monte Carlo Consensus Clustering
 
-Novel clustering hypothesis testing framework that uses the consensus clustering algorithm. It takes into account expectation under the null hypothesis using a multi core enabled monte carlo simulation that maintains the correlation structure of the data, this is based on the original algorithm by Monti et al. (2003) and subsequent work by Șenbabaoğlu et al. (2014). The result is empirical p values along the range of K which can be used either to reject or accept the null hypothesis.
+Genome-wide data is used to stratify patients into classes using class discovery algorithms. However, we have observed systematic bias present in current state-of-the-art methods. This arises from not considering reference distributions while selecting the number of classes (K). As a solution, we developed a consensus clustering-based algorithm with a hypothesis testing framework called Monte Carlo consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to calculate p values to select its value. P values beyond the limits of the simulation are estimated using a beta distribution. M3C can quantify structural relationships between clusters and uses spectral clustering to deal with non-gaussian and imbalanced structures.
 
-Algorithm:  
+Details:  
   
--Calculates the consensus rate, a measure of stability, which is quantified using PAC score  
--Generation of reference PAC distribution using monte carlo simulation  
--Randomisation preserves gene-gene correlation structure of data  
--The relative cluster stability index (RCSI) and empirical p values instead of delta K  
+-M3C calculates the consensus rate, a measure of stability of samples, which is quantified for each K using the PAC score  
+-Generation of reference PAC distribution using a multi-core Monte Carlo simulation  
+-Reference generation preserves gene-gene correlation structure of data  
+-The relative cluster stability index (RCSI) and empirical p values are used instead of delta K 
+-Extrapolated p values are calculate by fitting a beta distribution
 -Increased accuracy compared with other methods verified using simulations  
--Multi core enabled monte carlo  
 -Controls for the null hypothesis K = 1  
--Extrapolated p values using a beta distribution for estimation of p values below the min simulated PAC  
-  
-Other features:    
-  
--Re ordering of expression matrix and annotation data to help user easily get results  
--ggplot2 plotting code for publicaton quality outputs    
+-Removes systematic bias
+-Ability to investigates structural relationships using hierarchical clustering of medoids and sigclust
+-Inner algorithms are PAM, K means, and spectral clustering
+-Automatic re ordering of expression matrix and annotation data to help user do their analysis faster
+-Plotting code using ggplot2 for publication quality outputs    
 
-References:  
-  
-Monti, Stefano, et al. "Consensus clustering: a resampling-based method for class discovery and visualization of gene expression microarray data." Machine learning 52.1-2 (2003): 91-118.
-
-Șenbabaoğlu, Yasin, George Michailidis, and Jun Z. Li. "Critical limitations of consensus clustering in class discovery." Scientific reports 4 (2014).

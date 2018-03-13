@@ -6,6 +6,7 @@
 #' @param K Numerical value: How many clusters to simulate
 #' @param alpha Numerical value: How far to pull apart the clusters
 #' @param wobble Numerical value: The degree of noise to add to the sample co ordinates
+#' @param redp Numerical value: The fraction of samples to remove from one cluster
 #' @param print Logical flag: whether to print the PCA into current directory
 #' @param seed Numerical value: fixes the seed if you want to repeat results
 #'
@@ -15,7 +16,7 @@
 #' @examples
 #' res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = TRUE, seed=123)
 
-clustersim <- function(n, n2, r, K, alpha, wobble, print = FALSE, seed=NULL){
+clustersim <- function(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE, seed=NULL){
   
   message('***clustersim***')
   
@@ -109,6 +110,18 @@ clustersim <- function(n, n2, r, K, alpha, wobble, print = FALSE, seed=NULL){
   # transform back to n dimensional dataset
   message('transforming pulled apart PC co ordinates back to dataset...')
   jjj <- t(final_matrix[,4:5] %*% t(pca1$rotation[,1:2])) + pca1$center # equation, PCs * eigenvectors = original data
+  
+  # remove samples from a cluster at this stage
+  
+  if (!is.null(redp)){
+    colnames(jjj) <- NULL
+    kmtemp <- kmeans(t(jjj),K)
+    myclustertoreduce <- which(kmtemp$cluster %in% 1) # select kth cluster
+    indicestoremove <- sample(myclustertoreduce, ceiling((length(myclustertoreduce)/100)*(redp*100))) # remove randomly x samples from this cluster
+    jjj <- jjj[,-indicestoremove]
+    final_df <- final_df[-indicestoremove,]
+  }
+  
   # take jjj and do a PCA just to check the new dataset
   mydata2 <- as.data.frame(jjj)
   pca1 = prcomp(t(mydata2))
@@ -116,12 +129,12 @@ clustersim <- function(n, n2, r, K, alpha, wobble, print = FALSE, seed=NULL){
   p <- ggplot2::ggplot(data = scores, ggplot2::aes(x = PC1, y = PC2) ) + ggplot2::geom_point(ggplot2::aes(colour = factor(final_df$clusters_km)), size = 6) + 
     ggplot2::theme_bw() + 
     ggplot2::theme(legend.position = "none", panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-          axis.text.y = ggplot2::element_text(size = 33, colour = 'black'),
-          axis.text.x = ggplot2::element_text(size = 33, colour = 'black'),
-          axis.title.x = ggplot2::element_text(size = 33),
-          axis.title.y = ggplot2::element_text(size = 33)) # 31 old
+          axis.text.y = ggplot2::element_text(size = 30, colour = 'black'),
+          axis.text.x = ggplot2::element_text(size = 30, colour = 'black'),
+          axis.title.x = ggplot2::element_text(size = 30),
+          axis.title.y = ggplot2::element_text(size = 30)) # 31 old
   if (print == TRUE){ # width 22 for figure1, width xx for figure 2
-    png(paste('PCAsim',n,n2,r,K,alpha,wobble,'.png'), height = 14, width = 22, units = 'cm', # 16 old
+    png(paste('PCAsim',n,n2,r,K,alpha,wobble,'.png'), height = 20, width = 22, units = 'cm', # 16 old
          res = 900, type="cairo")
   }
   print(p) # print ggplot CDF in main plotting window

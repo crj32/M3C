@@ -6,9 +6,10 @@
 \usage{
 M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
-  repsreal = 100, clusteralg = c("pam", "km"), distance = "euclidean",
-  pacx1 = 0.1, pacx2 = 0.9, printres = FALSE, printheatmaps = FALSE,
-  showheatmaps = FALSE, seed = NULL, removeplots = FALSE)
+  repsreal = 100, clusteralg = c("pam", "km", "spectral"),
+  distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
+  printheatmaps = FALSE, showheatmaps = FALSE, seed = NULL,
+  removeplots = FALSE, dend = FALSE)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -46,6 +47,8 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 \item{seed}{Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here}
 
 \item{removeplots}{Logical flag: whether to remove all plots (recommended: leaving as default)}
+
+\item{dend}{Logical flag: whether to compute the dendrogram and p values for the optimal K or not}
 }
 \value{
 A list, containing: 

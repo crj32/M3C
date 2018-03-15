@@ -14,7 +14,7 @@
 #' @export
 #'
 #' @examples
-#' res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = TRUE, seed=123)
+#' res <- clustersim(225, 900, 8, 4, 0.75, 0.025, redp = NULL, print = TRUE, seed=123)
 
 clustersim <- function(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE, seed=NULL){
   

@@ -47,7 +47,7 @@ library(ggsci) # more cool colours
 
 ### Exploratory data analysis
 
-This is an important checking step prior to running M3C. Not just outliers are important to check for, also important are the underlying assumptions of PAM or K means. Spectral clustering has more flexible assumptions (it is considerably slower, however), all three methods require removal of extreme outliers. It is sensible to visually inspect a PCA plot prior to clustering to verify;
+This is an important checking step prior to running M3C. Not just outliers are important to check for, also important are the underlying assumptions of PAM or K means. Spectral clustering has more flexible assumptions (it is considerably slower, however), all three methods require removal of extreme outliers. It is sensible to visually inspect a PCA (of samples) plot prior to clustering to verify;
 
 i) Clusters are approximately gaussian (normally distributed) - not severely elongated or non-linear
 ii) That one cluster is not clearly a lot smaller than another cluster
@@ -56,7 +56,7 @@ iii) That extreme outliers have been removed
 You can read more about the assumptions of K means here:
 (http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_assumptions.html)
 
-In the PCA plot below we can see there are no obvious non linear structures, evidence of cluster imbalance, or extreme outliers, therefore we can proceed with running M3C on this dataset with PAM as the inner algorithm.
+In the PCA plot below we can see there are no obvious non linear structures, evidence of cluster imbalance, or extreme outliers, therefore we can proceed with running M3C on this dataset with PAM as the inner algorithm. If points i and ii were clearly not the case, spectral clustering should be used instead, but this normally is not a problem.
 
 ```{r, message=FALSE, results='hide'}
 PCA1 <- pca(mydata)

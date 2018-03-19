@@ -4,7 +4,8 @@
 \alias{clustersim}
 \title{clustersim: A cluster simulator for testing clustering algorithms}
 \usage{
-clustersim(n, n2, r, K, alpha, wobble, print = FALSE, seed = NULL)
+clustersim(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE,
+  seed = NULL)
 }
 \arguments{
 \item{n}{Numerical value: The number of samples, it must be square rootable}
@@ -19,6 +20,8 @@ clustersim(n, n2, r, K, alpha, wobble, print = FALSE, seed = NULL)
 
 \item{wobble}{Numerical value: The degree of noise to add to the sample co ordinates}
 
+\item{redp}{Numerical value: The fraction of samples to remove from one cluster}
+
 \item{print}{Logical flag: whether to print the PCA into current directory}
 
 \item{seed}{Numerical value: fixes the seed if you want to repeat results}
@@ -30,5 +33,5 @@ A list: containing 1) matrix with simulated data in it
 clustersim: A cluster simulator for testing clustering algorithms
 }
 \examples{
-res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = TRUE, seed=123)
+res <- clustersim(225, 900, 8, 4, 0.75, 0.025, redp = NULL, print = TRUE, seed=123)
 }

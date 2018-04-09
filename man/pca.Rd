@@ -4,7 +4,7 @@
 \alias{pca}
 \title{pca: A principal component analysis function}
 \usage{
-pca(mydata, K = FALSE, printres = FALSE)
+pca(mydata, K = FALSE, printres = FALSE, labels = FALSE)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
@@ -12,6 +12,8 @@ pca(mydata, K = FALSE, printres = FALSE)
 \item{K}{Numerical value: if running on the M3C results object, which value was the optimal K?}
 
 \item{printres}{Logical flag: whether to print the PCA into current directory}
+
+\item{labels}{Factor: if we want to just display gender for example}
 }
 \value{
 A PCA plot object

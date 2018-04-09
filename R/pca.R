@@ -3,6 +3,7 @@
 #' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
 #' @param printres Logical flag: whether to print the PCA into current directory
 #' @param K Numerical value: if running on the M3C results object, which value was the optimal K?
+#' @param labels Factor: if we want to just display gender for example
 #'
 #' @return A PCA plot object
 #' @export
@@ -10,8 +11,8 @@
 #' @examples
 #' PCA <- pca(mydata)
 
-pca <- function(mydata, K = FALSE, printres = FALSE){
-  if (K == FALSE){
+pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE){
+  if (K == FALSE && labels == FALSE){
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
     p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = 6) + 
@@ -29,7 +30,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE){
       print(p) # print ggplot CDF in main plotting window
       dev.off()
     }
-  }else{
+  }else if (K != FALSE && labels == FALSE){
     res <- mydata
     mydata <- res$realdataresults[[K]]$ordered_data
     annon <- res$realdataresults[[K]]$ordered_annotation
@@ -54,6 +55,28 @@ pca <- function(mydata, K = FALSE, printres = FALSE){
       print(p) # print ggplot CDF in main plotting window
       dev.off()
     }
+  }else if (K == FALSE && labels != FALSE){
+    pca1 = prcomp(t(mydata))
+    scores <- data.frame(pca1$x) # PC score matrix
+    p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(labels)), size = 6) + 
+      theme_bw() + 
+      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+            axis.text.y = element_text(size = 30, colour = 'black'),
+            axis.text.x = element_text(size = 30, colour = 'black'),
+            axis.title.x = element_text(size = 30),
+            axis.title.y = element_text(size = 30),
+            legend.title = element_text(size = 30),
+            legend.text = element_text(size = 20)) + 
+      guides(colour=guide_legend(title="Cluster"))
+    if (printres == TRUE){
+      message('printing PCA to current directory...')
+      png('PCAlabeled.png', height = 20, width = 26, units = 'cm',
+          res = 900, type = 'cairo')
+      print(p) # print ggplot CDF in main plotting window
+      dev.off()
+    }
+  }else{
+    message('no valid options detected')
   }
   return(p)
 }

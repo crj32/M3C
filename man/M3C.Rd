@@ -14,11 +14,11 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
 
-\item{montecarlo}{Logical flag: whether to run the monte carlo simulation or not (recommended: TRUE)}
+\item{montecarlo}{Logical flag: whether to run the Monte Carlo simulation or not (recommended: TRUE)}
 
 \item{cores}{Numerical value: how many cores to split the monte carlo simulation over}
 
-\item{iters}{Numerical value: how many monte carlo iterations to perform (default: 100, recommended: 100-1000)}
+\item{iters}{Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 100-1000)}
 
 \item{maxK}{Numerical value: the maximum number of clusters to test for, K (default: 10)}
 
@@ -26,7 +26,7 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{ref_method}{Character string: refers to which reference method to use (recommended: leaving as default)}
 
-\item{repsref}{Numerical value: how many reps to use for the monte carlo reference data (suggest 100)}
+\item{repsref}{Numerical value: how many reps to use for the Monte Carlo reference data (suggest 100)}
 
 \item{repsreal}{Numerical value: how many reps to use for the real data (recommended: 100)}
 
@@ -58,14 +58,14 @@ A list, containing:
 (see vignette for more details on how to easily access)
 }
 \description{
-This function runs M3C, which is a hypothesis testing framework for consensus clustering. The basic
-idea is to use a multi-core enabled monte carlo simulation to drive the creation of a null distribution
+This function runs M3C, which is a consensus clustering tool with hypothesis testing. The basic
+idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
 of stability scores. The monte carlo simulations maintains the correlation structure of the input data.
 Then the null distribution is used to compare the reference scores with the real scores
 and a empirical p value is calculated for every value of K. We also use the relative cluster stability
 index as an alternative metric which is just based on a comparison against the reference mean, the advantage 
 being it requires fewer iterations. Small p values are estimated cheaply using a beta distribution that is
-inferred using parameter estimates from the monte carlo simulation.
+inferred using parameter estimates from the Monte Carlo simulation.
 }
 \examples{
 res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 

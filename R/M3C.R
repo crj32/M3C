@@ -1,22 +1,22 @@
 #' M3C: Monte Carlo Consensus Clustering
 #'
-#' This function runs M3C, which is a hypothesis testing framework for consensus clustering. The basic
-#' idea is to use a multi-core enabled monte carlo simulation to drive the creation of a null distribution
+#' This function runs M3C, which is a consensus clustering tool with hypothesis testing. The basic
+#' idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
 #' of stability scores. The monte carlo simulations maintains the correlation structure of the input data.
 #' Then the null distribution is used to compare the reference scores with the real scores
 #' and a empirical p value is calculated for every value of K. We also use the relative cluster stability
 #' index as an alternative metric which is just based on a comparison against the reference mean, the advantage 
 #' being it requires fewer iterations. Small p values are estimated cheaply using a beta distribution that is
-#' inferred using parameter estimates from the monte carlo simulation.
+#' inferred using parameter estimates from the Monte Carlo simulation.
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
-#' @param montecarlo Logical flag: whether to run the monte carlo simulation or not (recommended: TRUE)
+#' @param montecarlo Logical flag: whether to run the Monte Carlo simulation or not (recommended: TRUE)
 #' @param cores Numerical value: how many cores to split the monte carlo simulation over
-#' @param iters Numerical value: how many monte carlo iterations to perform (default: 100, recommended: 100-1000)
+#' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 100-1000)
 #' @param maxK Numerical value: the maximum number of clusters to test for, K (default: 10)
 #' @param des Data frame: contains annotation data for the input data for automatic reordering (optional)
 #' @param ref_method Character string: refers to which reference method to use (recommended: leaving as default)
-#' @param repsref Numerical value: how many reps to use for the monte carlo reference data (suggest 100)
+#' @param repsref Numerical value: how many reps to use for the Monte Carlo reference data (suggest 100)
 #' @param repsreal Numerical value: how many reps to use for the real data (recommended: 100)
 #' @param clusteralg String: dictates which algorithm to use for M3C (recommended: leaving as default)
 #' @param distance String: dictates which distance metric to use for M3C (recommended: leaving as default)
@@ -68,7 +68,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     message('warning pam is more advisable than k means, because it is far faster and often more accurate')
   }
   if (clusteralg == 'spectral'){
-    message('warning spectral mode is slow, only recommended if there are highly imbalanced or non linear structures')
+    message('warning pam is usually preferred to spectral, unless there are highly imbalanced or non linear structures')
   }
   if (clusteralg == 'pam' && distance != 'euclidean'){
     message('warning pam must be used with euclidean distance, changing to euclidean...')
@@ -104,7 +104,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     colnames(mydata) <- gsub('X', '', colnames(mydata))
   }
   
-  # consensuscluster2 reference or no reference functions
+  # M3C reference or no reference functions
   
   if (montecarlo == TRUE){
     ## run monte carlo simulation to generate references with same gene-gene correlation structure
@@ -130,8 +130,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     }
     ## for each loop to use all cores
     ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref", "myPal",
-                                       "sampleCols", "setClusterColors", "triangle", "rval",
-                                       "makeaffinity", "sigest"),
+                                       "sampleCols", "setClusterColors", "triangle", "rbfkernel"),
                 .packages=c("cluster", "base", "Matrix"), .combine='rbind', .options.snow = opts) %dopar% {
                   
                   if (is.null(seed) == FALSE){
@@ -555,11 +554,23 @@ ccRun <- function( d=d,
                    weightsFeature=NULL,
                    corUse=NULL) {
   
-  # estimate sigma parameter for making affinity matrix if necessary
+  ## calculate sigma parameter for making affinity matrix if necessary
   if (clusterAlg == 'spectral'){ 
-    sigma <- as.numeric(sigest(as.matrix(d), frac = 1, scaled = TRUE)[2])
+    distx <- as.matrix(dist(t(d)))
+    distx <- distx^2
+    sigmas <- c()
+    for (i in seq(1,nrow(distx))){
+      sortedvec <- as.numeric(sort(distx[i,]))
+      sortedvec <- sortedvec[!sortedvec == 0]
+      maxd <- max(sortedvec)
+      mind <- min(sortedvec)
+      sigma <- (maxd-mind)/(2*log(maxd/mind))
+      sigmas <- c(sigmas,sigma)
+    }
+    meansigma <- mean(sigmas)
+    meansigma2 <- sqrt(meansigma) # sigma for rbfkernel
   }
-
+  
   ## setting up initial objects
   m = vector(mode='list', repCount)
   ml = vector(mode="list",maxK)
@@ -572,6 +583,10 @@ ccRun <- function( d=d,
   ## if pam you need to make the distance matrix first
   if ( clusterAlg == "pam" ){
     main.dist.obj <- dist( t(d), method=distance )
+  }else if (clusterAlg == 'spectral'){ # do affinity matrix calculation and resample that
+    affinitymatrixraw <- rbfkernel(t(d),sigma=meansigma2)
+    colnames(affinitymatrixraw) <- colnames(d) # note the order may have changed here
+    rownames(affinitymatrixraw) <- colnames(d)
   }
   
   ## start the resampling loop
@@ -584,19 +599,17 @@ ccRun <- function( d=d,
       this_dist <- as.matrix( main.dist.obj )[ boot.cols, boot.cols ]
       this_dist <- as.dist( this_dist )
       attr( this_dist, "method" ) <- attr( main.dist.obj, "method" )
-    }else if (clusterAlg == 'km') { # algorithm equals KMEANS then do this
+    }else if (clusterAlg == 'km') { # if algorithm equals KMEANS then do this
       this_dist <- d[, sample_x$subcols ]
-    }else if (clusterAlg == 'spectral'){
-      resampleddata <- d[ , sample_x$subcols ] # sample beforehand
-      affinitymatrix <- makeaffinity(t(resampleddata), sigma=sigma) # losing the row and column names here
-      colnames(affinitymatrix) <- colnames(resampleddata) # note the order may have changed here
-      rownames(affinitymatrix) <- colnames(resampleddata)
+    }else if (clusterAlg == 'spectral'){ # if algorithm equals SPECTRAL do this
+      affinitymatrix <- affinitymatrixraw[sample_x$subcols , sample_x$subcols ] # sample beforehand
     }
     
     ## mCount stores number of times a sample pair was sampled together.
     mCount <- connectivityMatrix( rep( 1,length(sample_x[[3]])),
                                   mCount,
                                   sample_x[[3]] )
+    
     ## loop over different values of K
     for (k in 2:maxK){
       #print(k)
@@ -612,32 +625,15 @@ ccRun <- function( d=d,
         #print(this_assignment)
       }else if ( clusterAlg == 'spectral'){
         centers <- k
-        # start spcc code
         m <- nrow(affinitymatrix)
-        if (missing(centers))
-          stop("centers must be a number or a matrix")
-        if (length(centers) == 1) {
-          nc <-  centers
-          if (m < centers)
-            stop("more cluster centers than data points.")
-        }
-        else
-          nc <- dim(centers)[2]
-        if(dim(affinitymatrix)[1]!=dim(affinitymatrix)[2])
-        {
-          nystrom.red <- TRUE
-          if(dim(affinitymatrix)[1] < dim(affinitymatrix)[2])
-            affinitymatrix <- t(affinitymatrix)
-          m <- nrow(affinitymatrix)
-          n <- ncol(affinitymatrix)
-        }
-        dv <- 1/sqrt(rowSums(affinitymatrix)) # it was re writing the original d object here
+        nc <-  centers
+        dv <- 1/sqrt(rowSums(affinitymatrix))
         l <- dv * affinitymatrix %*% diag(dv)
         xi <- eigen(l)$vectors[,1:nc]
         yi <- xi/sqrt(rowSums(xi^2))
         if (any(is.na(yi))){ # fill in columns with column mean when NA
-          for(i in 1:ncol(yi)){
-            yi[is.na(yi[,i]), i] <- mean(yi[,i], na.rm = TRUE)
+          for(iii in 1:ncol(yi)){
+            yi[is.na(yi[,iii]), iii] <- mean(yi[,iii], na.rm = TRUE)
           }
         }
         res <- NULL
@@ -840,88 +836,6 @@ triangle = function(m,mode=1){
   }
 }
 
-makeaffinity <- function (x, y = NULL, sigma) {
-  if (is(x, "vector")) 
-    x <- as.matrix(x)
-  if (is(y, "vector")) 
-    y <- as.matrix(y)
-  if (!is(x, "matrix")) 
-    stop("x must be a matrix")
-  if (!is(y, "matrix") && !is.null(y)) 
-    stop("y must be a matrix")
-  n <- nrow(x)
-  res1 <- matrix(rep(0, n * n), ncol = n)
-  if (is.null(y)) {
-    for (i in 1:n) {
-      for (j in i:n) {
-        res1[i, j] <- rval(x[i, ], x[j, ], sigma)
-      }
-    }
-    res1 <- res1 + t(res1)
-    diag(res1) <- diag(res1)/2
-  }
-  if (is(y, "matrix")) {
-    m <- dim(y)[1]
-    res1 <- matrix(0, dim(x)[1], dim(y)[1])
-    for (i in 1:n) {
-      for (j in 1:m) {
-        res1[i, j] <- rval(x[i, ], y[j, ], sigma)
-      }
-    }
-  }
-  return(res1)
-}
-
-rval <- function(x, y = NULL, sigma) {
-  if (!is(x, "vector")) 
-    stop("x must be a vector")
-  if (!is(y, "vector") && !is.null(y)) 
-    stop("y must a vector")
-  if (is(x, "vector") && is.null(y)) {
-    return(1)
-  }
-  if (is(x, "vector") && is(y, "vector")) {
-    if (!length(x) == length(y)) 
-      stop("number of dimension must be the same on both data points")
-    return(exp(sigma * (2 * crossprod(x, y) - crossprod(x) - 
-                          crossprod(y))))
-  }
-}
-
-sigest <- function (x,
-                    frac = 0.5,
-                    scaled = TRUE,
-                    na.action = na.omit){
-  x <- na.action(x)
-  
-  if (length(scaled) == 1)
-    scaled <- rep(scaled, ncol(x))
-  if (any(scaled)) {
-    co <- !apply(x[,scaled, drop = FALSE], 2, var)
-    if (any(co)) {
-      scaled <- rep(FALSE, ncol(x))
-      warning(paste("Variable(s)",
-                    paste("`",colnames(x[,scaled, drop = FALSE])[co],
-                          "'", sep="", collapse=" and "),
-                    "constant. Cannot scale data.")
-      )
-    } else {
-      xtmp <- scale(x[,scaled])
-      x[,scaled] <- xtmp
-    }
-  }
-  
-  m <- dim(x)[1]
-  n <- floor(frac*m)
-  index <- sample(1:m, n, replace = TRUE)
-  index2 <- sample(1:m, n, replace = TRUE)
-  temp <- x[index,, drop=FALSE] - x[index2,,drop=FALSE]
-  dist <- rowSums(temp^2)
-  srange <- 1/quantile(dist[dist!=0],probs=c(0.9,0.5,0.1))
-  
-  return(srange)
-}
-
 M3Cdendcomputations <- function(optK, inputdata, realdataresults, printres=printres){
   k <- optK
   mydata <- inputdata
@@ -1044,4 +958,7 @@ clust.medoid = function(i, distmat, clusters) {
   names(which.min(rowSums( distmat[ind, ind, drop = FALSE] )))
 }
 
-
+rbfkernel <- function (X = NULL, sigma = NULL) 
+{
+  return(exp(-as.matrix(dist(X)^2)/sigma^2))
+}

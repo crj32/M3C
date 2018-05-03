@@ -12,7 +12,7 @@ vignette: >
 
 ### Abstract
 
-Genome-wide data is used to stratify patients into classes using class discovery algorithms. However, we have observed systematic bias present in current state-of-the-art methods. This arises from not considering reference distributions while selecting the number of classes (K). As a solution, we developed a consensus clustering-based algorithm with a hypothesis testing framework called Monte Carlo consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to calculate p values to select its value. P values beyond the limits of the simulation are estimated using a beta distribution. M3C can quantify structural relationships between clusters and uses spectral clustering to deal with non-gaussian and imbalanced structures.
+Genome-wide data is used to stratify patients into classes using class discovery algorithms. However, we have observed systematic bias present in state-of-the-art methods. This arises from not considering reference distributions while selecting the number of classes (K). As a solution, we developed a consensus clustering-based algorithm with a hypothesis testing framework called Monte Carlo consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to calculate p values to select its value. P values beyond the limits of the simulation are estimated using a beta distribution. M3C can quantify structural relationships between clusters and uses spectral clustering to deal with non-Gaussian and imbalanced structures.
 
 ### Prerequisites
 
@@ -22,7 +22,9 @@ A relatively new and fast multi-core computer or cluster.
 
 **M3C requires:**   
 
-A matrix or data frame of normalised expression data (e.g. microarray, RNA-seq, but also epigenetic or protein data) where columns equal samples and rows equal features. For RNA-seq data, VST or rlog transformed count data, log(CPM), log(TPM), and log(RPKM), are all acceptable forms of normalisation.
+A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, epigenetic, protein, gene copy number etc) where columns equal samples and rows equal features. 
+
+For RNA-seq data, VST or rlog transformed count data, log(CPM), log(TPM), and log(RPKM), are all acceptable forms of normalisation.
 
 The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised).
 
@@ -32,7 +34,7 @@ Annotation data frame, where every row is a patient/sample and columns refer to 
 
 ### Example workflow
 
-The M3C package contains the GBM cancer microarray dataset for testing. There is an accepted cluster solution of 4. First we load the package which also loads the GBM data.
+The M3C package contains the GBM cancer microarray dataset for testing. The original cluster solution was K=4. First we load the package which also loads the GBM data.
 
 ```{r, message=FALSE}
 library(M3C)
@@ -47,16 +49,15 @@ library(ggsci) # more cool colours
 
 ### Exploratory data analysis
 
-This is an important checking step prior to running M3C. Not just outliers are important to check for, also important are the underlying assumptions of PAM or K means. Spectral clustering has more flexible assumptions (it is considerably slower, however), all three methods require removal of extreme outliers. It is sensible to visually inspect a PCA (of samples) plot prior to clustering to verify;
+This is an important checking step prior to running M3C. It is best to remove extreme outliers. It is also important to be aware of the assumptions of PAM or K-means. K means and PAM assume the following;
 
-i) Clusters are approximately gaussian (normally distributed) - not severely elongated or non-linear
-ii) That one cluster is not clearly a lot smaller than another cluster
-iii) That extreme outliers have been removed
+i) Clusters are approximately spherical - not severely elongated in one direction (anisotropic) or non-linear
+ii) Clusters are approximately equal in variance
 
 You can read more about the assumptions of K means here:
 (http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_assumptions.html)
 
-In the PCA plot below we can see there are no obvious non linear structures, evidence of cluster imbalance, or extreme outliers, therefore we can proceed with running M3C on this dataset with PAM as the inner algorithm. If points i and ii were clearly not the case, spectral clustering should be used instead, but this normally is not a problem.
+In the PCA plot below we can see there are no obvious non linear structures, extreme outliers, or cases of unequal variance, therefore we can proceed with running M3C on this dataset with PAM as the inner algorithm. If points i and ii were clearly not the case, spectral clustering should be used instead, but this normally is not a problem. 
 
 ```{r, message=FALSE, results='hide'}
 PCA1 <- pca(mydata)
@@ -66,15 +67,17 @@ PCA1 <- pca(mydata)
 
 ### Running M3C
 
-In our example, we run the algorithm using the default settings (100x monte carlo iterations and 100x inner replications). We have found the results generally stable using these parameters, although they may be increased or the algorithm may simply be run a few extra times to test stability. Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add the annotation file for streamlined downstream analyses (des = desx).
+In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. M3C may be run twice to test stability of the results or the inner replications parameter may be increased to 200x. If you are running a slow machine or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50x or even 20x.
 
-It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results - most of the time. The reference method that generates the null datasets is best left to the default setting which is 'reverse-PCA', this maintains the correlation structure of the data using the principle component loadings. We will set the removeplots option to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
+Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add the annotation file for streamlined downstream analyses (des = desx).
+
+It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. The reference method that generates the null datasets is best left to the default setting which is 'reverse-PCA', this maintains the correlation structure of the features of the data using the datas eigenvectors. We will set the removeplots option to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
 
 ```{r, message=FALSE, results='hide'}
 res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE)
 ```
 
-The scores and p values are contained within the res$scores object. So we can see the RCSI reaches a maxima at K = 4 (RSCI=0.33), the monte carlo p value supports this decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters (but with the same gene-gene correlation structure). For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033. You may of course want to take a look at other significant or near significant clustering solutions and how they relate to the variables of investigation.
+The scores and p values are contained within the res$scores object. So we can see the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters (but with the same gene-gene correlation structure). For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033. You may of course want to take a look at other significant or near significant clustering solutions and how they relate to the variables of investigation.
 
 ```{r}
 res$scores
@@ -91,9 +94,9 @@ This figure below is the PAC score, we can see an elbow at K = 4 which is sugges
 
 ![*Figure 3: PAC score for real data*](PACscore.png){width=90%}
 
-We then derive the relative cluster stability index (RCSI) which takes into account the reference PAC scores, but not the shape of the distribution. This metric is better than the PAC score for deciding class number, where the maximum value corresponds to the best value of K. In this example the RCSI has an optima at K=4. It generally requires fewer iterations than deriving the empirical p values.
+We then derive the Relative Cluster Stability Index (RCSI) which takes into account the reference PAC scores, but not the shape of the distribution. This metric is better than the PAC score for deciding class number, where the maximum value corresponds to the best value of K. In this example the RCSI has an optima at K=4. It generally requires fewer iterations than deriving the empirical p values.
 
-![*Figure 4: RCSI*](pacdiff.png){width=90%}
+![*Figure 4: RCSI*](RCSI.png){width=90%}
 
 Finally, we calculate a p value from the distribution, here we display the p values from the beta distribution. If none of the p values reach significance over a reasonable range of K (e.g. 10), then we accept the null hypothesis. In the GBM dataset, we can see K = 4 reaches signfiicance with an alpha of 0.05 (red dotted line), therefore we can reject the null hypothesis for the GBM dataset.
 
@@ -109,7 +112,7 @@ We can turn to examine the output objects that M3C generates. These allow heatma
 
 ### Understanding M3C outputs
 
-The first 3 lines below extract the ordered (according in clustering results) expression data and the annotation data from the results object after running M3C. If we wanted to extract the data for 5 clusters, we would simply replace in 4 in the below lines to 5 and so on. We scale the data here row wise according to z-score prior to some light data compression for visualisation purposes in the heatmap. Remember to set Colv = NA for heatmap plotting because we have already ordered the data column or samplewise, M3C does that for you.
+The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C. If we wanted to extract the data for 5 clusters, we would simply replace in 4 in the below lines to 5 and so on. We scale the data here row wise according to z-score prior to some light data compression for visualisation purposes in the heatmap. Remember to set Colv = NA for heatmap plotting because we have already ordered the data column or samplewise, M3C does that for you.
 
 ```{r,fig.show = 'hide'}
 # get the data out of the results list (by using $ - dollar sign)
@@ -126,7 +129,7 @@ data <- apply(data, 2, function(x) ifelse(x < -4, -4, x)) # compress data within
 ann_colors <- ggsci::pal_startrek("uniform")(4) # star trek palette
 ann_colors2 <- ggsci::pal_futurama()(4) # futurama palette
 pal <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256))
-NMF::aheatmap(data, annCol = annon, scale = 'row', Colv = NA, distfun = 'pearson', 
+NMF::aheatmap(data, annCol = annon, Colv = NA, distfun = 'pearson', 
          color = gplots::bluered(256), annColors = list(class=ann_colors, consensuscluster=ann_colors2))
 
 ```
@@ -143,19 +146,22 @@ NMF::aheatmap(ccmatrix, annCol = annon, Colv = NA, Rowv = NA,
               color = rev(pal), scale = 'none') # plot the heatmap
 ```
 
-![*Figure 6: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
+![*Figure 8: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
 
 ### Final check of consensus cluster structure
 
-A last analysis we recommend to do is to examine how the clusters are arranged in principal component space. To do this the PCA function can be run directly on the M3C output object.
+A last analysis we recommend to do is to examine how the clusters are arranged in principal component and t-SNE latent variable space. To do this the PCA and tsne functions can be run directly on the M3C output object. We may need to experiment with the perplexity parameter of tSNE in the range of 5-20 to better suit the data. Both functions can also be used to print their results to the working directory.
 
 ```{r,fig.show = 'hide',message=FALSE,results='hide'}
   PCA2 <- pca(res, K=4)
+  TSNE <- tsne(res, K=4, perplex=15)
 ```
 
-We can see in the PCA that clusters 3 and 4 are close together. Doing a visual check like this allows the user to ensure there are no artifacts that have occured due to the assumptions of K means or PAM. An example would be a very large cluster next to a smaller one, these algorithms will often pull in samples from the larger cluster to balance the small one. 
+We can see in the PCA and tSNE plots that clusters 3 and 4 are closer together. Doing a visual check like this allows the user to ensure there are no obvious artifacts that have occured. 
 
-![*Figure 7: PCA of a 4 cluster simulated dataset *](PCApostclustering.png)
+![*Figure 9: PCA of a 4 cluster test dataset *](PCApostclustering.png)
+
+![*Figure 10: tSNE of a 4 cluster simulated dataset *](TSNEpostclustering.png)
 
 ### Generating simulated data
 
@@ -165,7 +171,7 @@ We have included a function for generating simulated data to test various cluste
   res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = FALSE, seed=123)
 ```
 
-![*Figure 7: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
+![*Figure 11: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
 ### Conclusions
 

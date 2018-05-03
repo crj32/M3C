@@ -1,8 +1,8 @@
 Package: M3C
 Title: Monte Carlo Consensus Clustering
-Version: 1.1.7
+Version: 1.1.8
 Authors@R: person("Christopher", "John", email = "chris.r.john86@gmail.com", role = c("aut", "cre"))
-Description: Genome-wide data is used to stratify patients into classes using class discovery algorithms. However, we have observed systematic bias present in current state-of-the-art methods. This arises from not considering reference distributions while selecting the number of classes (K). As a solution, we developed a consensus clustering-based algorithm with a hypothesis testing framework called Monte Carlo consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to calculate p values to select its value. P values beyond the limits of the simulation are estimated using a beta distribution. M3C can quantify structural relationships between clusters and uses spectral clustering to deal with non-gaussian and imbalanced structures.
+Description: Genome-wide data is used to stratify patients into classes using class discovery algorithms. However, we have observed systematic bias present in state-of-the-art methods. This arises from not considering reference distributions while selecting the number of classes (K). As a solution, we developed a consensus clustering-based algorithm with a hypothesis testing framework called Monte Carlo consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to calculate p values to select its value. P values beyond the limits of the simulation are estimated using a beta distribution. M3C can quantify structural relationships between clusters and uses spectral clustering to deal with non-Gaussian and imbalanced structures.
 Depends: R (>= 3.4.0)
 License: AGPL-3
 Encoding: UTF-8

@@ -144,6 +144,8 @@ clustersim <- function(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE, s
   if (print == TRUE){
     print(p)
   }
+  jjj <- data.frame(jjj)
+  colnames(jjj) <- paste('Y',seq(1,ncol(jjj)),sep='')
   message('finished.')
   outputs <- list(simulated_data = jjj)
   return(outputs)

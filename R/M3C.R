@@ -2,21 +2,21 @@
 #'
 #' This function runs M3C, which is a consensus clustering tool with hypothesis testing. The basic
 #' idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
-#' of stability scores. The monte carlo simulations maintains the correlation structure of the input data.
+#' of stability scores. The Monte Carlo simulations maintains the correlation structure of the input data.
 #' Then the null distribution is used to compare the reference scores with the real scores
-#' and a empirical p value is calculated for every value of K. We also use the relative cluster stability
-#' index as an alternative metric which is just based on a comparison against the reference mean, the advantage 
+#' and a empirical p value is calculated for every value of K. We also use the Relative Cluster Stability
+#' Index as an alternative metric which is based on a comparison against the reference mean, the advantage 
 #' being it requires fewer iterations. Small p values are estimated cheaply using a beta distribution that is
 #' inferred using parameter estimates from the Monte Carlo simulation.
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
 #' @param montecarlo Logical flag: whether to run the Monte Carlo simulation or not (recommended: TRUE)
 #' @param cores Numerical value: how many cores to split the monte carlo simulation over
-#' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 100-1000)
+#' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 20-200)
 #' @param maxK Numerical value: the maximum number of clusters to test for, K (default: 10)
 #' @param des Data frame: contains annotation data for the input data for automatic reordering (optional)
 #' @param ref_method Character string: refers to which reference method to use (recommended: leaving as default)
-#' @param repsref Numerical value: how many reps to use for the Monte Carlo reference data (suggest 100)
+#' @param repsref Numerical value: how many reps to use for the Monte Carlo reference data (recommended: 100)
 #' @param repsreal Numerical value: how many reps to use for the real data (recommended: 100)
 #' @param clusteralg String: dictates which algorithm to use for M3C (recommended: leaving as default)
 #' @param distance String: dictates which distance metric to use for M3C (recommended: leaving as default)
@@ -24,7 +24,7 @@
 #' @param pacx2 Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default: 0.9)
 #' @param printres Logical flag: whether to print all results into current directory
 #' @param printheatmaps Logical flag: whether to print all the heatmaps into current directory
-#' @param showheatmaps Logical flag: whether to show the heatmaps on screen (can be slow)
+#' @param showheatmaps Logical flag: whether to show the heatmaps on screen
 #' @param removeplots Logical flag: whether to remove all plots (recommended: leaving as default)
 #' @param seed Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here
 #' @param dend Logical flag: whether to compute the dendrogram and p values for the optimal K or not
@@ -554,23 +554,6 @@ ccRun <- function( d=d,
                    weightsFeature=NULL,
                    corUse=NULL) {
   
-  ## calculate sigma parameter for making affinity matrix if necessary
-  if (clusterAlg == 'spectral'){ 
-    distx <- as.matrix(dist(t(d)))
-    distx <- distx^2
-    sigmas <- c()
-    for (i in seq(1,nrow(distx))){
-      sortedvec <- as.numeric(sort(distx[i,]))
-      sortedvec <- sortedvec[!sortedvec == 0]
-      maxd <- max(sortedvec)
-      mind <- min(sortedvec)
-      sigma <- (maxd-mind)/(2*log(maxd/mind))
-      sigmas <- c(sigmas,sigma)
-    }
-    meansigma <- mean(sigmas)
-    meansigma2 <- sqrt(meansigma) # sigma for rbfkernel
-  }
-  
   ## setting up initial objects
   m = vector(mode='list', repCount)
   ml = vector(mode="list",maxK)
@@ -580,11 +563,10 @@ ccRun <- function( d=d,
   acceptable.distance <- c( "euclidean")
   main.dist.obj <- NULL
   
-  ## if pam you need to make the distance matrix first
-  if ( clusterAlg == "pam" ){
+  if ( clusterAlg == "pam" ){ # if pam you need to make the distance matrix first
     main.dist.obj <- dist( t(d), method=distance )
   }else if (clusterAlg == 'spectral'){ # do affinity matrix calculation and resample that
-    affinitymatrixraw <- rbfkernel(t(d),sigma=meansigma2)
+    affinitymatrixraw <- rbfkernel(d)
     colnames(affinitymatrixraw) <- colnames(d) # note the order may have changed here
     rownames(affinitymatrixraw) <- colnames(d)
   }
@@ -958,7 +940,29 @@ clust.medoid = function(i, distmat, clusters) {
   names(which.min(rowSums( distmat[ind, ind, drop = FALSE] )))
 }
 
-rbfkernel <- function (X = NULL, sigma = NULL) 
-{
-  return(exp(-as.matrix(dist(X)^2)/sigma^2))
+rbfkernel <- function (X = NULL) { # calculate gaussian kernel with local sigma
+  NN <- 3 # nearest neighbours (2-3)
+  matrix<-X
+  dm <- as.matrix(dist(t(matrix)))
+  kn <- c() # find kth nearest neighbour for each sample 1...N
+  for (i in seq(1,nrow(dm))){
+    sortedvec <- as.numeric(sort(dm[i,]))
+    sortedvec <- sortedvec[!sortedvec == 0]
+    kn <- c(kn,sortedvec[NN])
+  }
+  sigmamatrix <- kn %o% kn # make the symmetrical matrix of kth nearest neighbours distances
+  sigmamatrix <- sigmamatrix*1 # a global sigma (0.5-2)
+  upper <- -dm^2 # calculate the numerator beforehand
+  newmatrix <- matrix(ncol=ncol(upper),nrow=nrow(upper))
+  for (i in seq(1,ncol(upper))){ # for each column
+    for (j in seq(1,nrow(upper))){ # row each row
+      lowerval <- sigmamatrix[j,i] # retrieve sigma
+      upperval <- upper[j,i]
+      done <- exp(upperval/lowerval) # calculate local affinity
+      newmatrix[j,i] <- done
+    }
+  }
+  done <- newmatrix # output kernel
+  diag(done) <- 0 # diagonal must be zero
+  return(done)
 }

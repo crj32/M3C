@@ -167,7 +167,9 @@ We can see in the PCA and tSNE plots that clusters 3 and 4 are closer together. 
 
 ### Generating simulated data
 
-We have included a function for generating simulated data to test various clustering algorithms. This cluster simulator is simple to use. Using the code below, clustersim generates a dataset with 225 samples, 900 features, a radius cut-off for the initial square of 8, a cluster number of 4, a seperation of clusters of 0.75, and a degree of noise added to each co-ordinate of 0.025. After running, a PCA will print of the data so we can visualise the 4 clusters in principle component space. Note, clustersim's method has recently been replaced with the CRAN package, clusterlab. We recommend using this for more sophisticated benchmarking.
+We have included a function for generating simulated data to test various clustering algorithms. This cluster simulator is simple to use. Using the code below, clustersim generates a dataset with 225 samples, 900 features, a radius cut-off for the initial square of 8, a cluster number of 4, a seperation of clusters of 0.75, and a degree of noise added to each co-ordinate of 0.025. After running, a PCA will print of the data so we can visualise the 4 clusters in principle component space. 
+
+Note, clustersim's method has recently been replaced with the CRAN package, clusterlab. We recommend using this for more sophisticated benchmarking. Clusterlab can generate Gaussian clusters with controlled variance and spacing, it can also create more complex higher order structures.
 
 ```{r,fig.show = 'hide',message=FALSE,results='hide'}
   res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = FALSE, seed=123)
@@ -175,7 +177,7 @@ We have included a function for generating simulated data to test various cluste
 
 ![*Figure 11: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
-### Afterthoughts
+### Closing comments
 
 In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data opposed to relying on relative scores. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Șenbabaoğlu et al. (2014), and Monti et al. (2003). 
 

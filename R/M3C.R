@@ -213,7 +213,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     if (removeplots == FALSE){ # we are doing the plots
       # plot real vs reference results
       # pac statistic
-      px <- ggplot(data=real, aes(x=K, y=RCSI)) + geom_line(colour = "purple", size = 2) + 
+      px <- ggplot(data=real, aes(x=K, y=RCSI)) + geom_line(colour = "midnightblue", size = 2) + 
         geom_point(colour = "black", size = 3) +
         theme_bw() +
         theme(axis.text.y = element_text(size = 26, colour = 'black'),

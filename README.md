@@ -9,7 +9,7 @@ Details:
 -Reference generation preserves feature-feature correlation structure of data  
 -The Relative Cluster Stability Index (RCSI) and empirical p values are used to select K and reject the null, K=1.   
 -Extrapolated p values are calculate by fitting a beta distribution  
--Increased accuracy compared with other methods verified using simulations  
+-M3C with the RCSI has better accuracy than other methods, verified using simulations, and eliminates overfitting
 -Ability to investigates structural relationships using hierarchical clustering of medoids and Sigclust  
 -Includes spectral clustering to investigate complex structures (e.g. non linear, anisotropic)    
 -Automatic re ordering of expression matrix and annotation data to help user do their analysis faster  

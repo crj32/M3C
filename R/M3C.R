@@ -380,15 +380,12 @@ M3Creal <- function( d=NULL, # function for real data
   else {
     colBreaks = length(tmyPal)
   }
-  sc = cbind(seq(0, 1, by = 1/(colBreaks)))
-  rownames(sc) = sc[, 1]
-  sc = cbind(sc, sc)
   
   ## loop over each consensus matrix and get the results out
   resultslist <- list() # holds all results for each value of K
   for (tk in 2:maxK){
     fm = ml[[tk]]
-    hc=hclust( as.dist( 1 - fm ), method=finalLinkage);
+    hc = hclust( as.dist( 1 - fm ), method=finalLinkage)
     ct = cutree(hc,tk)
     names(ct) = colnames(d)
     if(class(d)=="dist"){
@@ -397,8 +394,9 @@ M3Creal <- function( d=NULL, # function for real data
     c = fm
     colorList = setClusterColors(res[[tk-1]][[3]],ct,thisPal,colorList)
     pc = c
-    pc=pc[hc$order,]
-    pc = rbind(pc,0)
+    pc = pc[hc$order,]
+    
+    #pc = rbind(pc,0)
     colcols <- as.factor(as.numeric(as.factor(colorList[[1]])))
     cols <- colorRampPalette(RColorBrewer::brewer.pal(9,'Reds')[1:6])(256)
     if (showheatmaps == TRUE & printheatmaps == FALSE){
@@ -966,3 +964,4 @@ rbfkernel <- function (X = NULL) { # calculate gaussian kernel with local sigma
   diag(done) <- 0 # diagonal must be zero
   return(done)
 }
+

@@ -11,8 +11,8 @@ Details:
 -Extrapolated p values are calculate by fitting a beta distribution  
 -Increased accuracy compared with other methods verified using simulations  
 -Ability to investigates structural relationships using hierarchical clustering of medoids and Sigclust  
--Includes spectral clustering to investigate complex structures
+-Includes spectral clustering to investigate complex structures (e.g. non linear, anisotropic)    
 -Automatic re ordering of expression matrix and annotation data to help user do their analysis faster  
--Plotting code using ggplot2 for publication quality outputs
+-Plotting code using ggplot2 for publication quality outputs  
 -User friendly PCA and tSNE functions that interface with the results
 

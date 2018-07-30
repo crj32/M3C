@@ -7,7 +7,7 @@ Details:
 -M3C calculates the consensus rate, a measure of stability of samples, which is quantified for each K using the PAC score  
 -Generation of reference PAC distribution using a multi-core Monte Carlo simulation  
 -Reference generation preserves feature-feature correlation structure of data  
--The Relative Cluster Stability Index (RCSI) and empirical p values are used to select K and reject the null, K=1. 
+-The Relative Cluster Stability Index (RCSI) and empirical p values are used to select K and reject the null, K=1.   
 -Extrapolated p values are calculate by fitting a beta distribution  
 -Increased accuracy compared with other methods verified using simulations  
 -Ability to investigates structural relationships using hierarchical clustering of medoids and Sigclust  

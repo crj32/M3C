@@ -51,7 +51,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   ref_method <- match.arg(ref_method)
   clusteralg <- match.arg(clusteralg)
   
-  message('***M3C: Monte Carlo Consensus Clustering***')
+  message('***M3C: Monte Carlo Reference-based Consensus Clustering***')
   
   # error handling of input variables
   

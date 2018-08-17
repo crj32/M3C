@@ -12,7 +12,7 @@ vignette: >
 
 ### Abstract
 
-Genome-wide data is used to stratify patients into classes using class discovery algorithms. A popular method is consensus clustering, however; the approach is prone to overfitting and false positives. These issues arise from not considering reference distributions while selecting the number of classes (K). As a solution, we developed Monte Carlo reference-based consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to select its value. Using the appropiate reference eliminates the limitations of the consensus clustering method. M3C can also quantify structural relationships between clusters, and uses spectral clustering to deal with non-Gaussian and complex structures.
+Genome-wide data is used to stratify large complex datasets into classes using class discovery algorithms. A widely applied technique is consensus clustering, however; the approach is prone to overfitting and false positives. These issues arise from not considering reference distributions while selecting the number of classes (K). As a solution, we developed Monte Carlo reference-based consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to select its value. Using a reference, that maintains the correlation structure of the input features, eliminates the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. M3C can also quantify structural relationships between clusters, and uses spectral clustering to deal with non-Gaussian and complex structures. M3C can automatically analyse biological or clinical data with respect to the discovered classes.
 
 ### Prerequisites
 
@@ -22,7 +22,7 @@ A relatively new and fast multi-core computer or cluster.
 
 **M3C requires:**   
 
-A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, epigenetic, protein, gene copy number etc) where columns equal samples and rows equal features.
+A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, epigenetic, protein, gene copy number, single cell RNA-seq, etc) where columns equal samples and rows equal features.
 
 For RNA-seq data, VST or rlog transformed count data, log(CPM), log(TPM), and log(RPKM), are all acceptable forms of normalisation.
 
@@ -33,6 +33,8 @@ We recommend M3C only be used to cluster datasets with high numbers of samples (
 **M3C also accepts optionally:**
 
 Annotation data frame, where every row is a patient/sample and columns refer to meta-data, e.g. age, sex, etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. This is done to speed up subsequent analyses. Note, this only works if the IDs (column names in data) match a column called "ID" in the annotation data frame.
+
+M3C also accepts clinical or biological data for a comparative analysis with the discovered classes. If the data is continuous or categorical, a kruskal wallis or chi-squared test are performed, respectively. In this case, the supplied des data frame must have an 'ID' column first and then the variable of interest 'XXX' second. Only two columns are permitted. If the data is survival data for cancer, the des object must have an 'ID' column first, followed by a 'Time' and 'Death' column. Only three columns are permitted.
 
 ### Example workflow
 
@@ -69,20 +71,26 @@ PCA1 <- pca(mydata)
 
 ### Running M3C
 
-In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. M3C may be run twice to test stability of the results or the inner replications parameter may be increased to 200x. If you are running a slow machine or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50x or 20x.
+In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-10x.
 
-Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add the annotation file for streamlined downstream analyses (des = desx).
+Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set doanalysis to TRUE and analysistype to 'chi', to do a chi-squared test for significance.
 
-It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. The reference method that generates the null datasets is best left to the default setting which is 'reverse-PCA', this maintains the correlation structure of the features of the data using the datas eigenvectors. We will set the removeplots option to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
+It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the removeplots option to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
 
 ```{r, message=FALSE, results='hide'}
-res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE)
+res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, analysistype = 'chi', doanalysis = TRUE)
 ```
 
-The scores and p values are contained within the res$scores object. So we can see the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters (but with the same gene-gene correlation structure). For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033. You may of course want to take a look at other significant or near significant clustering solutions and how they relate to the variables of investigation.
+The scores and p values are contained within the res$scores object. We can see below the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters. For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033.
 
 ```{r}
 res$scores
+```
+
+Also important is the relationship between the clinical variables and the discovered clusters. In this data we want to compare with a categorical variable so perform a chi-squared test. We are reassured to see below K=4 is highly significant (p=5.5x10-14), however, K=5 is slightly more so. It is important to bear in mind the clinical/ biological relationships as well as the structural nature of the data when deciding K.
+
+```{r}
+res$clinicalres
 ```
 
 Now we will take a look at some of the plots M3C generates.  

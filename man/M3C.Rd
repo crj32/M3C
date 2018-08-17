@@ -6,10 +6,11 @@
 \usage{
 M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
-  repsreal = 100, clusteralg = c("pam", "km", "spectral"),
+  repsreal = 100, clusteralg = c("pam", "km", "spectral", "hc"),
   distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
   printheatmaps = FALSE, showheatmaps = FALSE, seed = NULL,
-  removeplots = FALSE, dend = FALSE)
+  removeplots = FALSE, dend = FALSE, silent = FALSE, doanalysis = FALSE,
+  analysistype = c("survival", "kw", "chi"))
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -18,7 +19,7 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{cores}{Numerical value: how many cores to split the monte carlo simulation over}
 
-\item{iters}{Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 100-1000)}
+\item{iters}{Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 20-200)}
 
 \item{maxK}{Numerical value: the maximum number of clusters to test for, K (default: 10)}
 
@@ -26,7 +27,7 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{ref_method}{Character string: refers to which reference method to use (recommended: leaving as default)}
 
-\item{repsref}{Numerical value: how many reps to use for the Monte Carlo reference data (suggest 100)}
+\item{repsref}{Numerical value: how many reps to use for the Monte Carlo reference data (recommended: 100)}
 
 \item{repsreal}{Numerical value: how many reps to use for the real data (recommended: 100)}
 
@@ -42,13 +43,19 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{printheatmaps}{Logical flag: whether to print all the heatmaps into current directory}
 
-\item{showheatmaps}{Logical flag: whether to show the heatmaps on screen (can be slow)}
+\item{showheatmaps}{Logical flag: whether to show the heatmaps on screen}
 
 \item{seed}{Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here}
 
 \item{removeplots}{Logical flag: whether to remove all plots (recommended: leaving as default)}
 
 \item{dend}{Logical flag: whether to compute the dendrogram and p values for the optimal K or not}
+
+\item{silent}{Logical flag: whether to remove messages or not}
+
+\item{doanalysis}{Logical flag: whether to analyse the clinical variable supplied (univariate only)}
+
+\item{analysistype}{Character string: refers to which kind of statistical analysis to do on the data, survival, kruskal wallis (kw), or chi-squared (chi).}
 }
 \value{
 A list, containing: 
@@ -60,10 +67,10 @@ A list, containing:
 \description{
 This function runs M3C, which is a consensus clustering tool with hypothesis testing. The basic
 idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
-of stability scores. The monte carlo simulations maintains the correlation structure of the input data.
+of stability scores. The Monte Carlo simulations maintains the correlation structure of the input data.
 Then the null distribution is used to compare the reference scores with the real scores
-and a empirical p value is calculated for every value of K. We also use the relative cluster stability
-index as an alternative metric which is just based on a comparison against the reference mean, the advantage 
+and a empirical p value is calculated for every value of K. We also use the Relative Cluster Stability
+Index as an alternative metric which is based on a comparison against the reference mean, the advantage 
 being it requires fewer iterations. Small p values are estimated cheaply using a beta distribution that is
 inferred using parameter estimates from the Monte Carlo simulation.
 }

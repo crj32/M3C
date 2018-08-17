@@ -28,6 +28,9 @@
 #' @param removeplots Logical flag: whether to remove all plots (recommended: leaving as default)
 #' @param seed Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here
 #' @param dend Logical flag: whether to compute the dendrogram and p values for the optimal K or not
+#' @param silent Logical flag: whether to remove messages or not
+#' @param doanalysis Logical flag: whether to analyse the clinical variable supplied (univariate only)
+#' @param analysistype Character string: refers to which kind of statistical analysis to do on the data, survival, kruskal wallis (kw), or chi-squared (chi).
 #'
 #' @return A list, containing: 
 #' 1) the stability results and 
@@ -41,8 +44,9 @@
 #' maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = FALSE, seed = 123, des = desx)
 M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                 des = NULL, ref_method = c('reverse-pca', 'chol'), repsref = 100, repsreal = 100,
-                clusteralg = c('pam', 'km', 'spectral'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
-                printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL, removeplots = FALSE, dend = FALSE){
+                clusteralg = c('pam', 'km', 'spectral', 'hc'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
+                printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL, removeplots = FALSE, dend = FALSE,
+                silent = FALSE, doanalysis = FALSE , analysistype = c('survival','kw','chi')){
   
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -51,7 +55,10 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   ref_method <- match.arg(ref_method)
   clusteralg <- match.arg(clusteralg)
   
-  message('***M3C: Monte Carlo Reference-based Consensus Clustering***')
+  if (silent != TRUE){
+    message('***M3C: Monte Carlo Reference-based Consensus Clustering***')
+    message(paste('clustering algorithm:',clusteralg))
+  }
   
   # error handling of input variables
   
@@ -62,41 +69,69 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     mydata <- exprs(mydata)
   }
   if (montecarlo != TRUE){
-    message('warning running without monte carlo simulation lowers accuracy')
+    if (silent != TRUE){
+      message('warning running without monte carlo simulation lowers accuracy')
+    }
   }
   if (clusteralg == 'km'){
-    message('warning pam is more advisable than k means, because it is far faster and often more accurate')
+    if (silent != TRUE){
+      message('warning pam is more advisable than k means, because it is faster and often more accurate')
+    }
   }
   if (clusteralg == 'spectral'){
-    message('warning pam is usually preferred to spectral, unless there are highly imbalanced or non linear structures')
+    if (silent != TRUE){
+      message('warning pam is usually preferred to spectral, unless there are highly imbalanced or non linear structures')
+    }
   }
   if (clusteralg == 'pam' && distance != 'euclidean'){
-    message('warning pam must be used with euclidean distance, changing to euclidean...')
+    if (silent != TRUE){
+      message('warning pam must be used with euclidean distance, changing to euclidean...')
+    }
     distance <- 'euclidean'
   }
   if (clusteralg == 'km' && distance != 'euclidean'){
-    message('warning kmeans must be used with euclidean distance, changing to euclidean...')
+    if (silent != TRUE){
+      message('warning kmeans must be used with euclidean distance, changing to euclidean...')
+    }
     distance <- 'euclidean'
   }
   if (ncol(mydata) > nrow(mydata)){
-    message('samples(columns) exceeds features(rows), switching to cholesky decomposition method...')
+    if (silent != TRUE){
+      message('samples(columns) exceeds features(rows), switching to cholesky decomposition method...')
+    }
     ref_method = 'chol' # this works when variables < samples
   }
   if (is.null(des) == TRUE){ # user does not give extra annotation data
-    message('user does not give extra annotation for reordering according to clustering results')
+    if (silent != TRUE){
+      message('annotation: none')
+    }
   }
   if (is.null(des) == FALSE){ # user does give extra annotation data
-    message('user does give extra annotation for reordering according to clustering results')
+    if (silent != TRUE){
+      message('annotation: yes')
+    }
     '%!in%' <- function(x,y)!('%in%'(x,y))
     if("ID" %!in% colnames(des))
     {
-      stop('in the supplied annotation object for reordering, ther is no \'ID\' column....')
+      stop('in the supplied annotation object for reordering, ther is no \'ID\' column...')
     }
     if (all(colnames(mydata) %in% des$ID) == FALSE){
       stop('the IDs in the annotation do not match column IDs in data')
     }
     if (nrow(des) != ncol(mydata)){
       stop('the dimensions of your annotation object do not match data object')
+    }
+    if (doanalysis == TRUE){ # if running analysis run checking on description file
+      if (analysistype == 'survival'){
+        vec <- c(c('Death','Time')%in%colnames(des))
+        if(sum(vec==TRUE)!=2)
+        {
+          stop('we are doing survival analysis, but there are not both \'Time\' and \'Death\' columns...')
+        }
+      }
+      if (ncol(des) != 2 & analysistype != 'survival'){
+        stop('if using kw or chi, we should have only two columns')
+      }
     }
   }
   if (class(mydata) == 'matrix'){
@@ -108,7 +143,9 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   
   if (montecarlo == TRUE){
     ## run monte carlo simulation to generate references with same gene-gene correlation structure
-    message('running simulations...')
+    if (silent != TRUE){
+      message('running simulations...')
+    }
     cl <- makeCluster(cores)
     registerDoSNOW(cl)
     invisible(capture.output(pb <- txtProgressBar(min = 0, max = iters, style = 3)))
@@ -151,13 +188,16 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                                     clusterAlg=clusteralg, # use pam it is fast
                                     distance=distance, # with pam always use euclidean
                                     title = '/home/christopher/Desktop/',
-                                    x1=pacx1, x2=pacx2, printres=FALSE, seed=seed)
+                                    x1=pacx1, x2=pacx2, printres=FALSE, seed=seed,
+                                    silent=silent)
                   pacresults <- results$pac_scores$PAC_SCORE
                   return(pacresults)
                 }
     close(pb)
     stopCluster(cl)
-    message('finished generating reference distribution')
+    if (silent != TRUE){
+      message('finished generating reference distribution')
+    }
     ## finished monte carlo, results are in ls matrix
     ## real data PAC score calculation
     results2 <- M3Creal(as.matrix(mydata),maxK=maxK,reps=repsreal,pItem=0.8,pFeature=1,
@@ -166,9 +206,11 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                         title = '/home/christopher/Desktop/',
                         printres = printres,
                         showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
-                        x1=pacx1, x2=pacx2, seed=seed, removeplots=removeplots) # png to file
+                        x1=pacx1, x2=pacx2, seed=seed, removeplots=removeplots, silent=silent,
+                        doanalysis=doanalysis, analysistype=analysistype) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
+    clinicalres <- results2$clinicalres
     
     ## process reference data and calculate scores and p values (simulations are in ls matrix)
     colnames(real)[2] <- 'PAC_REAL'
@@ -204,15 +246,19 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     ## select optimal K using the beta p values then compute dendrogram and p values
     ## still need to set up dend code for remove plots equals true
     if (dend == TRUE){
-      message('doing the dendrogram')
+      if (silent != TRUE){
+        message('doing the dendrogram')
+      }
       optK <- which.min(real$BETA_P)+1 # use the real object
       M3Cdendcompres <- M3Cdendcomputations(optK, mydata, allresults, printres=printres)
-      message('finished')
+      if (silent != TRUE){
+        message('finished')
+      }
     }
     
     if (removeplots == FALSE){ # we are doing the plots
       # plot real vs reference results
-      # pac statistic
+      # RCSI
       px <- ggplot(data=real, aes(x=K, y=RCSI)) + geom_line(colour = "midnightblue", size = 2) + 
         geom_point(colour = "black", size = 3) +
         theme_bw() +
@@ -269,7 +315,9 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   }
   
   if (montecarlo == FALSE){
-    message('running without monte carlo simulations...')
+    if (silent != TRUE){
+      message('running without monte carlo simulations...')
+    }
     results2 <- M3Creal(as.matrix(mydata),maxK=maxK,reps=repsreal,pItem=0.8,pFeature=1, 
                         clusterAlg=clusteralg, # default = pam, others = hc, km
                         distance=distance, # seed=1262118388.71279,
@@ -298,12 +346,21 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     if (dend == TRUE){
       return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 'dendres' = M3Cdendcompres))
     }else{
-      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls))
+      if (doanalysis == TRUE){
+        return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 'clinicalres' = clinicalres))
+      }else{
+        return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls))
+      }
     }
   }
   if (montecarlo == FALSE){
     # return results without monte carlo
-    return(list("realdataresults" = allresults, 'scores' = real)) 
+    if (doanalysis == TRUE){
+      return(list("realdataresults" = allresults, 'scores' = real, 'clinicalres' = clinicalres)) 
+    }else{
+      return(list("realdataresults" = allresults, 'scores' = real)) 
+    }
+    
   }
   
 }
@@ -346,8 +403,13 @@ M3Creal <- function( d=NULL, # function for real data
                      x1=0.1,
                      x2=0.9,
                      des = NULL,
-                     removeplots=removeplots) {
-  message('running consensus cluster algorithm for real data...')
+                     removeplots=removeplots,
+                     silent=silent,
+                     doanalysis=doanalysis,
+                     analysistype=analysistype) {
+  if (silent != TRUE){
+    message('running consensus cluster algorithm for real data...')
+  }
   if (is.null(seed) == FALSE){
     set.seed(seed)
   }
@@ -363,7 +425,9 @@ M3Creal <- function( d=NULL, # function for real data
               weightsItem=weightsItem,
               distance=distance,
               corUse=corUse)
-  message('finished')
+  if (silent != TRUE){
+    message('finished')
+  }
   res=list();
   colorList=list()
   colorM = rbind()
@@ -491,11 +555,56 @@ M3Creal <- function( d=NULL, # function for real data
     newList <- list("consensus_matrix" = pc, 'ordered_data' = data, 'ordered_annotation' = annotation) # you can remove ml
     resultslist[[tk]] <- newList
   }
+  
+  # if running a clinical analysis run here
+  if (doanalysis == TRUE){
+    statisticalres <- matrix(nrow=maxK-1,ncol=2)
+    statisticalres[,1] <- seq(2,maxK)
+    if (silent != TRUE){
+      message(paste('running clinical analysis type:',analysistype))
+    }
+    for (k in seq(2,maxK)){
+      myresults <- resultslist[[k]]$ordered_annotation
+      if (analysistype == 'survival'){
+        myresults$Death <- as.numeric(as.character(myresults$Death))
+        coxFit <- suppressWarnings(coxph(Surv(time = Time, event = Death) ~ as.factor(myresults$consensuscluster), data = myresults, ties = "exact"))
+        coxresults <- summary(coxFit)
+        statisticalres[k-1,2] <- coxresults$logtest[3]
+      }else if (analysistype == 'kw'){ # continuous non parametric
+        variable <- colnames(myresults)[2] # dependant variable (e.g. disease activity)
+        variable2 <- 'consensuscluster'
+        formula <- as.formula(paste(variable,'~',variable2))
+        kwfit <- kruskal.test(formula, data = t) 
+        statisticalres[k-1,2] <- kwfit$p.value
+      }else if (analysistype == 'chi'){
+        print(head(myresults))
+        variable <- colnames(myresults)[2] # dependant variable (e.g. remission/ high DA)
+        myresults[[variable]] <- droplevels(myresults[[variable]])
+        chifit <- suppressWarnings(chisq.test(table(myresults[c('consensuscluster',variable)])))
+        statisticalres[k-1,2] <- chifit$p.value
+      }
+    }
+    statisticalres <- data.frame(statisticalres)
+    colnames(statisticalres)[1] <- 'K'
+    # sort out the column names
+    if (analysistype == 'survival'){
+      colnames(statisticalres)[2] <- 'logtest'
+    }else if (analysistype == 'kw'){
+      colnames(statisticalres)[2] <- 'kw'
+    }else if (analysistype == 'chi'){
+      colnames(statisticalres)[2] <- 'chi'
+    }
+  }
+  
   pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots) # this runs the new CDF function with PAC score
   res[[1]] = colorM
-  listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res) # use a name list, one item is a list of results
+  if (doanalysis == TRUE){
+    listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res, 'clinicalres' = statisticalres) 
+  }else{
+    listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res) # use a name list, one item is a list of results
+  }
+  
   return(listxyx)
-  print('finished this function')
 }
 
 M3Cref <- function( d=NULL, # function for reference data
@@ -516,11 +625,14 @@ M3Cref <- function( d=NULL, # function for reference data
                     x1=0.1,
                     x2=0.9,
                     printres=FALSE, 
-                    seed=NULL) {
+                    seed=NULL,
+                    silent=silent) {
   if (is.null(seed) == FALSE){
     set.seed(seed)
   }
-  message('running consensus cluster algorithm for reference data...') # this is the main function that takes the vast majority of the time
+  if (silent != TRUE){
+    message('running consensus cluster algorithm for reference data...') # this is the main function that takes the vast majority of the time
+  }
   ml <- ccRun(d=d,
               maxK=maxK,
               repCount=reps,
@@ -533,7 +645,9 @@ M3Cref <- function( d=NULL, # function for reference data
               weightsItem=weightsItem,
               distance=distance,
               corUse=corUse)
-  message('finished.')
+  if (silent != TRUE){
+    message('finished.')
+  }
   pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2, removeplots=TRUE) # this runs the new CDF function with PAC score
   newList <- list('pac_scores' = pac_res) # now returning a fairly coherant list of results
   return(newList)
@@ -567,6 +681,8 @@ ccRun <- function( d=d,
     affinitymatrixraw <- rbfkernel(d)
     colnames(affinitymatrixraw) <- colnames(d) # note the order may have changed here
     rownames(affinitymatrixraw) <- colnames(d)
+  }else if (clusterAlg == 'hc'){
+    main.dist.obj <- dist(t(d),method=distance )
   }
   
   ## start the resampling loop
@@ -583,6 +699,11 @@ ccRun <- function( d=d,
       this_dist <- d[, sample_x$subcols ]
     }else if (clusterAlg == 'spectral'){ # if algorithm equals SPECTRAL do this
       affinitymatrix <- affinitymatrixraw[sample_x$subcols , sample_x$subcols ] # sample beforehand
+    }else if (clusterAlg == 'hc'){
+      boot.cols <- sample_x$subcols
+      this_dist <- as.matrix( main.dist.obj )[ boot.cols, boot.cols ]
+      this_dist <- as.dist( this_dist )
+      attr( this_dist, "method" ) <- attr( main.dist.obj, "method" )
     }
     
     ## mCount stores number of times a sample pair was sampled together.
@@ -625,6 +746,9 @@ ccRun <- function( d=d,
         #
         this_assignment <- res$cluster
         names(this_assignment) <- colnames(affinitymatrix)
+      }else if (clusterAlg == 'hc'){
+        this_cluster <- hclust( this_dist, method='ward.D')
+        this_assignment <- cutree(this_cluster,k)
       }
       ml[[k]] <- connectivityMatrix(this_assignment,ml[[k]],sample_x[[3]])
     }
@@ -949,7 +1073,6 @@ rbfkernel <- function (X = NULL) { # calculate gaussian kernel with local sigma
     kn <- c(kn,sortedvec[NN])
   }
   sigmamatrix <- kn %o% kn # make the symmetrical matrix of kth nearest neighbours distances
-  sigmamatrix <- sigmamatrix*1 # a global sigma (0.5-2)
   upper <- -dm^2 # calculate the numerator beforehand
   newmatrix <- matrix(ncol=ncol(upper),nrow=nrow(upper))
   for (i in seq(1,ncol(upper))){ # for each column

@@ -32,9 +32,9 @@ We recommend M3C only be used to cluster datasets with high numbers of samples (
 
 **M3C also accepts optionally:**
 
-Annotation data frame, where every row is a patient/sample and columns refer to meta-data, e.g. age, sex, etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. This is done to speed up subsequent analyses. Note, this only works if the IDs (column names in data) match a column called "ID" in the annotation data frame.
+Annotation data frame, where every row is a patient/sample and columns refer to meta-data, e.g. age, sex, etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. This is done to speed up subsequent analyses. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the annotation data frame.
 
-M3C also accepts clinical or biological data for a comparative analysis with the discovered classes. If the data is continuous or categorical, a kruskal wallis or chi-squared test are performed, respectively. In this case, the supplied des data frame must have an 'ID' column first and then the variable of interest 'XXX' second. Only two columns are permitted. If the data is survival data for cancer, the des object must have an 'ID' column first, followed by a 'Time' and 'Death' column. Only three columns are permitted.
+M3C also accepts clinical or biological data for a statistical analysis with the discovered classes. Again the 'ID' column must exist in the annotation data frame. If the data is continuous or categorical, a Kruskal-Wallis or chi-squared test are performed, respectively. For these two tests, a 'variable' parameter must be given which is a string that defines the dependent variable in the users annotation data frame. If the data is survival data for cancer, the annotation data frame must have an 'ID' column first, followed by a 'Time' and 'Death' column (where 0 is no death and 1 is death or time until last visit). 
 
 ### Example workflow
 
@@ -71,14 +71,14 @@ PCA1 <- pca(mydata)
 
 ### Running M3C
 
-In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-10x.
+In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-10x. The inner replications needs to be at least 100x.
 
-Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set doanalysis to TRUE and analysistype to 'chi', to do a chi-squared test for significance.
+Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set 'doanalysis' to TRUE and 'analysistype' to 'chi', to do a chi-squared test for significance. The 'variable' parameter is set to class (tumour histological class in this data).
 
 It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the removeplots option to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
 
 ```{r, message=FALSE, results='hide'}
-res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, analysistype = 'chi', doanalysis = TRUE)
+res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, analysistype = 'chi', doanalysis = TRUE, variable = 'class')
 ```
 
 The scores and p values are contained within the res$scores object. We can see below the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters. For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033.

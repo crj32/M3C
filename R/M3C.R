@@ -1,13 +1,12 @@
 #' M3C: Monte Carlo Consensus Clustering
 #'
-#' This function runs M3C, which is a consensus clustering tool with hypothesis testing. The basic
+#' This is the M3C core function, which is a consensus clustering tool with hypothesis testing. The basic
 #' idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
 #' of stability scores. The Monte Carlo simulations maintains the correlation structure of the input data.
 #' Then the null distribution is used to compare the reference scores with the real scores
 #' and a empirical p value is calculated for every value of K. We also use the Relative Cluster Stability
 #' Index as an alternative metric which is based on a comparison against the reference mean, the advantage 
-#' being it requires fewer iterations. Small p values are estimated cheaply using a beta distribution that is
-#' inferred using parameter estimates from the Monte Carlo simulation.
+#' being it requires fewer iterations. 
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
 #' @param montecarlo Logical flag: whether to run the Monte Carlo simulation or not (recommended: TRUE)
@@ -31,6 +30,7 @@
 #' @param silent Logical flag: whether to remove messages or not
 #' @param doanalysis Logical flag: whether to analyse the clinical variable supplied (univariate only)
 #' @param analysistype Character string: refers to which kind of statistical analysis to do on the data, survival, kruskal wallis (kw), or chi-squared (chi).
+#' @param variable Character string: if not doing survival what is the dependant variable (column name) called in the data frame
 #'
 #' @return A list, containing: 
 #' 1) the stability results and 
@@ -46,7 +46,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                 des = NULL, ref_method = c('reverse-pca', 'chol'), repsref = 100, repsreal = 100,
                 clusteralg = c('pam', 'km', 'spectral', 'hc'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
                 printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL, removeplots = FALSE, dend = FALSE,
-                silent = FALSE, doanalysis = FALSE , analysistype = c('survival','kw','chi')){
+                silent = FALSE, doanalysis = FALSE , analysistype = c('survival','kw','chi'), variable = NULL){
   
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -54,6 +54,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   
   ref_method <- match.arg(ref_method)
   clusteralg <- match.arg(clusteralg)
+  analysistype <- match.arg(analysistype)
   
   if (silent != TRUE){
     message('***M3C: Monte Carlo Reference-based Consensus Clustering***')
@@ -85,19 +86,19 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   }
   if (clusteralg == 'pam' && distance != 'euclidean'){
     if (silent != TRUE){
-      message('warning pam must be used with euclidean distance, changing to euclidean...')
+      message('warning pam must be used with euclidean distance, changing to euclidean')
     }
     distance <- 'euclidean'
   }
   if (clusteralg == 'km' && distance != 'euclidean'){
     if (silent != TRUE){
-      message('warning kmeans must be used with euclidean distance, changing to euclidean...')
+      message('warning kmeans must be used with euclidean distance, changing to euclidean')
     }
     distance <- 'euclidean'
   }
   if (ncol(mydata) > nrow(mydata)){
     if (silent != TRUE){
-      message('samples(columns) exceeds features(rows), switching to cholesky decomposition method...')
+      message('samples(columns) exceeds features(rows), switching to cholesky decomposition method')
     }
     ref_method = 'chol' # this works when variables < samples
   }
@@ -113,7 +114,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     '%!in%' <- function(x,y)!('%in%'(x,y))
     if("ID" %!in% colnames(des))
     {
-      stop('in the supplied annotation object for reordering, ther is no \'ID\' column...')
+      stop('in the supplied annotation object for reordering, ther is no \'ID\' column')
     }
     if (all(colnames(mydata) %in% des$ID) == FALSE){
       stop('the IDs in the annotation do not match column IDs in data')
@@ -126,11 +127,11 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
         vec <- c(c('Death','Time')%in%colnames(des))
         if(sum(vec==TRUE)!=2)
         {
-          stop('we are doing survival analysis, but there are not both \'Time\' and \'Death\' columns...')
+          stop('we are doing survival analysis, but there are not both \'Time\' and \'Death\' columns or analysistype not set')
         }
       }
-      if (ncol(des) != 2 & analysistype != 'survival'){
-        stop('if using kw or chi, we should have only two columns')
+      if (is.null(variable) == TRUE){
+        stop('if using kw or chi, we should define the dependent variable as a string, i.e. column name')
       }
     }
   }
@@ -207,7 +208,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                         printres = printres,
                         showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
                         x1=pacx1, x2=pacx2, seed=seed, removeplots=removeplots, silent=silent,
-                        doanalysis=doanalysis, analysistype=analysistype) # png to file
+                        doanalysis=doanalysis, analysistype=analysistype,variable=variable) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
     clinicalres <- results2$clinicalres
@@ -406,7 +407,8 @@ M3Creal <- function( d=NULL, # function for real data
                      removeplots=removeplots,
                      silent=silent,
                      doanalysis=doanalysis,
-                     analysistype=analysistype) {
+                     analysistype=analysistype,
+                     variable=variable) {
   if (silent != TRUE){
     message('running consensus cluster algorithm for real data...')
   }
@@ -571,15 +573,10 @@ M3Creal <- function( d=NULL, # function for real data
         coxresults <- summary(coxFit)
         statisticalres[k-1,2] <- coxresults$logtest[3]
       }else if (analysistype == 'kw'){ # continuous non parametric
-        variable <- colnames(myresults)[2] # dependant variable (e.g. disease activity)
-        variable2 <- 'consensuscluster'
-        formula <- as.formula(paste(variable,'~',variable2))
-        kwfit <- kruskal.test(formula, data = t) 
+        formula <- as.formula(paste(variable,'~','consensuscluster')) # defined variable by user
+        kwfit <- kruskal.test(formula, data = myresults) 
         statisticalres[k-1,2] <- kwfit$p.value
       }else if (analysistype == 'chi'){
-        print(head(myresults))
-        variable <- colnames(myresults)[2] # dependant variable (e.g. remission/ high DA)
-        myresults[[variable]] <- droplevels(myresults[[variable]])
         chifit <- suppressWarnings(chisq.test(table(myresults[c('consensuscluster',variable)])))
         statisticalres[k-1,2] <- chifit$p.value
       }
@@ -747,7 +744,7 @@ ccRun <- function( d=d,
         this_assignment <- res$cluster
         names(this_assignment) <- colnames(affinitymatrix)
       }else if (clusterAlg == 'hc'){
-        this_cluster <- hclust( this_dist, method='ward.D')
+        this_cluster <- hclust( this_dist, method='ward.D2')
         this_assignment <- cutree(this_cluster,k)
       }
       ml[[k]] <- connectivityMatrix(this_assignment,ml[[k]],sample_x[[3]])

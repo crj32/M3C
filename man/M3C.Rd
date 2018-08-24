@@ -10,7 +10,7 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
   printheatmaps = FALSE, showheatmaps = FALSE, seed = NULL,
   removeplots = FALSE, dend = FALSE, silent = FALSE, doanalysis = FALSE,
-  analysistype = c("survival", "kw", "chi"))
+  analysistype = c("survival", "kw", "chi"), variable = NULL)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -56,6 +56,8 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 \item{doanalysis}{Logical flag: whether to analyse the clinical variable supplied (univariate only)}
 
 \item{analysistype}{Character string: refers to which kind of statistical analysis to do on the data, survival, kruskal wallis (kw), or chi-squared (chi).}
+
+\item{variable}{Character string: if not doing survival what is the dependant variable (column name) called in the data frame}
 }
 \value{
 A list, containing: 
@@ -65,14 +67,13 @@ A list, containing:
 (see vignette for more details on how to easily access)
 }
 \description{
-This function runs M3C, which is a consensus clustering tool with hypothesis testing. The basic
+This is the M3C core function, which is a consensus clustering tool with hypothesis testing. The basic
 idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
 of stability scores. The Monte Carlo simulations maintains the correlation structure of the input data.
 Then the null distribution is used to compare the reference scores with the real scores
 and a empirical p value is calculated for every value of K. We also use the Relative Cluster Stability
 Index as an alternative metric which is based on a comparison against the reference mean, the advantage 
-being it requires fewer iterations. Small p values are estimated cheaply using a beta distribution that is
-inferred using parameter estimates from the Monte Carlo simulation.
+being it requires fewer iterations.
 }
 \examples{
 res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 

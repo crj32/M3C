@@ -211,7 +211,9 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                         doanalysis=doanalysis, analysistype=analysistype,variable=variable) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
-    clinicalres <- results2$clinicalres
+    if (doanalysis == TRUE){
+      clinicalres <- results2$clinicalres
+    }
     
     ## process reference data and calculate scores and p values (simulations are in ls matrix)
     colnames(real)[2] <- 'PAC_REAL'
@@ -325,9 +327,13 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                         title = '/home/christopher/Desktop/',
                         printres = printres, x1=pacx1, x2=pacx2,
                         showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
-                        seed=seed, removeplots=removeplots) # png to file
+                        seed=seed, removeplots=removeplots, variable = variable,
+                        silent=silent, doanalysis=doanalysis, analysistype=analysistype) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
+    if (doanalysis == TRUE){
+      clinicalres <- results2$clinicalres
+    }
   }
   
   if (file.exists('Rplots.pdf') == TRUE){ # random file pops up
@@ -344,14 +350,14 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     ls <- data.frame(ls)
     row.names(ls) <- gsub('result', 'iteration', row.names(ls))
     colnames(ls) <- c(2:maxK)
-    if (dend == TRUE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 'dendres' = M3Cdendcompres))
-    }else{
-      if (doanalysis == TRUE){
-        return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 'clinicalres' = clinicalres))
-      }else{
-        return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls))
-      }
+    if (dend == TRUE & doanalysis == TRUE){
+      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
+                  'dendres' = M3Cdendcompres, 'clinicalres' = clinicalres))
+    }else if (dend == TRUE & doanalysis == FALSE){
+      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls,
+                  'dendres' = M3Cdendcompres))
+    }else if (dend == FALSE & doanalysis == FALSE){
+      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls))
     }
   }
   if (montecarlo == FALSE){
@@ -361,9 +367,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     }else{
       return(list("realdataresults" = allresults, 'scores' = real)) 
     }
-    
   }
-  
 }
 
 estBetaParams <- function(mu, var) {
@@ -592,7 +596,6 @@ M3Creal <- function( d=NULL, # function for real data
       colnames(statisticalres)[2] <- 'chi'
     }
   }
-  
   pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots) # this runs the new CDF function with PAC score
   res[[1]] = colorM
   if (doanalysis == TRUE){
@@ -600,7 +603,6 @@ M3Creal <- function( d=NULL, # function for real data
   }else{
     listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res) # use a name list, one item is a list of results
   }
-  
   return(listxyx)
 }
 

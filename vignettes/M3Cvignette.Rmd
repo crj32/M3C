@@ -122,7 +122,7 @@ We can turn to examine the output objects that M3C generates. These allow heatma
 
 ### Understanding M3C outputs
 
-The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C. If we wanted to extract the data for 5 clusters, we would simply replace in 4 in the below lines to 5 and so on. We scale the data here row wise according to z-score prior to some light data compression for visualisation purposes in the heatmap. Remember to set Colv = NA for heatmap plotting because we have already ordered the data column or samplewise, M3C does that for you.
+The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C. If we wanted to extract the data for a 5 cluster solution from the results list, we would simply replace in 4 in the below lines to 5. We can also take a brief look at the annotation object M3C outputs. 
 
 ```{r,fig.show = 'hide'}
 # get the data out of the results list (by using $ - dollar sign)
@@ -130,6 +130,12 @@ data <- res$realdataresults[[4]]$ordered_data # this is the data
 annon <- res$realdataresults[[4]]$ordered_annotation # this is the annotation
 ccmatrix <- res$realdataresults[[4]]$consensus_matrix # this is the consensus matrix
 
+head(annon)
+```
+
+Next, we scale the data here row wise according to z-score, prior to some light data compression for visualisation purposes in the heatmap. Remember to set Colv = NA for heatmap plotting because we have already ordered the data columns (samples), M3C does that automatically.
+
+```{r,fig.show = 'hide'}
 # normalise and scale the data
 data <- t(scale(t(data))) # z-score normalise each row (feature)
 data <- apply(data, 2, function(x) ifelse(x > 4, 4, x)) # compress data within range

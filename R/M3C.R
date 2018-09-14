@@ -356,6 +356,9 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     }else if (dend == TRUE & doanalysis == FALSE){
       return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls,
                   'dendres' = M3Cdendcompres))
+    }else if (dend == FALSE & doanalysis == TRUE){
+      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
+                  'clinicalres' = clinicalres))
     }else if (dend == FALSE & doanalysis == FALSE){
       return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls))
     }
@@ -1086,4 +1089,3 @@ rbfkernel <- function (X = NULL) { # calculate gaussian kernel with local sigma
   diag(done) <- 0 # diagonal must be zero
   return(done)
 }
-

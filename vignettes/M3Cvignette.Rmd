@@ -122,14 +122,13 @@ We can turn to examine the output objects that M3C generates. These allow heatma
 
 ### Understanding M3C outputs
 
-The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C. If we wanted to extract the data for a 5 cluster solution from the results list, we would simply replace in 4 in the below lines to 5. We can also take a brief look at the annotation object M3C outputs. 
+The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C for a 4 cluster solution. If we, for example, wanted to extract the data for a 5 cluster solution from the M3C results list, we would simply replace in 4 in the below lines to 5. We can also take a brief look at the annotation object M3C outputs, a consensus cluster column has been added by M3C. 
 
 ```{r,fig.show = 'hide'}
-# get the data out of the results list (by using $ - dollar sign)
+# get the data out of the results list (by using $ - dollar sign) for K=4
 data <- res$realdataresults[[4]]$ordered_data # this is the data
 annon <- res$realdataresults[[4]]$ordered_annotation # this is the annotation
 ccmatrix <- res$realdataresults[[4]]$consensus_matrix # this is the consensus matrix
-
 head(annon)
 ```
 

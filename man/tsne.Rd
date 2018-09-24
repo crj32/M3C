@@ -4,8 +4,8 @@
 \alias{tsne}
 \title{tsne: A tsne function}
 \usage{
-tsne(mydata, K = FALSE, labels = FALSE, perplex = 15, printres = FALSE,
-  seed = FALSE)
+tsne(mydata, K = FALSE, labels = FALSE, perplex = 15,
+  printres = FALSE, seed = FALSE)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results (list) object: if dataframe/matrix should have samples as columns and rows as features}

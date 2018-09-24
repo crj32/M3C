@@ -1,35 +1,35 @@
-#' M3C: Monte Carlo Consensus Clustering
+#' M3C: Monte Carlo Reference-based Consensus Clustering
 #'
-#' This is the M3C core function, which is a consensus clustering tool with hypothesis testing. The basic
+#' This is the M3C core function, which is a reference-based consensus clustering algorithm. The basic
 #' idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
-#' of stability scores. The Monte Carlo simulations maintains the correlation structure of the input data.
-#' Then the null distribution is used to compare the reference scores with the real scores
-#' and a empirical p value is calculated for every value of K. We also use the Relative Cluster Stability
-#' Index as an alternative metric which is based on a comparison against the reference mean, the advantage 
-#' being it requires fewer iterations. 
+#' of stability scores. The Monte Carlo simulations maintains the feature correlation structure of the 
+#' input data. Then the null distribution is used to compare the reference scores with the real scores
+#' and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
+#' the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
+#' comparison against the reference mean.
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
 #' @param montecarlo Logical flag: whether to run the Monte Carlo simulation or not (recommended: TRUE)
 #' @param cores Numerical value: how many cores to split the monte carlo simulation over
-#' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 20-200)
+#' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 5-200)
 #' @param maxK Numerical value: the maximum number of clusters to test for, K (default: 10)
-#' @param des Data frame: contains annotation data for the input data for automatic reordering (optional)
+#' @param des Data frame: contains annotation data for the input data for automatic reordering
 #' @param ref_method Character string: refers to which reference method to use (recommended: leaving as default)
-#' @param repsref Numerical value: how many reps to use for the Monte Carlo reference data (recommended: 100)
-#' @param repsreal Numerical value: how many reps to use for the real data (recommended: 100)
-#' @param clusteralg String: dictates which algorithm to use for M3C (recommended: leaving as default)
+#' @param repsref Numerical value: how many resampling reps to use for reference (default: 100, recommended: 100-250)
+#' @param repsreal Numerical value: how many resampling reps to use for real data (default: 100, recommended: 100-250)
+#' @param clusteralg String: dictates which inner clustering algorithm to use for M3C
 #' @param distance String: dictates which distance metric to use for M3C (recommended: leaving as default)
 #' @param pacx1 Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)
 #' @param pacx2 Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default: 0.9)
 #' @param printres Logical flag: whether to print all results into current directory
 #' @param printheatmaps Logical flag: whether to print all the heatmaps into current directory
 #' @param showheatmaps Logical flag: whether to show the heatmaps on screen
-#' @param removeplots Logical flag: whether to remove all plots (recommended: leaving as default)
+#' @param removeplots Logical flag: whether to remove all plots
 #' @param seed Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here
 #' @param dend Logical flag: whether to compute the dendrogram and p values for the optimal K or not
 #' @param silent Logical flag: whether to remove messages or not
 #' @param doanalysis Logical flag: whether to analyse the clinical variable supplied (univariate only)
-#' @param analysistype Character string: refers to which kind of statistical analysis to do on the data, survival, kruskal wallis (kw), or chi-squared (chi).
+#' @param analysistype Character string: refers to which kind of statistical analysis to do on the data, survival, Kruskal-Wallis (kw), or chi-squared (chi)
 #' @param variable Character string: if not doing survival what is the dependant variable (column name) called in the data frame
 #'
 #' @return A list, containing: 
@@ -98,7 +98,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   }
   if (ncol(mydata) > nrow(mydata)){
     if (silent != TRUE){
-      message('samples(columns) exceeds features(rows), switching to cholesky decomposition method')
+      message('samples(columns) exceeds features(rows), switching to Cholesky decomposition reference')
     }
     ref_method = 'chol' # this works when variables < samples
   }
@@ -167,8 +167,8 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       }
     }
     ## for each loop to use all cores
-    ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref", "myPal",
-                                       "sampleCols", "setClusterColors", "triangle", "rbfkernel"),
+    ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref",
+                                       "sampleCols", "triangle", "rbfkernel"),
                 .packages=c("cluster", "base", "Matrix"), .combine='rbind', .options.snow = opts) %dopar% {
                   
                   if (is.null(seed) == FALSE){
@@ -437,23 +437,6 @@ M3Creal <- function( d=NULL, # function for real data
   if (silent != TRUE){
     message('finished')
   }
-  res=list();
-  colorList=list()
-  colorM = rbind()
-  thisPal <- c("#A6CEE3","#1F78B4","#B2DF8A","#33A02C","#FB9A99","#E31A1C",
-               "#FDBF6F","#FF7F00","#CAB2D6","#6A3D9A","#FFFF99","#B15928",
-               "#bd18ea","#2ef4ca","#f4cced","#f4cc03","#05188a","#e5a25a", 
-               "#06f106","#85848f","#000000","#076f25","#93cd7f","#4d0776", 
-               "#ffffff")
-  colBreaks = NA
-  if (is.null(tmyPal) == TRUE) {
-    colBreaks = 10
-    tmyPal = myPal(colBreaks)
-  }
-  else {
-    colBreaks = length(tmyPal)
-  }
-  
   ## loop over each consensus matrix and get the results out
   resultslist <- list() # holds all results for each value of K
   for (tk in 2:maxK){
@@ -465,12 +448,10 @@ M3Creal <- function( d=NULL, # function for real data
       names(ct) = colnames(as.matrix(d))
     }
     c = fm
-    colorList = setClusterColors(res[[tk-1]][[3]],ct,thisPal,colorList)
     pc = c
     pc = pc[hc$order,]
-    
+    colcols <- as.factor(as.numeric(ct))
     #pc = rbind(pc,0)
-    colcols <- as.factor(as.numeric(as.factor(colorList[[1]])))
     cols <- colorRampPalette(RColorBrewer::brewer.pal(9,'Reds')[1:6])(256)
     if (showheatmaps == TRUE & printheatmaps == FALSE){
       NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
@@ -492,15 +473,13 @@ M3Creal <- function( d=NULL, # function for real data
                     col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
       dev.off()
     }
-    res[[tk]] = list(consensusMatrix=c,consensusTree=hc,consensusClass=ct,ml=ml[[tk]],clrs=colorList)
-    colorM = rbind(colorM,colorList[[1]])
     
     ## start code for extracting ordered data out for user (removed the X reformatting)
     usethisorder <- hc$order
     colnames(pc) <- seq(1,ncol(pc))
     pc <- pc[,usethisorder] # get the consensus matrices in the correct order
     m_matrix=as.matrix(d) # this is the input data which we will reorder to match the consensus clusters
-    clustering <- as.numeric(as.factor(colorList[[1]]))
+    clustering <- colcols
     clusteringdf <- data.frame(sample = colnames(m_matrix), cluster = clustering)
     neworder1 <- colnames(m_matrix)[hc$order]
     neworder2 <- gsub('-', '.', neworder1)
@@ -600,7 +579,6 @@ M3Creal <- function( d=NULL, # function for real data
     }
   }
   pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots) # this runs the new CDF function with PAC score
-  res[[1]] = colorM
   if (doanalysis == TRUE){
     listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res, 'clinicalres' = statisticalres) 
   }else{
@@ -890,36 +868,6 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
   }
   
   return(PAC_res_df)
-}
-
-myPal = function(n=10){
-  seq = rev(seq(0,255,by=255/(n)))
-  palRGB = cbind(seq,seq,255)
-  rgb(palRGB,maxColorValue=255)
-}
-
-setClusterColors = function(past_ct,ct,colorU,colorList){
-  newColors = c()
-  if(length(colorList)==0){
-    newColors = colorU[ct]
-    colori=2
-  }else{
-    newColors = rep(NULL,length(ct))
-    colori = colorList[[2]]
-    mo=table(past_ct,ct)
-    m=mo/apply(mo,1,sum)
-    for(tci in 1:ncol(m)){
-      maxC = max(m[,tci])
-      pci = which(m[,tci] == maxC)				
-      if( sum(m[,tci]==maxC)==1 & max(m[pci,])==maxC & sum(m[pci,]==maxC)==1  )  {
-        newColors[which(ct==tci)] = unique(colorList[[1]][which(past_ct==pci)])
-      }else{
-        colori=colori+1
-        newColors[which(ct==tci)] = colorU[colori]
-      }
-    }
-  }
-  return(list(newColors,colori,unique(newColors) ))
 }
 
 triangle = function(m,mode=1){

@@ -2,15 +2,16 @@
 % Please edit documentation in R/M3C.R
 \name{M3C}
 \alias{M3C}
-\title{M3C: Monte Carlo Consensus Clustering}
+\title{M3C: Monte Carlo Reference-based Consensus Clustering}
 \usage{
 M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
   repsreal = 100, clusteralg = c("pam", "km", "spectral", "hc"),
-  distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
-  printheatmaps = FALSE, showheatmaps = FALSE, seed = NULL,
-  removeplots = FALSE, dend = FALSE, silent = FALSE, doanalysis = FALSE,
-  analysistype = c("survival", "kw", "chi"), variable = NULL)
+  distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9,
+  printres = FALSE, printheatmaps = FALSE, showheatmaps = FALSE,
+  seed = NULL, removeplots = FALSE, dend = FALSE, silent = FALSE,
+  doanalysis = FALSE, analysistype = c("survival", "kw", "chi"),
+  variable = NULL)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -19,19 +20,19 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{cores}{Numerical value: how many cores to split the monte carlo simulation over}
 
-\item{iters}{Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 20-200)}
+\item{iters}{Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 5-200)}
 
 \item{maxK}{Numerical value: the maximum number of clusters to test for, K (default: 10)}
 
-\item{des}{Data frame: contains annotation data for the input data for automatic reordering (optional)}
+\item{des}{Data frame: contains annotation data for the input data for automatic reordering}
 
 \item{ref_method}{Character string: refers to which reference method to use (recommended: leaving as default)}
 
-\item{repsref}{Numerical value: how many reps to use for the Monte Carlo reference data (recommended: 100)}
+\item{repsref}{Numerical value: how many resampling reps to use for reference (default: 100, recommended: 100-250)}
 
-\item{repsreal}{Numerical value: how many reps to use for the real data (recommended: 100)}
+\item{repsreal}{Numerical value: how many resampling reps to use for real data (default: 100, recommended: 100-250)}
 
-\item{clusteralg}{String: dictates which algorithm to use for M3C (recommended: leaving as default)}
+\item{clusteralg}{String: dictates which inner clustering algorithm to use for M3C}
 
 \item{distance}{String: dictates which distance metric to use for M3C (recommended: leaving as default)}
 
@@ -47,7 +48,7 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{seed}{Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here}
 
-\item{removeplots}{Logical flag: whether to remove all plots (recommended: leaving as default)}
+\item{removeplots}{Logical flag: whether to remove all plots}
 
 \item{dend}{Logical flag: whether to compute the dendrogram and p values for the optimal K or not}
 
@@ -55,7 +56,7 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 
 \item{doanalysis}{Logical flag: whether to analyse the clinical variable supplied (univariate only)}
 
-\item{analysistype}{Character string: refers to which kind of statistical analysis to do on the data, survival, kruskal wallis (kw), or chi-squared (chi).}
+\item{analysistype}{Character string: refers to which kind of statistical analysis to do on the data, survival, Kruskal-Wallis (kw), or chi-squared (chi)}
 
 \item{variable}{Character string: if not doing survival what is the dependant variable (column name) called in the data frame}
 }
@@ -67,13 +68,13 @@ A list, containing:
 (see vignette for more details on how to easily access)
 }
 \description{
-This is the M3C core function, which is a consensus clustering tool with hypothesis testing. The basic
+This is the M3C core function, which is a reference-based consensus clustering algorithm. The basic
 idea is to use a multi-core enabled Monte Carlo simulation to drive the creation of a null distribution
-of stability scores. The Monte Carlo simulations maintains the correlation structure of the input data.
-Then the null distribution is used to compare the reference scores with the real scores
-and a empirical p value is calculated for every value of K. We also use the Relative Cluster Stability
-Index as an alternative metric which is based on a comparison against the reference mean, the advantage 
-being it requires fewer iterations.
+of stability scores. The Monte Carlo simulations maintains the feature correlation structure of the 
+input data. Then the null distribution is used to compare the reference scores with the real scores
+and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
+the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
+comparison against the reference mean.
 }
 \examples{
 res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 

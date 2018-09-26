@@ -130,7 +130,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
           stop('we are doing survival analysis, but there are not both \'Time\' and \'Death\' columns or analysistype not set')
         }
       }
-      if (is.null(variable) == TRUE){
+      if (is.null(variable) == TRUE && analysistype != 'survival'){
         stop('if using kw or chi, we should define the dependent variable as a string, i.e. column name')
       }
     }

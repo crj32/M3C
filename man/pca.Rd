@@ -4,7 +4,9 @@
 \alias{pca}
 \title{pca: A principal component analysis function}
 \usage{
-pca(mydata, K = FALSE, printres = FALSE, labels = FALSE)
+pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
+  text = FALSE, axistextsize = 30, legendtextsize = 30,
+  dotsize = 6, textlabelsize = 4)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
@@ -13,7 +15,17 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE)
 
 \item{printres}{Logical flag: whether to print the PCA into current directory}
 
-\item{labels}{Factor: if we want to just display gender for example}
+\item{labels}{Character vector: if we want to just label with gender for example}
+
+\item{text}{Character vector: if we wanted to label the samples with text IDs to look for outliers}
+
+\item{axistextsize}{Numerical value: axis text size}
+
+\item{legendtextsize}{Numerical value: legend text size}
+
+\item{dotsize}{Numerical value: dot size}
+
+\item{textlabelsize}{Numerical value: text inside plot label size}
 }
 \value{
 A PCA plot object

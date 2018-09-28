@@ -5,7 +5,8 @@
 \title{tsne: A tsne function}
 \usage{
 tsne(mydata, K = FALSE, labels = FALSE, perplex = 15,
-  printres = FALSE, seed = FALSE)
+  printres = FALSE, seed = FALSE, axistextsize = 30,
+  legendtextsize = 30, dotsize = 6, textlabelsize = 4)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results (list) object: if dataframe/matrix should have samples as columns and rows as features}
@@ -19,6 +20,14 @@ tsne(mydata, K = FALSE, labels = FALSE, perplex = 15,
 \item{printres}{Logical flag: whether to print the plot into current directory}
 
 \item{seed}{Numerical value: to repeat the results exactly, setting seed is required}
+
+\item{axistextsize}{Numerical value: axis text size}
+
+\item{legendtextsize}{Numerical value: legend text size}
+
+\item{dotsize}{Numerical value: dot size}
+
+\item{textlabelsize}{Numerical value: text inside plot label size}
 }
 \value{
 A tsne plot object

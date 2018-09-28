@@ -10,40 +10,42 @@ vignette: >
   %\VignetteEncoding{UTF-8}  
 ---
 
-### Abstract
+# Abstract
 
 Genome-wide data is used to stratify large complex datasets into classes using class discovery algorithms. A widely applied technique is consensus clustering, however; the approach is prone to overfitting and false positives. These issues arise from not considering reference distributions while selecting the number of classes (K). As a solution, we developed Monte Carlo reference-based consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to select its value. Using a reference, that maintains the correlation structure of the input features, eliminates the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. M3C can also quantify structural relationships between clusters, and uses spectral clustering to deal with non-Gaussian and complex structures. M3C can automatically analyse biological or clinical data with respect to the discovered classes.
 
-### Prerequisites
+# Prerequisites
 
-**M3C recommended spec:**
+**M3C recommended spec**
 
-A relatively new and fast multi-core computer or cluster.
+A relatively new and fast multi-core computer or cluster. If your machine is not particuarly fast, you can reduce the Monte Carlo iterations down to 5-50x. Running with a small number of reference datasets is better than using no reference at all.
 
-**M3C requires:**   
+**M3C requires**   
 
-A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, epigenetic, protein, gene copy number, single cell RNA-seq, etc) where columns equal samples and rows equal features.
+A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, methylation arrays, protein arrays, single cell RNA-seq, etc) where columns equal samples and rows equal features. M3C's reference will work better if the feature data is approximately normally distributed across biological replicates.
 
-For RNA-seq data, VST or rlog transformed count data, log(CPM), log(TPM), and log(RPKM), are all acceptable forms of normalisation.
+For example, for RNA-seq data, VST or rlog transformed count data, log2(CPM), log2(TPM), and log2(RPKM), are all acceptable forms of normalisation.
 
-The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised).
+The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses the coefficient of variation in the package which is demonstrated later in the vignette.
+
+Outliers should be removed, we include a PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
 We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 75 and above).
 
-**M3C also accepts optionally:**
+**M3C also accepts optionally**
 
-Annotation data frame, where every row is a patient/sample and columns refer to meta-data, e.g. age, sex, etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. This is done to speed up subsequent analyses. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the annotation data frame.
+Annotation data frame, where every row is a patient or sample and columns refer to meta-data, e.g. age, sex, time until death etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the user supplied annotation data frame.
 
 M3C also accepts clinical or biological data for a statistical analysis with the discovered classes. Again the 'ID' column must exist in the annotation data frame. If the data is continuous or categorical, a Kruskal-Wallis or chi-squared test are performed, respectively. For these two tests, a 'variable' parameter must be given which is a string that defines the dependent variable in the users annotation data frame. If the data is survival data for cancer, the annotation data frame must have an 'ID' column first, followed by a 'Time' and 'Death' column (where 0 is no death and 1 is death or time until last visit). 
 
-### Example workflow
+# Example workflow: TCGA glioblastoma dataset
 
-The M3C package contains the GBM cancer microarray dataset for testing. The original cluster solution was K=4. First we load the package which also loads the GBM data.
+The M3C package contains the glioblastoma (GBM) cancer microarray dataset for testing (reduced to 50 samples randomly). The original optimal cluster decision was 4. First, we load M3C which also loads the GBM data.
 
 ```{r, message=FALSE}
 library(M3C)
-library(NMF) # loading for aheatmap plotting function
-library(gplots) # loading this for nice colour scale
+library(NMF) # loading for aheatmap function
+library(gplots) # has a nice colour scale
 library(ggsci) # more cool colours
 
 # now we have loaded the mydata and desx objects (with the package automatically)
@@ -51,17 +53,17 @@ library(ggsci) # more cool colours
 # desx is the annotation for this data
 ```
 
-### Exploratory data analysis
+## Exploratory data analysis
 
-This is an important checking step prior to running M3C. It is best to remove extreme outliers. It is also important to be aware of the assumptions of PAM or K-means. K means and PAM assume the following;
+This is an important exploratory step prior to running M3C. It is best to remove extreme outliers. It is also important to be aware of the assumptions of PAM, K-means, and HC. K means, PAM, and HC assume the following;
 
 i) Clusters are approximately spherical - not severely elongated in one direction (anisotropic) or non-linear
 ii) Clusters are approximately equal in variance
 
-You can read more about the assumptions of K means here:
-(http://scikit-learn.org/stable/auto_examples/cluster/plot_kmeans_assumptions.html)
+You can read more about the assumptions of clustering algorithms here:
+(http://scikit-learn.org/stable/modules/clustering.html)
 
-In the PCA plot below we can see there are no obvious non linear structures, extreme outliers, or cases of unequal variance, therefore we can proceed with running M3C on this dataset with PAM as the inner algorithm. If points i and ii were clearly not the case, spectral clustering should be used instead, but this normally is not a problem. 
+Spectral clustering may be used to cluster more unusual structures using M3C, but this normally is not necessary. Ward's hierarchical clustering (HC) is faster than these 3 algorithms and is an option included in M3C, although in practice PAM and KM usually perform better.
 
 ```{r, message=FALSE, results='hide'}
 PCA1 <- pca(mydata)
@@ -69,25 +71,25 @@ PCA1 <- pca(mydata)
 
 ![*Figure 1: Preliminary PCA to check structure*](PCApriorclustering.png)
 
-### Running M3C
+## Running M3C
 
-In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-10x. The inner replications needs to be at least 100x.
+In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-5x. The inner replications needs to be at least 100x, changing this up to 250x will lead to increased result stability on some datasets.
 
-Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set 'doanalysis' to TRUE and 'analysistype' to 'chi', to do a chi-squared test for significance. The 'variable' parameter is set to class (tumour histological class in this data).
+Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set 'doanalysis' to TRUE and 'analysistype' to 'chi', to do a chi-squared test for significance. The 'variable' parameter is set to class (tumour histology in this data).
 
-It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the removeplots option to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
+It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the 'removeplots' parameter to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
 
 ```{r, message=FALSE, results='hide'}
 res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, analysistype = 'chi', doanalysis = TRUE, variable = 'class')
 ```
 
-The scores and p values are contained within the res$scores object. We can see below the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters. For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033.
+The scores and p values are contained within the res$scores object. We can see below the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this optimal K decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters. For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033.
 
 ```{r}
 res$scores
 ```
 
-Also important is the relationship between the clinical variables and the discovered clusters. In this data we want to compare with a categorical variable so perform a chi-squared test. We are reassured to see below K=4 is highly significant (p=5.5x10-14), however, K=5 is slightly more so. It is important to bear in mind the clinical/ biological relationships as well as the structural nature of the data when deciding K.
+Also important is the relationship between the clinical variables and the discovered clusters. In this data we want to compare with a categorical variable so perform a chi-squared test. We are reassured to see below K=4 is highly significant (p=5.5x10-14), however, K=5 is slightly more so. It is important to bear in mind the clinical or biological relationships as well as the structural nature of the data when deciding K.
 
 ```{r}
 res$clinicalres
@@ -120,9 +122,9 @@ A further analysis that M3C conducts (if the dend flag is set to TRUE) is to mak
 
 We can turn to examine the output objects that M3C generates. These allow heatmap generation for publications.
 
-### Understanding M3C outputs
+## Understanding M3C outputs
 
-The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C for a 4 cluster solution. If we, for example, wanted to extract the data for a 5 cluster solution from the M3C results list, we would simply replace in 4 in the below lines to 5. We can also take a brief look at the annotation object M3C outputs, a consensus cluster column has been added by M3C. 
+The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C for a 4 cluster solution. If we, for example, wanted to extract the data for a 5 cluster solution from the M3C results list, we would simply replace 4 in the below lines to 5. We then take a brief glance at the annotation object M3C outputs, a consensus cluster column has been added by M3C. 
 
 ```{r,fig.show = 'hide'}
 # get the data out of the results list (by using $ - dollar sign) for K=4
@@ -132,7 +134,7 @@ ccmatrix <- res$realdataresults[[4]]$consensus_matrix # this is the consensus ma
 head(annon)
 ```
 
-Next, we scale the data here row wise according to z-score, prior to some light data compression for visualisation purposes in the heatmap. Remember to set Colv = NA for heatmap plotting because we have already ordered the data columns (samples), M3C does that automatically.
+Next, we scale the data here row wise according to z-score, prior to some light data compression for visualisation purposes in the heatmap. Remember to set Colv = NA for heatmap plotting because the data columns (samples) are already ordered.
 
 ```{r,fig.show = 'hide'}
 # normalise and scale the data
@@ -163,7 +165,7 @@ NMF::aheatmap(ccmatrix, annCol = annon, Colv = NA, Rowv = NA,
 
 ![*Figure 8: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
 
-### Final check of consensus cluster structure
+## Final check of consensus cluster structure
 
 A last analysis we recommend to do is to examine how the clusters are arranged in principal component and tSNE latent variable space. To do this the pca and tsne functions can be run directly on the M3C output object. We may need to experiment with the perplexity parameter of tSNE in the range of 5-20 to better suit the data. Both functions can also be used to print their results to the working directory.
 
@@ -178,10 +180,11 @@ We can see in the PCA and tSNE plots that clusters 3 and 4 are closer together. 
 
 ![*Figure 10: tSNE of a 4 cluster simulated dataset *](TSNEpostclustering.png)
 
-### Generating simulated data
+# Additional functions
+
+## Generating simulated data
 
 We have included a function for generating simulated data to test various clustering algorithms from the Șenbabaoğlu et al. (2014) study. This cluster simulator is simple to use. Using the code below, clustersim generates a dataset with 225 samples, 900 features, a radius cut-off for the initial square of 8, a cluster number of 4, a seperation of clusters of 0.75, and a degree of noise added to each co-ordinate of 0.025. After running, a PCA will print of the data so we can visualise the 4 clusters in principle component space. 
-
 Note, clustersim's method has recently been replaced with the CRAN package, clusterlab. We recommend using this for more sophisticated benchmarking. Clusterlab can generate Gaussian clusters with controlled variance and spacing, it can also create more complex higher order structures.
 
 ```{r,fig.show = 'hide',message=FALSE,results='hide'}
@@ -190,13 +193,21 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ![*Figure 11: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
-### Closing comments
+## Filtering features by variance
+
+A feature filter function has been included in M3C that uses the coefficient of variation (CV) to filter features of a data frame. To use we set the CV percentile we wish to filter by and input the data. This code extracts the 10% most variable features.
+
+```{r}
+  filtered_data <- featurefilter(mydata, 90)
+```
+
+# Closing comments
 
 In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Șenbabaoğlu et al. (2014), and Monti et al. (2003). 
 
 During the development of M3C, we also devised a flexible method and associated CRAN package for generating Gaussian clusters called, clusterlab (https://cran.r-project.org/web/packages/clusterlab/index.html). This tool should prove useful in testing the performance of class discovery algorithms.
 
-### References
+# References
 
 Monti, Stefano, et al. "Consensus clustering: a resampling-based method for class discovery and visualization of gene expression microarray data." Machine learning 52.1 (2003): 91-118.
 

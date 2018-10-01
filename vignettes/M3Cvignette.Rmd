@@ -195,10 +195,10 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ## Filtering features by variance
 
-A feature filter function has been included in M3C that uses the coefficient of variation (CV) to filter features of a data frame. To use we set the CV percentile we wish to filter by and input the data. This code extracts the 10% most variable features.
+A feature filter function has been included in M3C that uses the coefficient of variation (CV) to filter features of a data frame. The CV is standardised using the mean, therefore it is suitable to filter all rows of a given platform's dataset with the same code. To use this function, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features.
 
 ```{r}
-  filtered_data <- featurefilter(mydata, 90)
+  filtered_data <- featurefilter(mydata, 10)
 ```
 
 # Closing comments

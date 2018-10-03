@@ -1,16 +1,16 @@
-#' featurefilter: A function for filtering features based on the coefficient of variance (CV)
+#' featurefilter: A function for filtering features based on the coefficient of variance
 #'
-#' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
-#' @param percentile Numerical value: CV percentile by which to filter the features, e.g. 10 indicates top 10 percent based on CV
+#' @param mydata Data frame: should have samples as columns and rows as features
+#' @param percentile Numerical value: the top X percent most variable features should be kept
 #'
-#' @return A filtered (fewer rows) data frame
+#' @return A filtered data frame
 #' @export
 #'
 #' @examples
 #' filtered <- featurefilter(mydata,percentile=10)
 
 featurefilter <- function(mydata,percentile=10){
-  message(paste('extracting the most variable: '),percentile,'percent of features')
+  message(paste('extracting the most variable: '),percentile,' percent')
   message(paste('features to start with:',nrow(mydata)))
   # percentile (convert to decimal below)
   percentile <- 1-(percentile/100)

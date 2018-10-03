@@ -2,21 +2,21 @@
 % Please edit documentation in R/featurefilter.R
 \name{featurefilter}
 \alias{featurefilter}
-\title{featurefilter: A function for filtering genes based on the coefficient of variance (CV)}
+\title{featurefilter: A function for filtering features based on the coefficient of variance}
 \usage{
-featurefilter(mydata, mypercentile = 75)
+featurefilter(mydata, percentile = 10)
 }
 \arguments{
-\item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
+\item{mydata}{Data frame: should have samples as columns and rows as features}
 
-\item{mypercentile}{Numerical value: CV percentile by which to filter the features, e.g. 90 indicates top 10% based on CV}
+\item{percentile}{Numerical value: the top X percent most variable features should be kept}
 }
 \value{
-A filtered (fewer rows) data frame
+A filtered data frame
 }
 \description{
-featurefilter: A function for filtering genes based on the coefficient of variance (CV)
+featurefilter: A function for filtering features based on the coefficient of variance
 }
 \examples{
-filtered <- featurefilter(mydata,mypercentile=90)
+filtered <- featurefilter(mydata,percentile=10)
 }

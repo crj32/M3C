@@ -69,7 +69,7 @@ tsne <- function(mydata, K=FALSE, labels=FALSE, perplex=15, printres=FALSE, seed
   }else if (K == FALSE && labels != FALSE){
     tsne <- Rtsne::Rtsne(t(as.matrix(mydata)), dims = 2, perplexity=perplex, verbose=TRUE, max_iter = 500)
     scores <- data.frame(tsne$Y) # PC score matrix
-    p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(labels)), size = dotsize) + 
+    p <- ggplot(data = scores, aes(x = X1, y = X2) ) + geom_point(aes(colour = factor(labels)), size = dotsize) + 
       theme_bw() + 
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             axis.text.y = element_text(size = axistextsize, colour = 'black'),

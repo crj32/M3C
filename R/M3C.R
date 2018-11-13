@@ -74,14 +74,9 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       message('warning running without monte carlo simulation lowers accuracy')
     }
   }
-  if (clusteralg == 'km'){
-    if (silent != TRUE){
-      message('warning pam is more advisable than k means, because it is faster and often more accurate')
-    }
-  }
   if (clusteralg == 'spectral'){
     if (silent != TRUE){
-      message('warning pam is usually preferred to spectral, unless there are highly imbalanced or non linear structures')
+      message('warning km or pam is usually preferred to spectral, unless there are highly imbalanced or non linear structures')
     }
   }
   if (clusteralg == 'pam' && distance != 'euclidean'){

@@ -22,7 +22,7 @@ A relatively new and fast multi-core computer or cluster. If your machine is not
 
 **M3C requires**   
 
-A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, methylation arrays, protein arrays, single cell RNA-seq, etc) where columns equal samples and rows equal features. M3C's reference will work better if the feature data is approximately normally distributed across biological replicates.
+A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, methylation arrays, protein arrays) where columns equal samples and rows equal features. M3C's reference will work better if the feature data is approximately normally distributed across biological replicates.
 
 For example, for RNA-seq data, VST or rlog transformed count data, log2(CPM), log2(TPM), and log2(RPKM), are all acceptable forms of normalisation.
 
@@ -30,7 +30,7 @@ The data should be filtered to remove features with no or very low signal, and f
 
 Outliers should be removed, we include a PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
-We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 75 and above).
+We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 75 and above). However, with sample sizes well over 1000, M3C will become highly time consuming so there is a upper limit. M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia (75-1000 samples).
 
 **M3C also accepts optionally**
 

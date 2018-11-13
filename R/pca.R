@@ -19,7 +19,6 @@
 pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 30,
                 legendtextsize = 30, dotsize = 6, textlabelsize = 4){
   if (K == FALSE && labels == FALSE && text == FALSE){
-    print('entered here...')
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
     p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 

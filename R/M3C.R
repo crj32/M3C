@@ -157,6 +157,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       if (matrixcalc::is.positive.definite(cov(t(mydata))) == FALSE){
         covm <- Matrix::nearPD(cov(t(mydata)))
         covm <- covm$mat
+        covm <- as.matrix(covm)
       }else{
         covm <- cov(t(mydata))
       }

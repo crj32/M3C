@@ -155,9 +155,13 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       sds <- colSdColMeans(pca1$x)
     }else if (ref_method == 'chol'){
       if (matrixcalc::is.positive.definite(cov(t(mydata))) == FALSE){
-        covm <- Matrix::nearPD(cov(t(mydata)))
-        covm <- covm$mat
-        covm <- as.matrix(covm)
+        done <- corpcor::cov.shrink(t(mydata), verbose=FALSE)
+        attr(done, "lambda") <- NULL
+        attr(done, "lambda.estimated") <- NULL
+        attr(done, "class") <- NULL
+        attr(done, "lambda.var") <- NULL
+        attr(done, "lambda.var.estimated") <- NULL
+        covm <- as.matrix(done)
       }else{
         covm <- cov(t(mydata))
       }

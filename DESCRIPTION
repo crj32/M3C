@@ -1,6 +1,6 @@
 Package: M3C
 Title: Monte Carlo Reference-based Consensus Clustering
-Version: 1.5.7
+Version: 1.5.8
 Authors@R: person("Christopher", "John", email = "chris.r.john86@gmail.com", role = c("aut", "cre"))
 Description: M3C is an improved consensus clustering algorithm based on the work of Monti et al. (2003).
 Depends: R (>= 3.4.0)

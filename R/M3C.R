@@ -155,7 +155,7 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       sds <- colSdColMeans(pca1$x)
     }else if (ref_method == 'chol'){
       if (matrixcalc::is.positive.definite(cov(t(mydata))) == FALSE){
-        done <- corpcor::cov.shrink(t(mydata), verbose=FALSE)
+        done <- cov.shrink(t(mydata), verbose=FALSE)
         attr(done, "lambda") <- NULL
         attr(done, "lambda.estimated") <- NULL
         attr(done, "class") <- NULL

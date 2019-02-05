@@ -6,10 +6,10 @@
 #' input data. Then the null distribution is used to compare the reference scores with the real scores
 #' and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
 #' the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
-#' comparison against the reference mean.
+#' comparison against the reference mean. A faster alternative is also included that includes a penalty
+#' term to prevent overfitting, called the Penalised Cluster Stability Index (PCSI). 
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
-#' @param montecarlo Logical flag: whether to run the Monte Carlo simulation or not (recommended: TRUE)
 #' @param cores Numerical value: how many cores to split the monte carlo simulation over
 #' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 5-200)
 #' @param maxK Numerical value: the maximum number of clusters to test for, K (default: 10)
@@ -25,6 +25,8 @@
 #' @param printheatmaps Logical flag: whether to print all the heatmaps into current directory
 #' @param showheatmaps Logical flag: whether to show the heatmaps on screen
 #' @param removeplots Logical flag: whether to remove all plots
+#' @param fsize Numerical value: determines the font size of the ggplot2 plots
+#' @param method Numerical value: 1 refers to the Monte Carlo reference procedure, 2 to using a penalty term (faster)
 #' @param seed Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here
 #' @param dend Logical flag: whether to compute the dendrogram and p values for the optimal K or not
 #' @param silent Logical flag: whether to remove messages or not
@@ -42,11 +44,12 @@
 #' @examples
 #' res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
 #' maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = FALSE, seed = 123, des = desx)
-M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
+M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
                 des = NULL, ref_method = c('reverse-pca', 'chol'), repsref = 100, repsreal = 100,
                 clusteralg = c('pam', 'km', 'spectral', 'hc'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
                 printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL, removeplots = FALSE, dend = FALSE,
-                silent = FALSE, doanalysis = FALSE , analysistype = c('survival','kw','chi'), variable = NULL){
+                silent = FALSE, doanalysis = FALSE , analysistype = c('survival','kw','chi'), variable = NULL,
+                fsize = 18, method = 1){
   
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -56,8 +59,19 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   clusteralg <- match.arg(clusteralg)
   analysistype <- match.arg(analysistype)
   
+  if (method == 1){
+    montecarlo <- TRUE 
+  }else if (method == 2){
+    montecarlo <- FALSE 
+  }
+  
   if (silent != TRUE){
     message('***M3C: Monte Carlo Reference-based Consensus Clustering***')
+    if (method == 1){
+      message('method: reference simulation')
+    }else if (method == 2){
+      message('method: penalised stability')
+    }
     message(paste('clustering algorithm:',clusteralg))
   }
   
@@ -68,11 +82,6 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   }
   if ( inherits( mydata,"ExpressionSet" ) ) {
     mydata <- exprs(mydata)
-  }
-  if (montecarlo != TRUE){
-    if (silent != TRUE){
-      message('warning running without monte carlo simulation lowers accuracy')
-    }
   }
   if (clusteralg == 'spectral'){
     if (silent != TRUE){
@@ -91,11 +100,13 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
     }
     distance <- 'euclidean'
   }
-  if (ncol(mydata) > nrow(mydata)){
-    if (silent != TRUE){
-      message('samples(columns) exceeds features(rows), switching to Cholesky decomposition reference')
+  if (method == 1){
+    if (ncol(mydata) > nrow(mydata)){
+      if (silent != TRUE){
+        message('samples(columns) exceeds features(rows), switching to Cholesky decomposition reference')
+      }
+      ref_method = 'chol' # this works when variables < samples
     }
-    ref_method = 'chol' # this works when variables < samples
   }
   if (is.null(des) == TRUE){ # user does not give extra annotation data
     if (silent != TRUE){
@@ -208,7 +219,8 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                         printres = printres,
                         showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
                         x1=pacx1, x2=pacx2, seed=seed, removeplots=removeplots, silent=silent,
-                        doanalysis=doanalysis, analysistype=analysistype,variable=variable) # png to file
+                        doanalysis=doanalysis, analysistype=analysistype,variable=variable,
+                        fsize=fsize,method=method) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
     if (doanalysis == TRUE){
@@ -265,13 +277,13 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       px <- ggplot(data=real, aes(x=K, y=RCSI)) + geom_line(colour = "midnightblue", size = 2) + 
         geom_point(colour = "black", size = 3) +
         theme_bw() +
-        theme(axis.text.y = element_text(size = 26, colour = 'black'),
-              axis.text.x = element_text(size = 26, colour = 'black'),
-              axis.title.x = element_text(size = 26),
-              axis.title.y = element_text(size = 26),
-              legend.text = element_text(size = 26),
-              legend.title = element_text(size = 26),
-              plot.title = element_text(size = 26, colour = 'black', hjust = 0.5),
+        theme(axis.text.y = element_text(size = fsize, colour = 'black'),
+              axis.text.x = element_text(size = fsize, colour = 'black'),
+              axis.title.x = element_text(size = fsize),
+              axis.title.y = element_text(size = fsize),
+              legend.text = element_text(size = fsize),
+              legend.title = element_text(size = fsize),
+              plot.title = element_text(size = fsize, colour = 'black', hjust = 0.5),
               panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
         scale_x_continuous(breaks=c(seq(0,maxK,1))) +
         ylab('RCSI') +
@@ -281,13 +293,13 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
       col = ifelse(real$P_SCORE > 1.30103,'tomato','black')
       py <- ggplot(data=real, aes(x=K, y=P_SCORE)) + geom_point(colour = col, size = 3) +
         theme_bw() +
-        theme(axis.text.y = element_text(size = 26, colour = 'black'),
-              axis.text.x = element_text(size = 26, colour = 'black'),
-              axis.title.x = element_text(size = 26),
-              axis.title.y = element_text(size = 26),
-              legend.text = element_text(size = 26),
-              legend.title = element_text(size = 26),
-              plot.title = element_text(size = 26, colour = 'black', hjust = 0.5),
+        theme(axis.text.y = element_text(size = fsize, colour = 'black'),
+              axis.text.x = element_text(size = fsize, colour = 'black'),
+              axis.title.x = element_text(size = fsize),
+              axis.title.y = element_text(size = fsize),
+              legend.text = element_text(size = fsize),
+              legend.title = element_text(size = fsize),
+              plot.title = element_text(size = fsize, colour = 'black', hjust = 0.5),
               panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
         scale_x_continuous(breaks=c(seq(0,maxK,1))) +
         ylab(expression('-log'[10]*'p')) +
@@ -318,9 +330,6 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
   }
   
   if (montecarlo == FALSE){
-    if (silent != TRUE){
-      message('running without monte carlo simulations...')
-    }
     results2 <- M3Creal(as.matrix(mydata),maxK=maxK,reps=repsreal,pItem=0.8,pFeature=1, 
                         clusterAlg=clusteralg, # default = pam, others = hc, km
                         distance=distance, # seed=1262118388.71279,
@@ -328,7 +337,8 @@ M3C <- function(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
                         printres = printres, x1=pacx1, x2=pacx2,
                         showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
                         seed=seed, removeplots=removeplots, variable = variable,
-                        silent=silent, doanalysis=doanalysis, analysistype=analysistype) # png to file
+                        silent=silent, doanalysis=doanalysis, analysistype=analysistype, 
+                        method=method, fsize=fsize) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
     if (doanalysis == TRUE){
@@ -415,7 +425,9 @@ M3Creal <- function( d=NULL, # function for real data
                      silent=silent,
                      doanalysis=doanalysis,
                      analysistype=analysistype,
-                     variable=variable) {
+                     variable=variable,
+                     fsize=fsize,
+                     method=method) {
   if (silent != TRUE){
     message('running consensus cluster algorithm for real data...')
   }
@@ -578,7 +590,8 @@ M3Creal <- function( d=NULL, # function for real data
       colnames(statisticalres)[2] <- 'chi'
     }
   }
-  pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots) # this runs the new CDF function with PAC score
+  pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots, fsize=fsize, 
+                 method=method) # this runs the new CDF function with PAC score
   if (doanalysis == TRUE){
     listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res, 'clinicalres' = statisticalres) 
   }else{
@@ -628,7 +641,7 @@ M3Cref <- function( d=NULL, # function for reference data
   if (silent != TRUE){
     message('finished.')
   }
-  pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2, removeplots=TRUE) # this runs the new CDF function with PAC score
+  pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2, removeplots=TRUE, fsize=18, method=1) # this runs the new CDF function with PAC score
   newList <- list('pac_scores' = pac_res) # now returning a fairly coherant list of results
   return(newList)
 }
@@ -786,7 +799,7 @@ sampleCols <- function( d,
 }
 
 CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
-             removeplots=removeplots){ # calculate CDF and PAC score
+             removeplots=removeplots,fsize=18,method=1){ # calculate CDF and PAC score
   
   ## calculate CDF
   maxK = length(ml) # match with max K
@@ -811,13 +824,13 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
   
   if (removeplots==FALSE){
     p <- ggplot2::ggplot(cdf_res2, ggplot2::aes(x=consensusindex, y=CDF, group=k)) + ggplot2::geom_line(ggplot2::aes(colour = factor(k)), size = 2) + ggplot2::theme_bw() + 
-      ggplot2::theme(axis.text.y = ggplot2::element_text(size = 26, colour = 'black'),
-                     axis.text.x = ggplot2::element_text(size = 26, colour = 'black'),
-                     axis.title.x = ggplot2::element_text(size = 26),
-                     axis.title.y = ggplot2::element_text(size = 26),
+      ggplot2::theme(axis.text.y = ggplot2::element_text(size = fsize, colour = 'black'),
+                     axis.text.x = ggplot2::element_text(size = fsize, colour = 'black'),
+                     axis.title.x = ggplot2::element_text(size = fsize),
+                     axis.title.y = ggplot2::element_text(size = fsize),
                      legend.title = ggplot2::element_blank(),
-                     legend.text = ggplot2::element_text(size = 26),
-                     plot.title = ggplot2::element_text(size = 26, colour = 'black', hjust = 0.5),
+                     legend.text = ggplot2::element_text(size = fsize),
+                     plot.title = ggplot2::element_text(size = fsize, colour = 'black', hjust = 0.5),
                      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
       ggplot2::labs(title = "Real Data")
     if (printres == TRUE){
@@ -835,26 +848,38 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
   value1 <- cdf_res3[seq(2, nrow(cdf_res3), 2), 2]
   value2 <- cdf_res3[seq(1, nrow(cdf_res3), 2), 2]
   PAC <- value1 - value2
-  PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC)
+  
+  ## code for penalised PAC
+  if (method == 2){
+    ## PCSI calculation using penalty term
+    PAC[PAC==0] <- 0.0000001
+    ks <- seq(2,maxK)
+    PCSI <- log(PAC)+0.1*ks
+    ## make results data frame
+    PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC, PCSI=PCSI)
+  }else if (method == 1){ # same as before
+    ## make results data frame
+    PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC)
+  }
   
   if (removeplots==FALSE){
     # do PAC plot
     p2 <- ggplot2::ggplot(data=PAC_res_df, ggplot2::aes(x=K, y=PAC_SCORE)) + ggplot2::geom_line(colour = "sky blue", size = 2) + ggplot2::geom_point(colour = "black", size = 3) +
       ggplot2::theme_bw() + 
-      ggplot2::theme(axis.text.y = ggplot2::element_text(size = 26, colour = 'black'),
-                     axis.text.x = ggplot2::element_text(size = 26, colour = 'black'),
-                     axis.title.x = ggplot2::element_text(size = 26),
-                     axis.title.y = ggplot2::element_text(size = 26),
-                     legend.text = ggplot2::element_text(size = 26),
-                     legend.title = ggplot2::element_text(size = 26),
-                     plot.title = ggplot2::element_text(size = 26, colour = 'black', hjust = 0.5),
+      ggplot2::theme(axis.text.y = ggplot2::element_text(size = fsize, colour = 'black'),
+                     axis.text.x = ggplot2::element_text(size = fsize, colour = 'black'),
+                     axis.title.x = ggplot2::element_text(size = fsize),
+                     axis.title.y = ggplot2::element_text(size = fsize),
+                     legend.text = ggplot2::element_text(size = fsize),
+                     legend.title = ggplot2::element_text(size = fsize),
+                     plot.title = ggplot2::element_text(size = fsize, colour = 'black', hjust = 0.5),
                      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
       ggplot2::scale_x_continuous(breaks=c(seq(0,maxK,1))) +
-      ggplot2::ylab('PAC Score') +
-      ggplot2::xlab('Number of Clusters') +
+      ggplot2::ylab('PAC') +
+      ggplot2::xlab('K') +
       ggplot2::labs(title = "Real Data")
     if (printres == TRUE){
-      png('PACscore.png', height = 14, width = 20, units = 'cm', 
+      png('PACscore.png', height = 14, width = 23, units = 'cm', 
           type = 'cairo', res = 900)
     }
     print(p2)
@@ -864,6 +889,37 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
     if (printres == TRUE){
       print(p)
       print(p2)
+    }
+  }
+  
+  if (method == 2){ # extra plot is penalised PAC score
+    if (removeplots==FALSE){
+      # do PAC plot
+      p3 <- ggplot2::ggplot(data=PAC_res_df, ggplot2::aes(x=K, y=PCSI)) + ggplot2::geom_line(colour = "tomato", size = 2) + ggplot2::geom_point(colour = "black", size = 3) +
+        ggplot2::theme_bw() + 
+        ggplot2::theme(axis.text.y = ggplot2::element_text(size = fsize, colour = 'black'),
+                       axis.text.x = ggplot2::element_text(size = fsize, colour = 'black'),
+                       axis.title.x = ggplot2::element_text(size = fsize),
+                       axis.title.y = ggplot2::element_text(size = fsize),
+                       legend.text = ggplot2::element_text(size = fsize),
+                       legend.title = ggplot2::element_text(size = fsize),
+                       plot.title = ggplot2::element_text(size = fsize, colour = 'black', hjust = 0.5),
+                       panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
+        ggplot2::scale_x_continuous(breaks=c(seq(0,maxK,1))) +
+        ggplot2::ylab('PCSI') +
+        ggplot2::xlab('K') +
+        ggplot2::labs(title = "Real Data")
+      if (printres == TRUE){
+        png('PCSI.png', height = 14, width = 23, units = 'cm', 
+            type = 'cairo', res = 900)
+      }
+      print(p3)
+      if (printres == TRUE){
+        dev.off()
+      }
+      if (printres == TRUE){
+        print(p3)
+      }
     }
   }
   

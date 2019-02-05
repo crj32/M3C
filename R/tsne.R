@@ -17,8 +17,8 @@
 #' @examples
 #' TSNE <- tsne(mydata,perplex=15)
 
-tsne <- function(mydata, K=FALSE, labels=FALSE, perplex=15, printres=FALSE, seed=FALSE, axistextsize = 30,
-                 legendtextsize = 30, dotsize = 6, textlabelsize = 4){
+tsne <- function(mydata, K=FALSE, labels=FALSE, perplex=15, printres=FALSE, seed=FALSE, axistextsize = 18,
+                 legendtextsize = 18, dotsize = 5, textlabelsize = 4){
   if (seed != FALSE){
     set.seed(seed)
   }

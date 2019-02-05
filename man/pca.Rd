@@ -5,8 +5,8 @@
 \title{pca: A principal component analysis function}
 \usage{
 pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
-  text = FALSE, axistextsize = 30, legendtextsize = 30,
-  dotsize = 6, textlabelsize = 4)
+  text = FALSE, axistextsize = 18, legendtextsize = 18,
+  dotsize = 5, textlabelsize = 4)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}

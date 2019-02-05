@@ -5,8 +5,8 @@
 \title{tsne: A tsne function}
 \usage{
 tsne(mydata, K = FALSE, labels = FALSE, perplex = 15,
-  printres = FALSE, seed = FALSE, axistextsize = 30,
-  legendtextsize = 30, dotsize = 6, textlabelsize = 4)
+  printres = FALSE, seed = FALSE, axistextsize = 18,
+  legendtextsize = 18, dotsize = 5, textlabelsize = 4)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results (list) object: if dataframe/matrix should have samples as columns and rows as features}

@@ -1,9 +1,9 @@
 Package: M3C
 Title: Monte Carlo Reference-based Consensus Clustering
-Version: 1.5.8
+Version: 1.5.81
 Authors@R: person("Christopher", "John", email = "chris.r.john86@gmail.com", role = c("aut", "cre"))
-Description: M3C is an improved consensus clustering algorithm based on the work of Monti et al. (2003).
-Depends: R (>= 3.4.0)
+Description: M3C is a consensus clustering algorithm that uses a Monte Carlo simulation to eliminate overfitting and can reject the null hypothesis K=1.
+Depends: R (>= 3.5.0)
 License: AGPL-3
 Encoding: UTF-8
 LazyData: true
@@ -22,9 +22,10 @@ Imports:
 	sigclust,
 	Rtsne,
 	survival,
-	corpcor
+	corpcor,
+	umap
 Suggests: knitr,
     rmarkdown
 VignetteBuilder: knitr
-RoxygenNote: 6.0.1
+RoxygenNote: 6.1.1
 biocViews: Clustering, GeneExpression, Transcription, RNASeq, Sequencing, ImmunoOncology

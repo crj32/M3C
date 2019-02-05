@@ -16,8 +16,8 @@
 #' @examples
 #' PCA <- pca(mydata)
 
-pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 30,
-                legendtextsize = 30, dotsize = 6, textlabelsize = 4){
+pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
+                legendtextsize = 18, dotsize = 5, textlabelsize = 4){
   if (K == FALSE && labels == FALSE && text == FALSE){
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix

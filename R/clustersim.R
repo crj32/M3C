@@ -129,10 +129,10 @@ clustersim <- function(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE, s
   p <- ggplot2::ggplot(data = scores, ggplot2::aes(x = PC1, y = PC2) ) + ggplot2::geom_point(ggplot2::aes(colour = factor(final_df$clusters_km)), size = 6) + 
     ggplot2::theme_bw() + 
     ggplot2::theme(legend.position = "none", panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank(),
-          axis.text.y = ggplot2::element_text(size = 30, colour = 'black'),
-          axis.text.x = ggplot2::element_text(size = 30, colour = 'black'),
-          axis.title.x = ggplot2::element_text(size = 30),
-          axis.title.y = ggplot2::element_text(size = 30)) # 31 old
+          axis.text.y = ggplot2::element_text(size = 18, colour = 'black'),
+          axis.text.x = ggplot2::element_text(size = 18, colour = 'black'),
+          axis.title.x = ggplot2::element_text(size = 18),
+          axis.title.y = ggplot2::element_text(size = 18)) # 31 old
   if (print == TRUE){ # width 22 for figure1, width xx for figure 2
     png(paste('PCAsim',n,n2,r,K,alpha,wobble,'.png'), height = 20, width = 22, units = 'cm', # 16 old
          res = 900, type="cairo")

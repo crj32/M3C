@@ -1,7 +1,7 @@
 ---
 title: "M3C: Monte Carlo Reference-based Consensus Clustering"
 author: "Christopher R John"
-date: "24/05/2017"
+date: "30/01/2019"
 output: 
   BiocStyle::html_document
 vignette: >
@@ -12,13 +12,15 @@ vignette: >
 
 # Abstract
 
-Genome-wide data is used to stratify large complex datasets into classes using class discovery algorithms. A widely applied technique is consensus clustering, however; the approach is prone to overfitting and false positives. These issues arise from not considering reference distributions while selecting the number of classes (K). As a solution, we developed Monte Carlo reference-based consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to select its value. Using a reference, that maintains the correlation structure of the input features, eliminates the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. 
+Genome-wide data is used to stratify large complex datasets into classes using class discovery algorithms. A widely applied technique is consensus clustering, however; the approach is prone to overfitting and false positives. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C). M3C uses a multi-core enabled Monte Carlo simulation to generate null distributions along the range of K which are used to select its value. Using a reference, that maintains the correlation structure of the input features, eliminates the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. A faster method is included which eliminates overfitting by using a penalty term, the Penalised Cluster Stability Index (PCSI).
 
 # Prerequisites
 
 **M3C recommended spec**
 
-A relatively new and fast multi-core computer or cluster. If your machine is not particuarly fast, you can reduce the Monte Carlo iterations down to 5-50x. Running with a small number of reference datasets is better than using no reference at all.
+For the Monte Carlo reference (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If your machine is not particuarly fast, you can reduce the Monte Carlo iterations down to 10-50x. 
+
+The second method (method=2) that uses a penalty term is faster, but you will not get p values for each value of K.
 
 **M3C requires**   
 
@@ -38,7 +40,7 @@ Annotation data frame, where every row is a patient or sample and columns refer 
 
 M3C also accepts clinical or biological data for a statistical analysis with the discovered classes. Again the 'ID' column must exist in the annotation data frame. If the data is continuous or categorical, a Kruskal-Wallis or chi-squared test are performed, respectively. For these two tests, a 'variable' parameter must be given which is a string that defines the dependent variable in the users annotation data frame. If the data is survival data for cancer, the annotation data frame must have an 'ID' column first, followed by a 'Time' and 'Death' column (where 0 is no death and 1 is death or time until last visit). 
 
-# Example workflow: TCGA glioblastoma dataset
+# Example workflow I: TCGA glioblastoma dataset
 
 The M3C package contains the glioblastoma (GBM) cancer microarray dataset for testing (reduced to 50 samples randomly). The original optimal cluster decision was 4. First, we load M3C which also loads the GBM data.
 
@@ -97,7 +99,7 @@ res$clinicalres
 
 Now we will take a look at some of the plots M3C generates.  
 
-This is a CDF plot of the consensus matrices for our test data. We are looking for the value of K with the flattest curve and this can be quantified using the PAC metric (Șenbabaoğlu et al., 2014). In the CDF and following PAC plot we can see the overfitting effect of consensus clustering where as K increases so does the apparent stability of the results for any given dataset, this we correct for by using a reference.
+This is a CDF plot of the consensus matrices for our test data. We are looking for the value of K with the flattest curve and this can be quantified using the PAC metric (Senbabaoglu et al., 2014). In the CDF and following PAC plot we can see the overfitting effect of consensus clustering where as K increases so does the apparent stability of the results for any given dataset, this we correct for by using a reference.
 \newline  
   
 ![*Figure 2: CDF plot for real data*](CDF.png)
@@ -167,31 +169,48 @@ NMF::aheatmap(ccmatrix, annCol = annon, Colv = NA, Rowv = NA,
 
 ## Final check of consensus cluster structure
 
-A last analysis we recommend to do is to examine how the clusters are arranged in principal component and tSNE latent variable space. To do this the pca and tsne functions can be run directly on the M3C output object. We may need to experiment with the perplexity parameter of tSNE in the range of 5-20 to better suit the data. Both functions can also be used to print their results to the working directory.
+A last analysis we recommend to do is to examine how the clusters are arranged in principal component and t-SNE latent variable space. To do this the pca and t-SNE functions can be run directly on the M3C output object. We may need to experiment with the perplexity parameter of t-SNE in the range of 5-20 to better suit the data. Both functions can also be used to print their results to the working directory. It is also possible to run UMAP on the data in a streamlined manner, see ?umap.
 
 ```{r,fig.show = 'hide',message=FALSE,results='hide'}
   PCA2 <- pca(res, K=4)
   TSNE <- tsne(res, K=4, perplex=15)
 ```
 
-We can see in the PCA and tSNE plots that clusters 3 and 4 are closer together. Doing a visual check like this allows the user to ensure there are no obvious artifacts that have occured. 
+We can see in the PCA and t-SNE plots that clusters 3 and 4 are closer together. Doing a visual check like this allows the user to ensure there are no obvious artifacts that have occured. 
 
 ![*Figure 9: PCA of a 4 cluster test dataset *](PCApostclustering.png)
 
-![*Figure 10: tSNE of a 4 cluster simulated dataset *](TSNEpostclustering.png)
+![*Figure 10: t-SNE of a 4 cluster simulated dataset *](TSNEpostclustering.png)
+
+# Example workflow II: Fast penalty method
+
+## Running M3C in fast mode
+
+The second method minimises log(PAC) subject to lambda*K to find the optimal K. This metric is called the Penalised Cluster Stability Index (PCSI). 
+
+We recommend using this method if the user has a massive dataset or little time. It will correct for the overfitting effect observed with the PAC score.
+
+```{r,fig.show = 'hide',message=FALSE,results='hide'}
+res <- M3C(mydata, method = 2)
+```
+
+Here we can see the PCSI is minimised at K=4, this is the optimal K using this method.
+
+![*Figure 11: PCSI results *](PCSI.png)
 
 # Additional functions
 
 ## Generating simulated data
 
-We have included a function for generating simulated data to test various clustering algorithms from the Șenbabaoğlu et al. (2014) study. This cluster simulator is simple to use. Using the code below, clustersim generates a dataset with 225 samples, 900 features, a radius cut-off for the initial square of 8, a cluster number of 4, a seperation of clusters of 0.75, and a degree of noise added to each co-ordinate of 0.025. After running, a PCA will print of the data so we can visualise the 4 clusters in principle component space. 
+We have included a function for generating simulated data to test various clustering algorithms. This cluster simulator is simple to use. Using the code below, clustersim generates a dataset with 225 samples, 900 features, a radius cut-off for the initial square of 8, a cluster number of 4, a seperation of clusters of 0.75, and a degree of noise added to each co-ordinate of 0.025. After running, a PCA will print of the data so we can visualise the 4 clusters in principle component space. 
+
 Note, clustersim's method has recently been replaced with the CRAN package, clusterlab. We recommend using this for more sophisticated benchmarking. Clusterlab can generate Gaussian clusters with controlled variance and spacing, it can also create more complex higher order structures.
 
 ```{r,fig.show = 'hide',message=FALSE,results='hide'}
   res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = FALSE, seed=123)
 ```
 
-![*Figure 11: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
+![*Figure 12: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
 ## Filtering features by variance
 
@@ -203,7 +222,7 @@ A feature filter function has been included in M3C that uses the coefficient of 
 
 # Closing comments
 
-In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Șenbabaoğlu et al. (2014), and Monti et al. (2003). 
+In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Senbabaoglu et al. (2014), and Monti et al. (2003). 
 
 During the development of M3C, we also devised a flexible method and associated CRAN package for generating Gaussian clusters called, clusterlab (https://cran.r-project.org/web/packages/clusterlab/index.html). This tool should prove useful in testing the performance of class discovery algorithms.
 
@@ -211,7 +230,7 @@ During the development of M3C, we also devised a flexible method and associated 
 
 Monti, Stefano, et al. "Consensus clustering: a resampling-based method for class discovery and visualization of gene expression microarray data." Machine learning 52.1 (2003): 91-118.
 
-Șenbabaoğlu, Yasin, George Michailidis, and Jun Z. Li. "Critical limitations of consensus clustering in class discovery." Scientific reports 4 (2014): 6207.
+Senbabaoglu, Yasin, George Michailidis, and Jun Z. Li. "Critical limitations of consensus clustering in class discovery." Scientific reports 4 (2014): 6207.
 
 Tibshirani, Robert, Guenther Walther, and Trevor Hastie. "Estimating the number of clusters in a data set via the gap statistic." Journal of the Royal Statistical Society: Series B (Statistical Methodology) 63.2 (2001): 411-423.
 

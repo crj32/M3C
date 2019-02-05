@@ -4,19 +4,17 @@
 \alias{M3C}
 \title{M3C: Monte Carlo Reference-based Consensus Clustering}
 \usage{
-M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
-  des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
+M3C(mydata, cores = 1, iters = 100, maxK = 10, des = NULL,
+  ref_method = c("reverse-pca", "chol"), repsref = 100,
   repsreal = 100, clusteralg = c("pam", "km", "spectral", "hc"),
   distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9,
   printres = FALSE, printheatmaps = FALSE, showheatmaps = FALSE,
   seed = NULL, removeplots = FALSE, dend = FALSE, silent = FALSE,
   doanalysis = FALSE, analysistype = c("survival", "kw", "chi"),
-  variable = NULL)
+  variable = NULL, fsize = 18, method = 1)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
-
-\item{montecarlo}{Logical flag: whether to run the Monte Carlo simulation or not (recommended: TRUE)}
 
 \item{cores}{Numerical value: how many cores to split the monte carlo simulation over}
 
@@ -59,6 +57,10 @@ M3C(mydata, montecarlo = TRUE, cores = 1, iters = 100, maxK = 10,
 \item{analysistype}{Character string: refers to which kind of statistical analysis to do on the data, survival, Kruskal-Wallis (kw), or chi-squared (chi)}
 
 \item{variable}{Character string: if not doing survival what is the dependant variable (column name) called in the data frame}
+
+\item{fsize}{Numerical value: determines the font size of the ggplot2 plots}
+
+\item{method}{Numerical value: 1 refers to the Monte Carlo reference procedure, 2 to using a penalty term (faster)}
 }
 \value{
 A list, containing: 
@@ -74,7 +76,8 @@ of stability scores. The Monte Carlo simulations maintains the feature correlati
 input data. Then the null distribution is used to compare the reference scores with the real scores
 and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
 the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
-comparison against the reference mean.
+comparison against the reference mean. A faster alternative is also included that includes a penalty
+term to prevent overfitting, called the Penalised Cluster Stability Index (PCSI).
 }
 \examples{
 res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 

@@ -6,7 +6,7 @@
 #' input data. Then the null distribution is used to compare the reference scores with the real scores
 #' and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
 #' the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
-#' comparison against the reference mean. A faster alternative is also included that includes a penalty
+#' comparison against the reference mean. A faster alternative is included that includes a penalty
 #' term to prevent overfitting, called the Penalised Cluster Stability Index (PCSI). 
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
@@ -42,8 +42,7 @@
 #' @export
 #'
 #' @examples
-#' res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
-#' maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = FALSE, seed = 123, des = desx)
+#' res <- M3C(mydata)
 M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
                 des = NULL, ref_method = c('reverse-pca', 'chol'), repsref = 100, repsreal = 100,
                 clusteralg = c('pam', 'km', 'spectral', 'hc'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,

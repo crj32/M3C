@@ -551,7 +551,8 @@ M3Creal <- function( d=NULL, # function for real data
     }
     annotation$consensuscluster <- as.factor(vec2)
     
-    newList <- list("consensus_matrix" = pc, 'ordered_data' = data, 'ordered_annotation' = annotation) # you can remove ml
+    newList <- list("consensus_matrix" = pc, 'ordered_data' = data, 'ordered_annotation' = annotation, 
+                    "assignments" = ct) # you can remove ml
     resultslist[[tk]] <- newList
   }
   

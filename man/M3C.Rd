@@ -76,10 +76,9 @@ of stability scores. The Monte Carlo simulations maintains the feature correlati
 input data. Then the null distribution is used to compare the reference scores with the real scores
 and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
 the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
-comparison against the reference mean. A faster alternative is also included that includes a penalty
+comparison against the reference mean. A faster alternative is included that includes a penalty
 term to prevent overfitting, called the Penalised Cluster Stability Index (PCSI).
 }
 \examples{
-res <- M3C(mydata, cores=1, iters=100, ref_method = 'reverse-pca', montecarlo = TRUE,printres = FALSE, 
-maxK = 10, showheatmaps = FALSE, repsreal = 100, repsref = 100,printheatmaps = FALSE, seed = 123, des = desx)
+res <- M3C(mydata)
 }

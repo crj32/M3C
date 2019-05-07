@@ -27,6 +27,7 @@
 #' @param removeplots Logical flag: whether to remove all plots
 #' @param fsize Numerical value: determines the font size of the ggplot2 plots
 #' @param method Numerical value: 1 refers to the Monte Carlo reference procedure, 2 to using a penalty term (faster)
+#' @param lambda Numerical value: controls the strength of the penalty on the PAC score (default = 0.1)
 #' @param seed Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here
 #' @param dend Logical flag: whether to compute the dendrogram and p values for the optimal K or not
 #' @param silent Logical flag: whether to remove messages or not
@@ -48,7 +49,7 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
                 clusteralg = c('pam', 'km', 'spectral', 'hc'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
                 printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL, removeplots = FALSE, dend = FALSE,
                 silent = FALSE, doanalysis = FALSE , analysistype = c('survival','kw','chi'), variable = NULL,
-                fsize = 18, method = 1){
+                fsize = 18, method = 1, lambda = 0.1){
   
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -65,9 +66,9 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
   }
   
   if (silent != TRUE){
-    message('***M3C: Monte Carlo Reference-based Consensus Clustering***')
+    message('***M3C***')
     if (method == 1){
-      message('method: reference simulation')
+      message('method: Monte Carlo simulation')
     }else if (method == 2){
       message('method: penalised stability')
     }
@@ -207,7 +208,7 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     close(pb)
     stopCluster(cl)
     if (silent != TRUE){
-      message('finished generating reference distribution')
+      message('done.')
     }
     ## finished monte carlo, results are in ls matrix
     ## real data PAC score calculation
@@ -256,19 +257,6 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     }, numeric(1))
     real$BETA_P <- pvals2
     real$P_SCORE <- -log10(real$BETA_P)
-    
-    ## select optimal K using the beta p values then compute dendrogram and p values
-    ## still need to set up dend code for remove plots equals true
-    if (dend == TRUE){
-      if (silent != TRUE){
-        message('doing the dendrogram')
-      }
-      optK <- which.min(real$BETA_P)+1 # use the real object
-      M3Cdendcompres <- M3Cdendcomputations(optK, mydata, allresults, printres=printres)
-      if (silent != TRUE){
-        message('finished')
-      }
-    }
     
     if (removeplots == FALSE){ # we are doing the plots
       # plot real vs reference results
@@ -337,7 +325,7 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
                         showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
                         seed=seed, removeplots=removeplots, variable = variable,
                         silent=silent, doanalysis=doanalysis, analysistype=analysistype, 
-                        method=method, fsize=fsize) # png to file
+                        method=method, fsize=fsize, lambda=lambda) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
     if (doanalysis == TRUE){
@@ -354,6 +342,34 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     write.csv(real, file = 'pacresultfile.csv', row.names = FALSE)
   }
   
+  if (method == 1){
+    optk <- which.max(real$RCSI)+1
+  }else if (method == 2){
+    optk <- which.min(real$PCSI)+1
+  }
+  
+  ## dend code
+  if (dend == TRUE){
+    if (silent != TRUE){
+      message('doing the dendrogram')
+    }
+    M3Cdendcompres <- M3Cdendcomputations(optk, mydata, allresults, printres=printres)
+    if (silent != TRUE){
+      message('done.')
+    }
+  }
+  
+  if (silent != TRUE){
+    # print optimal K
+    if (method == 1){
+      message(paste('optimal K:',optk))
+    }else if (method == 2){
+      message(paste('optimal K:',optk))
+    }
+  }
+  # get optk assignments out
+  assignments <- as.numeric(allresults[[optk]]$assignments)
+  
   if (montecarlo == TRUE){
     # return results with monte carlo
     ls <- data.frame(ls)
@@ -361,23 +377,25 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     colnames(ls) <- c(2:maxK)
     if (dend == TRUE & doanalysis == TRUE){
       return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
-                  'dendres' = M3Cdendcompres, 'clinicalres' = clinicalres))
+                  'dendres' = M3Cdendcompres, 'clinicalres' = clinicalres, 'assignments' = assignments))
     }else if (dend == TRUE & doanalysis == FALSE){
       return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls,
-                  'dendres' = M3Cdendcompres))
+                  'dendres' = M3Cdendcompres, 'assignments' = assignments))
     }else if (dend == FALSE & doanalysis == TRUE){
       return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
-                  'clinicalres' = clinicalres))
+                  'clinicalres' = clinicalres, 'assignments' = assignments))
     }else if (dend == FALSE & doanalysis == FALSE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls))
+      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
+                  'assignments' = assignments))
     }
   }
   if (montecarlo == FALSE){
     # return results without monte carlo
     if (doanalysis == TRUE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'clinicalres' = clinicalres)) 
+      return(list("realdataresults" = allresults, 'scores' = real, 'clinicalres' = clinicalres, 
+                  'assignments' = assignments)) 
     }else{
-      return(list("realdataresults" = allresults, 'scores' = real)) 
+      return(list("realdataresults" = allresults, 'scores' = real, 'assignments'= assignments)) 
     }
   }
 }
@@ -426,7 +444,8 @@ M3Creal <- function( d=NULL, # function for real data
                      analysistype=analysistype,
                      variable=variable,
                      fsize=fsize,
-                     method=method) {
+                     method=method,
+                     lambda=lambda) {
   if (silent != TRUE){
     message('running consensus cluster algorithm for real data...')
   }
@@ -446,7 +465,7 @@ M3Creal <- function( d=NULL, # function for real data
               distance=distance,
               corUse=corUse)
   if (silent != TRUE){
-    message('finished')
+    message('done.')
   }
   ## loop over each consensus matrix and get the results out
   resultslist <- list() # holds all results for each value of K
@@ -496,15 +515,9 @@ M3Creal <- function( d=NULL, # function for real data
     neworder2 <- gsub('-', '.', neworder1)
     df <- data.frame(m_matrix)
     newdes <- data.frame(ID = colnames(df), consensuscluster = factor(clusteringdf$cluster))
-    #colnames(df) <- gsub('X', '', colnames(df))
-    #neworder2 <- gsub('X', '', neworder2)
     data <- df[neworder2]
     if (is.null(des) == TRUE){ 
-      neworder1 <- gsub('-', '.', neworder1) # cc code is changing - to . so change back
-      #vec <- grepl('X', colnames(d)) # check for X's in original colnames if dont exist run this code
-      #if (all(vec == FALSE)){ # just changed this to FALSE
-      #newdes$ID <- gsub('X', '', newdes$ID) # this creates problem if X in original names
-      #}
+      neworder1 <- gsub('-', '.', neworder1) 
       newerdes <- newdes[match(neworder1, newdes$ID),]
       annotation <- data.frame(newerdes$consensuscluster)
       row.names(annotation) <- newerdes$ID
@@ -512,12 +525,7 @@ M3Creal <- function( d=NULL, # function for real data
     }
     if (is.null(des) == FALSE){
       neworder1 <- gsub('-', '.', neworder1)
-      #neworder1 <- gsub('X', '', neworder1)
       des$ID <- gsub('-', '.', des$ID) # this is a problem with formatting of the ids - check out later
-      #vec <- grepl('X', colnames(d)) # check for X's in original colnames if dont exist run this code
-      #if (all(vec == FALSE)){ # changed to true** then back to false, problems here
-      #  newdes$ID <- gsub('X', '', newdes$ID) # this creates problem if X in original names
-      #}
       merged <- merge(newdes, des, by = 'ID') # name to merge by
       newdes <- merged
       newerdes <- newdes[match(neworder1, newdes$ID),]
@@ -591,7 +599,7 @@ M3Creal <- function( d=NULL, # function for real data
     }
   }
   pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots, fsize=fsize, 
-                 method=method) # this runs the new CDF function with PAC score
+                 method=method, lambda=lambda) # this runs the new CDF function with PAC score
   if (doanalysis == TRUE){
     listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res, 'clinicalres' = statisticalres) 
   }else{
@@ -639,7 +647,7 @@ M3Cref <- function( d=NULL, # function for reference data
               distance=distance,
               corUse=corUse)
   if (silent != TRUE){
-    message('finished.')
+    message('done.')
   }
   pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2, removeplots=TRUE, fsize=18, method=1) # this runs the new CDF function with PAC score
   newList <- list('pac_scores' = pac_res) # now returning a fairly coherant list of results
@@ -799,7 +807,8 @@ sampleCols <- function( d,
 }
 
 CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
-             removeplots=removeplots,fsize=18,method=1){ # calculate CDF and PAC score
+             removeplots=removeplots,fsize=18,method=1,
+             lambda=0.1){ # calculate CDF and PAC score
   
   ## calculate CDF
   maxK = length(ml) # match with max K
@@ -854,7 +863,7 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
     ## PCSI calculation using penalty term
     PAC[PAC==0] <- 0.0000001
     ks <- seq(2,maxK)
-    PCSI <- log(PAC)+0.1*ks
+    PCSI <- log(PAC)+lambda*ks
     ## make results data frame
     PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC, PCSI=PCSI)
   }else if (method == 1){ # same as before
@@ -1068,28 +1077,29 @@ clust.medoid = function(i, distmat, clusters) {
   names(which.min(rowSums( distmat[ind, ind, drop = FALSE] )))
 }
 
-rbfkernel <- function (X = NULL) { # calculate gaussian kernel with local sigma
-  NN <- 3 # nearest neighbours (2-3)
-  matrix<-X
-  dm <- as.matrix(dist(t(matrix)))
+rbfkernel <- function (mat, K=3) { # calculate gaussian kernel with local sigma
+  n <- ncol(mat)
+  NN <- K # nearest neighbours (2-3)
+  dm <- as.matrix(dist(t(mat)))
   kn <- c() # find kth nearest neighbour for each sample 1...N
-  for (i in seq(1,nrow(dm))){
-    sortedvec <- as.numeric(sort(dm[i,]))
+  for (i in seq_len(n)) {
+    sortedvec <- as.numeric(sort.int(dm[i, ]))
     sortedvec <- sortedvec[!sortedvec == 0]
-    kn <- c(kn,sortedvec[NN])
+    kn <- c(kn, sortedvec[NN])
   }
   sigmamatrix <- kn %o% kn # make the symmetrical matrix of kth nearest neighbours distances
   upper <- -dm^2 # calculate the numerator beforehand
-  newmatrix <- matrix(ncol=ncol(upper),nrow=nrow(upper))
-  for (i in seq(1,ncol(upper))){ # for each column
-    for (j in seq(1,nrow(upper))){ # row each row
-      lowerval <- sigmamatrix[j,i] # retrieve sigma
-      upperval <- upper[j,i]
-      done <- exp(upperval/lowerval) # calculate local affinity
-      newmatrix[j,i] <- done
+  out <- matrix(nrow = n, ncol = n)
+  for (i in 2:n) {
+    for (j in 1:(i - 1)) {
+      lowerval <- sigmamatrix[i, j] # retrieve sigma
+      upperval <- upper[i, j]
+      out[i, j] <- exp(upperval / (lowerval)) # calculate local affinity
     }
   }
-  done <- newmatrix # output kernel
-  diag(done) <- 0 # diagonal must be zero
-  return(done)
+  # reflect, diag = 1
+  out <- pmax(out, t(out), na.rm = TRUE)
+  diag(out) <- 1
+  ## return kernel
+  return(out)
 }

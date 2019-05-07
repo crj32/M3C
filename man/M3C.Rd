@@ -11,7 +11,7 @@ M3C(mydata, cores = 1, iters = 100, maxK = 10, des = NULL,
   printres = FALSE, printheatmaps = FALSE, showheatmaps = FALSE,
   seed = NULL, removeplots = FALSE, dend = FALSE, silent = FALSE,
   doanalysis = FALSE, analysistype = c("survival", "kw", "chi"),
-  variable = NULL, fsize = 18, method = 1)
+  variable = NULL, fsize = 18, method = 1, lambda = 0.1)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
@@ -61,6 +61,8 @@ M3C(mydata, cores = 1, iters = 100, maxK = 10, des = NULL,
 \item{fsize}{Numerical value: determines the font size of the ggplot2 plots}
 
 \item{method}{Numerical value: 1 refers to the Monte Carlo reference procedure, 2 to using a penalty term (faster)}
+
+\item{lambda}{Numerical value: controls the strength of the penalty on the PAC score (default = 0.1)}
 }
 \value{
 A list, containing: 

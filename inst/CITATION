@@ -1,0 +1,17 @@
+citEntry(entry="article",
+         title = "M3C: A Monte Carlo reference-based consensus clustering algorithm",
+         author = personList( as.person("Christopher R. John"),
+                              as.person("David Watson"),
+                              as.person("Myles Lewis"),
+                              as.person("Dominic Russ"),
+                              as.person("Katriona Goldmann"),
+                              as.person("Michael Ehrenstein"),
+                              as.person("Costantino Pitzalis"),
+                              as.person("Michael Barnes")),
+         year = 2018,
+         journal = "bioRxiv",
+         doi = "https://doi.org/10.1101/377002",
+         textVersion = 
+         paste("John, C.R., Watson, D., Lewis, M.", 
+               "M3C: A Monte Carlo reference-based consensus clustering algorithm",
+"bioRxiv (2018): 377002" ) )

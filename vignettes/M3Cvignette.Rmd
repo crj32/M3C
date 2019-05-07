@@ -32,7 +32,7 @@ The data should be filtered to remove features with no or very low signal, and f
 
 Outliers should be removed, we include a PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
-We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 75 and above). However, with sample sizes well over 1000, M3C will become highly time consuming so there is a upper limit. M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia (75-1000 samples).
+We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix is makes, it is not suited for single cell RNA-seq data. 
 
 **M3C also accepts optionally**
 

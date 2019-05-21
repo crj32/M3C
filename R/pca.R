@@ -64,7 +64,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
   }else if (K == FALSE && labels != FALSE){
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
-    p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(labels)), size = dotsize) + 
+    p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
       theme_bw() + 
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             axis.text.y = element_text(size = axistextsize, colour = 'black'),

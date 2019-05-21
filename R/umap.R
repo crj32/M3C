@@ -67,7 +67,7 @@ umap <- function(mydata, K=FALSE, labels=FALSE, printres=FALSE, seed=FALSE, axis
   }else if (K == FALSE && labels != FALSE){
     umap <- umap::umap(t(as.matrix(mydata)))
     scores <- data.frame(umap$layout) # PC score matrix
-    p <- ggplot(data = scores, aes(x = X1, y = X2) ) + geom_point(aes(colour = factor(labels)), size = dotsize) +
+    p <- ggplot(data = scores, aes(x = X1, y = X2) ) + geom_point(aes(colour = labels), size = dotsize) +
       theme_bw() +
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             axis.text.y = element_text(size = axistextsize, colour = 'black'),

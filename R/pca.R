@@ -8,7 +8,12 @@
 #' @param axistextsize Numerical value: axis text size
 #' @param legendtextsize Numerical value: legend text size
 #' @param dotsize Numerical value: dot size
-#' @param textlabelsize Numerical value: text inside plot label size   
+#' @param textlabelsize Numerical value: text inside plot label size 
+#' @param legendtitle Character vector: text legend title   
+#' @param controlscale Logical flag: whether to control the colour scale
+#' @param scale Numerical value: 1=spectral palette, 2=manual low and high palette, else= default
+#' @param low Character vector: scale low colour
+#' @param high Character vector: scale high colour
 #'
 #' @return A PCA plot object
 #' @export
@@ -17,7 +22,8 @@
 #' PCA <- pca(mydata)
 
 pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
-                legendtextsize = 18, dotsize = 5, textlabelsize = 4){
+                legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
+                controlscale = FALSE, scale = 1, low = 'blue', high = 'red'){
   if (K == FALSE && labels == FALSE && text == FALSE){
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
@@ -53,7 +59,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.title.y = element_text(size = axistextsize),
             legend.title = element_text(size = legendtextsize),
             legend.text = element_text(size = legendtextsize)) + 
-      guides(colour=guide_legend(title="Cluster"))
+      guides(colour=guide_legend(title="Cluster")) 
     if (printres == TRUE){
       message('printing PCA to current directory...')
       png('PCApostclustering.png', height = 20, width = 26, units = 'cm',
@@ -61,19 +67,62 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
       print(p) # print ggplot CDF in main plotting window
       dev.off()
     }
-  }else if (K == FALSE && labels != FALSE){
+  }else if (K == FALSE && labels != FALSE){ ################ KEY
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
-    p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
-      theme_bw() + 
-      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-            axis.text.y = element_text(size = axistextsize, colour = 'black'),
-            axis.text.x = element_text(size = axistextsize, colour = 'black'),
-            axis.title.x = element_text(size = axistextsize),
-            axis.title.y = element_text(size = axistextsize),
-            legend.title = element_text(size = legendtextsize),
-            legend.text = element_text(size = legendtextsize)) + 
-      guides(colour=guide_legend(title="Group"))
+    if (controlscale == TRUE){
+      if (scale == 1){
+        p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
+          theme_bw() + 
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                axis.text.y = element_text(size = axistextsize, colour = 'black'),
+                axis.text.x = element_text(size = axistextsize, colour = 'black'),
+                axis.title.x = element_text(size = axistextsize),
+                axis.title.y = element_text(size = axistextsize),
+                legend.title = element_text(size = legendtextsize),
+                legend.text = element_text(size = legendtextsize)) + 
+          #guides(colour=guide_legend(title=legendtitle)) +
+          labs(colour = legendtitle) + scale_colour_distiller(palette = "Spectral")
+        #scale_colour_gradient(low="red", high="white")
+      }else if (scale == 2){
+        p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
+          theme_bw() + 
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                axis.text.y = element_text(size = axistextsize, colour = 'black'),
+                axis.text.x = element_text(size = axistextsize, colour = 'black'),
+                axis.title.x = element_text(size = axistextsize),
+                axis.title.y = element_text(size = axistextsize),
+                legend.title = element_text(size = legendtextsize),
+                legend.text = element_text(size = legendtextsize)) + 
+          #guides(colour=guide_legend(title=legendtitle)) +
+          labs(colour = legendtitle) + #scale_colour_distiller(palette = "Spectral")
+        scale_colour_gradient(low=low, high=high)
+      }else{
+        p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
+          theme_bw() + 
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                axis.text.y = element_text(size = axistextsize, colour = 'black'),
+                axis.text.x = element_text(size = axistextsize, colour = 'black'),
+                axis.title.x = element_text(size = axistextsize),
+                axis.title.y = element_text(size = axistextsize),
+                legend.title = element_text(size = legendtextsize),
+                legend.text = element_text(size = legendtextsize)) + 
+          #guides(colour=guide_legend(title=legendtitle)) +
+          labs(colour = legendtitle)
+      }
+    }else{
+      p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
+        theme_bw() + 
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              axis.text.y = element_text(size = axistextsize, colour = 'black'),
+              axis.text.x = element_text(size = axistextsize, colour = 'black'),
+              axis.title.x = element_text(size = axistextsize),
+              axis.title.y = element_text(size = axistextsize),
+              legend.title = element_text(size = legendtextsize),
+              legend.text = element_text(size = legendtextsize)) + 
+        #guides(colour=guide_legend(title=legendtitle)) +
+        labs(colour = legendtitle)
+    }
     if (printres == TRUE){
       message('printing PCA to current directory...')
       png('PCAlabeled.png', height = 20, width = 26, units = 'cm',

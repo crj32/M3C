@@ -6,7 +6,8 @@
 \usage{
 pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
   text = FALSE, axistextsize = 18, legendtextsize = 18,
-  dotsize = 5, textlabelsize = 4)
+  dotsize = 5, textlabelsize = 4, legendtitle = "Group",
+  controlscale = FALSE, scale = 1, low = "blue", high = "red")
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
@@ -26,6 +27,16 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
 \item{dotsize}{Numerical value: dot size}
 
 \item{textlabelsize}{Numerical value: text inside plot label size}
+
+\item{legendtitle}{Character vector: text legend title}
+
+\item{controlscale}{Logical flag: whether to control the colour scale}
+
+\item{scale}{Numerical value: 1=spectral palette, 2=manual low and high palette, else= default}
+
+\item{low}{Character vector: scale low colour}
+
+\item{high}{Character vector: scale high colour}
 }
 \value{
 A PCA plot object

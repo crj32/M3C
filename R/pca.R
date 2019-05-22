@@ -1,7 +1,7 @@
 #' pca: A principal component analysis function
 #' 
-#' This is a flexible PCA function that can be run on the results object from M3C or a standard data frame.
-#' It is a wrapper for prcomp/ggplot2 code, and can be customised with different colours and font sizes.
+#' This is a flexible PCA function that can be run on a standard data frame or the M3C results object.
+#' It is a wrapper for prcomp/ggplot2 code and can be customised with different colours and font sizes and more.
 #' 
 #' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
 #' @param printres Logical flag: whether to print the PCA into current directory
@@ -18,6 +18,8 @@
 #' @param low Character vector: continuous scale low colour
 #' @param high Character vector: continuous scale high colour
 #' @param colvec Character vector: a series of colours in vector for categorical labels, e.g. c("sky blue", "gold")
+#' @param printheight Numerical value: png height
+#' @param printwidth Numerical value: png width
 #'
 #' @return A PCA plot object
 #' @export
@@ -27,7 +29,8 @@
 
 pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
                 legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
-                controlscale = FALSE, scale = 1, low = 'blue', high = 'red', colvec = c("sky blue", "gold")){
+                controlscale = FALSE, scale = 1, low = 'blue', high = 'red', colvec = c("sky blue", "gold"),
+                printheight = 20, printwidth = 22){
   if (K == FALSE && labels == FALSE && text == FALSE){
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
@@ -38,10 +41,10 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.text.x = element_text(size = axistextsize, colour = 'black'),
             axis.title.x = element_text(size = axistextsize),
             axis.title.y = element_text(size = axistextsize)) +
-      scale_colour_manual(values = c("1"='sky blue'))
+      scale_colour_manual(values = colvec)
     if (printres == TRUE){
       message('printing PCA to current directory...')
-      png('PCApriorclustering.png', height = 20, width = 22, units = 'cm',
+      png('PCApriorclustering.png', height = printheight, width = printwidth, units = 'cm',
           res = 900, type = 'cairo')
       print(p) # print ggplot CDF in main plotting window
       dev.off()
@@ -66,7 +69,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
       guides(colour=guide_legend(title="Cluster")) 
     if (printres == TRUE){
       message('printing PCA to current directory...')
-      png('PCApostclustering.png', height = 20, width = 26, units = 'cm',
+      png('PCApostclustering.png', height = printheight, width = printwidth, units = 'cm',
           res = 900, type = 'cairo')
       print(p) # print ggplot CDF in main plotting window
       dev.off()
@@ -130,7 +133,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     }
     if (printres == TRUE){
       message('printing PCA to current directory...')
-      png('PCAlabeled.png', height = 20, width = 26, units = 'cm',
+      png('PCAlabeled.png', height = printheight, width = printwidth, units = 'cm',
           res = 900, type = 'cairo')
       print(p) # print ggplot CDF in main plotting window
       dev.off()
@@ -147,10 +150,10 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.text.x = element_text(size = axistextsize, colour = 'black'),
             axis.title.x = element_text(size = axistextsize),
             axis.title.y = element_text(size = axistextsize)) +
-      scale_colour_manual(values = c("1"='sky blue')) + geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+      scale_colour_manual(values = colvec) + geom_text(vjust="inward",hjust="inward",size=textlabelsize)
     if (printres == TRUE){
       message('printing PCA to current directory...')
-      png('PCApriorclustering.png', height = 20, width = 22, units = 'cm',
+      png('PCApriorclustering.png', height = printheight, width = printwidth, units = 'cm',
           res = 900, type = 'cairo')
       print(p) # print ggplot CDF in main plotting window
       dev.off()

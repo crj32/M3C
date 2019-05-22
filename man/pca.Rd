@@ -8,7 +8,7 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
   text = FALSE, axistextsize = 18, legendtextsize = 18,
   dotsize = 5, textlabelsize = 4, legendtitle = "Group",
   controlscale = FALSE, scale = 1, low = "blue", high = "red",
-  colvec = c("sky blue", "gold"))
+  colvec = c("sky blue", "gold"), printheight = 20, printwidth = 22)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
@@ -40,13 +40,17 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
 \item{high}{Character vector: continuous scale high colour}
 
 \item{colvec}{Character vector: a series of colours in vector for categorical labels, e.g. c("sky blue", "gold")}
+
+\item{printheight}{Numerical value: png height}
+
+\item{printwidth}{Numerical value: png width}
 }
 \value{
 A PCA plot object
 }
 \description{
-This is a flexible PCA function that can be run on the results object from M3C or a standard data frame.
-It is a wrapper for prcomp/ggplot2 code, and can be customised with different colours and font sizes.
+This is a flexible PCA function that can be run on a standard data frame or the M3C results object.
+It is a wrapper for prcomp/ggplot2 code and can be customised with different colours and font sizes and more.
 }
 \examples{
 PCA <- pca(mydata)

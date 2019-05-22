@@ -11,9 +11,10 @@
 #' @param textlabelsize Numerical value: text inside plot label size 
 #' @param legendtitle Character vector: text legend title   
 #' @param controlscale Logical flag: whether to control the colour scale
-#' @param scale Numerical value: 1=spectral palette, 2=manual low and high palette, else= default
+#' @param scale Numerical value: 1=spectral palette, 2=manual low and high palette, 2=categorical labs
 #' @param low Character vector: scale low colour
 #' @param high Character vector: scale high colour
+#' @param colvec Character vector: a series of colours in vector, e.g. c("sky blue", "gold")
 #'
 #' @return A PCA plot object
 #' @export
@@ -23,7 +24,7 @@
 
 pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
                 legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
-                controlscale = FALSE, scale = 1, low = 'blue', high = 'red'){
+                controlscale = FALSE, scale = 1, low = 'blue', high = 'red', colvec = c("sky blue", "gold")){
   if (K == FALSE && labels == FALSE && text == FALSE){
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
@@ -97,7 +98,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
           #guides(colour=guide_legend(title=legendtitle)) +
           labs(colour = legendtitle) + #scale_colour_distiller(palette = "Spectral")
         scale_colour_gradient(low=low, high=high)
-      }else{
+      }else if (scale == 3){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
           theme_bw() + 
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -108,7 +109,8 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.title = element_text(size = legendtextsize),
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
-          labs(colour = legendtitle)
+          labs(colour = legendtitle) +
+          scale_colour_manual(values = colvec)
       }
     }else{
       p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 

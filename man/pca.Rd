@@ -7,7 +7,8 @@
 pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
   text = FALSE, axistextsize = 18, legendtextsize = 18,
   dotsize = 5, textlabelsize = 4, legendtitle = "Group",
-  controlscale = FALSE, scale = 1, low = "blue", high = "red")
+  controlscale = FALSE, scale = 1, low = "blue", high = "red",
+  colvec = c("sky blue", "gold"))
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
@@ -32,11 +33,13 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
 
 \item{controlscale}{Logical flag: whether to control the colour scale}
 
-\item{scale}{Numerical value: 1=spectral palette, 2=manual low and high palette, else= default}
+\item{scale}{Numerical value: 1=spectral palette, 2=manual low and high palette, 2=categorical labs}
 
 \item{low}{Character vector: scale low colour}
 
 \item{high}{Character vector: scale high colour}
+
+\item{colvec}{Character vector: a series of colours in vector, e.g. c("sky blue", "gold")}
 }
 \value{
 A PCA plot object

@@ -1,5 +1,8 @@
 #' pca: A principal component analysis function
-#'
+#' 
+#' This is a flexible PCA function that can be run on the results object from M3C or a standard data frame.
+#' It is a wrapper for prcomp/ggplot2 code, and can be customised with different colours and font sizes.
+#' 
 #' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
 #' @param printres Logical flag: whether to print the PCA into current directory
 #' @param K Numerical value: if running on the M3C results object, which value was the optimal K?
@@ -11,10 +14,10 @@
 #' @param textlabelsize Numerical value: text inside plot label size 
 #' @param legendtitle Character vector: text legend title   
 #' @param controlscale Logical flag: whether to control the colour scale
-#' @param scale Numerical value: 1=spectral palette, 2=manual low and high palette, 2=categorical labs
-#' @param low Character vector: scale low colour
-#' @param high Character vector: scale high colour
-#' @param colvec Character vector: a series of colours in vector, e.g. c("sky blue", "gold")
+#' @param scale Numerical value: 1=spectral palette, 2=manual low and high palette, 3=categorical labels
+#' @param low Character vector: continuous scale low colour
+#' @param high Character vector: continuous scale high colour
+#' @param colvec Character vector: a series of colours in vector for categorical labels, e.g. c("sky blue", "gold")
 #'
 #' @return A PCA plot object
 #' @export

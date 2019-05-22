@@ -33,19 +33,20 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
 
 \item{controlscale}{Logical flag: whether to control the colour scale}
 
-\item{scale}{Numerical value: 1=spectral palette, 2=manual low and high palette, 2=categorical labs}
+\item{scale}{Numerical value: 1=spectral palette, 2=manual low and high palette, 3=categorical labels}
 
-\item{low}{Character vector: scale low colour}
+\item{low}{Character vector: continuous scale low colour}
 
-\item{high}{Character vector: scale high colour}
+\item{high}{Character vector: continuous scale high colour}
 
-\item{colvec}{Character vector: a series of colours in vector, e.g. c("sky blue", "gold")}
+\item{colvec}{Character vector: a series of colours in vector for categorical labels, e.g. c("sky blue", "gold")}
 }
 \value{
 A PCA plot object
 }
 \description{
-pca: A principal component analysis function
+This is a flexible PCA function that can be run on the results object from M3C or a standard data frame.
+It is a wrapper for prcomp/ggplot2 code, and can be customised with different colours and font sizes.
 }
 \examples{
 PCA <- pca(mydata)

@@ -12,7 +12,7 @@ vignette: >
 
 # Abstract
 
-Genome-wide data is used to stratify large complex datasets into classes using clustering algorithms. The Monti consensus clustering algorithm is a widely applied method to identify the number of clusters (K), however; it has inherant bias towards greater values of K and yields high numbers of false positives. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C). M3C uses a Monte Carlo simulation to generate null distributions of stability scores along the range of K which are used when deciding the optimal value. Using a reference, that maintains the correlation structure of the input features, improves on the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. 
+Genome-wide data is used to stratify large complex datasets into classes using clustering algorithms. The Monti consensus clustering algorithm is a widely applied method to identify the number of clusters (K), however; it has inherant bias towards greater values of K and yields high numbers of false positives. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of stability scores along the range of K which are used when deciding the optimal value. Using a reference, that maintains the correlation structure of the input features, improves on the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. 
 
 # Prerequisites
 
@@ -30,7 +30,7 @@ For example, for RNA-seq data, VST or rlog transformed count data, log2(CPM), lo
 
 The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses the coefficient of variation in the package which is demonstrated later in the vignette.
 
-Outliers should be removed, we include a PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
+Outliers should be removed, we include an easy to use PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
 We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix it makes, it is not well suited for single cell RNA-seq data, better to use SC3 or Seurat, for example. 
 
@@ -221,11 +221,17 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ## Filtering features by variance
 
-A feature filter function has been included in M3C that uses the coefficient of variation (CV) to filter features of a data frame. The CV is standardised using the mean, therefore it is suitable to filter all rows of a given platform's dataset with the same code. To use this function, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features.
+A feature filter function has been included in M3C that uses Pearson's coefficient of variation (A) or its second order derivative (A2) to filter features of a data frame. A is standardised using the mean, therefore it is suitable to filter all rows of a given platform's dataset. However, when the data contains negative and positive values or values close to zero or extreme outliers, A has some undesirable properties (Kvålseth, 2017). This is why we have included A2, a new statistic which rectifies the issues with A. 
+
+The statistics for each feature (and the filtered data itself) are saved in a data frame in the results list. We suggest to do some manual examination and plotting, for example, with the qplot function from ggplot2. 
+
+Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using the second order derivative of the coefficient of variation (A2). The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
 
 ```{r}
-  filtered_data <- featurefilter(mydata, 10)
+  filtered_results <- featurefilter(mydata, percentile=10, method='A2', topN=5)
 ```
+
+In this case the data has been filtered for variance beforehand, so the A2 values are all 1 or close to 1.
 
 # Closing comments
 
@@ -233,9 +239,17 @@ In this tutorial, we have seen that M3C provides a rigourous approach for select
 
 During the development of M3C, we also devised a flexible method and associated CRAN package for generating Gaussian clusters called, clusterlab (https://cran.r-project.org/web/packages/clusterlab/index.html). This tool should prove useful in testing the performance of class discovery algorithms.
 
+For much faster clustering of either single and multi-omic data, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration procedure and uses a density-aware kernel.
+
 # References
 
+John, Christopher Robert, et al. "M3C: A Monte Carlo reference-based consensus clustering algorithm." bioRxiv (2018): 377002.
+
+John, Christopher R., et al. "Spectrum: Fast density-aware spectral clustering for single and multi-omic data." BioRxiv (2019): 636639.
+
 Monti, Stefano, et al. "Consensus clustering: a resampling-based method for class discovery and visualization of gene expression microarray data." Machine learning 52.1 (2003): 91-118.
+
+Kvålseth, Tarald O. "Coefficient of variation: the second-order alternative." Journal of Applied Statistics 44.3 (2017): 402-415.
 
 Senbabaoglu, Yasin, George Michailidis, and Jun Z. Li. "Critical limitations of consensus clustering in class discovery." Scientific reports 4 (2014): 6207.
 

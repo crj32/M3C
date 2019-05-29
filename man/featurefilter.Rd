@@ -2,20 +2,30 @@
 % Please edit documentation in R/featurefilter.R
 \name{featurefilter}
 \alias{featurefilter}
-\title{featurefilter: A function for filtering features based on the coefficient of variance}
+\title{featurefilter: A function for filtering features}
 \usage{
-featurefilter(mydata, percentile = 10)
+featurefilter(mydata, percentile = 10, method = "A", topN = 20)
 }
 \arguments{
 \item{mydata}{Data frame: should have samples as columns and rows as features}
 
 \item{percentile}{Numerical value: the top X percent most variable features should be kept}
+
+\item{method}{Character vector: coefficient of variation (A), the A second order derivative (A2)}
+
+\item{topN}{Numerical value: the number of most variable features to display}
 }
 \value{
-A filtered data frame
+A list, containing: 
+1) filtered data
+2) statistics for each feature order according to A or A2
 }
 \description{
-featurefilter: A function for filtering features based on the coefficient of variance
+This function is to filter features based on the coefficient of variation (A) or its second
+order derivative (A2) (Kvalseth, 2015). A is standardised according to the mean so is better
+for gene/ feature expression than variance or standard deviation, however, it comes with 
+disadvantages. This is why we have included its second order derivative. See the study in the 
+journal of applied statistics for more information on these two statistics.
 }
 \examples{
 filtered <- featurefilter(mydata,percentile=10)

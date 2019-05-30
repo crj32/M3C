@@ -18,7 +18,7 @@ Genome-wide data is used to stratify large complex datasets into classes using c
 
 **M3C recommended spec**
 
-For the Monte Carlo reference (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If your machine is not particuarly fast, you can reduce the Monte Carlo iterations down to 10-50x. 
+For the Monte Carlo simulation (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If your machine is not particuarly fast, you can reduce the Monte Carlo iterations down to 10-50x. 
 
 The second method (method=2) that uses a penalty term to eliminate overestimation of K is faster, but you will not get p values for each value of K.
 
@@ -28,17 +28,17 @@ A matrix or data frame of normalised continuous expression data (e.g. microarray
 
 For example, for RNA-seq data, VST or rlog transformed count data, log2(CPM), log2(TPM), and log2(RPKM), are all acceptable forms of normalisation.
 
-The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses the coefficient of variation in the package which is demonstrated later in the vignette.
+The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses the coefficient of variation in the package which is demonstrated later in the vignette. This function also provides a number of other useful statistics for each gene.
 
 Outliers should be removed, we include an easy to use PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
-We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix it makes, it is not well suited for single cell RNA-seq data, better to use SC3 or Seurat, for example. 
+We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix it makes, it is not suited for single cell RNA-seq data, better to use SC3 or Seurat, for example.
 
 **M3C also accepts optionally**
 
-Annotation data frame, where every row is a patient or sample and columns refer to meta-data, e.g. age, sex, time until death etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the user supplied annotation data frame.
+Annotation data frame, where every row is a patient or sample and columns refer to meta-data, e.g. age, sex, time until death, etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the user supplied annotation data frame.
 
-M3C also accepts clinical or biological data for a statistical analysis with the discovered classes. Again the 'ID' column must exist in the annotation data frame. If the data is continuous or categorical, a Kruskal-Wallis or chi-squared test are performed, respectively. For these two tests, a 'variable' parameter must be given which is a string that defines the dependent variable in the users annotation data frame. If the data is survival data for cancer, the annotation data frame must have an 'ID' column first, followed by a 'Time' and 'Death' column (where 0 is no death and 1 is death or time until last visit). 
+M3C also accepts clinical or biological data for a basic statistical analysis with the discovered classes. Again the 'ID' column must exist in the annotation data frame. If the data is continuous or categorical, a Kruskal-Wallis or chi-squared test are performed, respectively. For these two tests, a 'variable' parameter must be given which is a string that defines the dependent variable in the users annotation data frame. If the data is survival data for cancer, the annotation data frame must have an 'ID' column first, followed by a 'Time' and 'Death' column (where 0 is no death and 1 is death or time until last visit). 
 
 # Example workflow I: TCGA glioblastoma dataset
 
@@ -219,7 +219,7 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ![*Figure 12: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
-## Filtering features by variance
+## Filtering features by the coefficient of variation
 
 A feature filter function has been included in M3C that uses Pearson's coefficient of variation (A) or its second order derivative (A2) to filter features of a data frame. A is standardised using the mean, therefore it is suitable to filter all rows of a given platform's dataset. However, when the data contains negative and positive values or values close to zero or extreme outliers, A has some undesirable properties (Kvålseth, 2017). This is why we have included A2, a new statistic which rectifies the issues with A. 
 
@@ -239,7 +239,7 @@ In this tutorial, we have seen that M3C provides a rigourous approach for select
 
 During the development of M3C, we also devised a flexible method and associated CRAN package for generating Gaussian clusters called, clusterlab (https://cran.r-project.org/web/packages/clusterlab/index.html). This tool should prove useful in testing the performance of class discovery algorithms.
 
-For much faster clustering of either single and multi-omic data, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration procedure and uses a density-aware kernel.
+For much faster clustering of either single and multi-omic data, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration procedure, a density-aware kernel, and contains a data compression method to cluster 1000s of samples quickly.
 
 # References
 

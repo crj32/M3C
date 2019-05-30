@@ -7,7 +7,7 @@
 pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
   text = FALSE, axistextsize = 18, legendtextsize = 18,
   dotsize = 5, textlabelsize = 4, legendtitle = "Group",
-  controlscale = FALSE, scale = 1, low = "blue", high = "red",
+  controlscale = FALSE, scale = 1, low = "grey", high = "red",
   colvec = c("sky blue", "gold"), printheight = 20, printwidth = 22)
 }
 \arguments{
@@ -49,7 +49,7 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
 A PCA plot object
 }
 \description{
-This is a flexible PCA function that can be run on a standard data frame or the M3C results object.
+This is a flexible PCA function that can be run on a standard data frame (or the M3C results object).
 It is a wrapper for prcomp/ggplot2 code and can be customised with different colours and font sizes and more.
 }
 \examples{

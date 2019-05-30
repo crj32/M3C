@@ -6,18 +6,21 @@
 \usage{
 umap(mydata, K = FALSE, labels = FALSE, printres = FALSE,
   seed = FALSE, axistextsize = 18, legendtextsize = 18,
-  dotsize = 5, textlabelsize = 4)
+  dotsize = 5, textlabelsize = 4, legendtitle = "Group",
+  controlscale = FALSE, scale = 1, low = "grey", high = "red",
+  colvec = c("sky blue", "gold"), printheight = 20, printwidth = 22,
+  text = FALSE)
 }
 \arguments{
-\item{mydata}{Data frame or matrix or M3C results (list) object: if dataframe/matrix should have samples as columns and rows as features}
+\item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
 
-\item{K}{Numerical value: if running on the M3C results object, which value was the optimal K? Needs manual input from user.}
+\item{K}{Numerical value: if running on the M3C results object, which value was the optimal K?}
 
-\item{labels}{Factor: if we want to just display gender for example, only for when running without K parameter and with a matrix or data frame}
+\item{labels}{Character vector: if we want to just label with gender for example}
 
-\item{printres}{Logical flag: whether to print the plot into current directory}
+\item{printres}{Logical flag: whether to print the UMAP into current directory}
 
-\item{seed}{Numerical value: to repeat the results exactly, setting seed is required}
+\item{seed}{Numerical value: optionally set the seed}
 
 \item{axistextsize}{Numerical value: axis text size}
 
@@ -26,12 +29,31 @@ umap(mydata, K = FALSE, labels = FALSE, printres = FALSE,
 \item{dotsize}{Numerical value: dot size}
 
 \item{textlabelsize}{Numerical value: text inside plot label size}
+
+\item{legendtitle}{Character vector: text legend title}
+
+\item{controlscale}{Logical flag: whether to control the colour scale}
+
+\item{scale}{Numerical value: 1=spectral palette, 2=manual low and high palette, 3=categorical labels}
+
+\item{low}{Character vector: continuous scale low colour}
+
+\item{high}{Character vector: continuous scale high colour}
+
+\item{colvec}{Character vector: a series of colours in vector for categorical labels, e.g. c("sky blue", "gold")}
+
+\item{printheight}{Numerical value: png height}
+
+\item{printwidth}{Numerical value: png width}
+
+\item{text}{Character vector: if we wanted to label the samples with text IDs to look for outliers}
 }
 \value{
 A umap plot object
 }
 \description{
-umap: A umap function
+This is a flexible umap function that can be run on a standard data frame (or the M3C results object).
+It is a wrapper for umap/ggplot2 code and can be customised with different colours and font sizes and more.
 }
 \examples{
 UMAP <- umap(mydata)

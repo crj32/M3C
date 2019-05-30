@@ -1,6 +1,6 @@
 #' pca: A principal component analysis function
 #' 
-#' This is a flexible PCA function that can be run on a standard data frame or the M3C results object.
+#' This is a flexible PCA function that can be run on a standard data frame (or the M3C results object).
 #' It is a wrapper for prcomp/ggplot2 code and can be customised with different colours and font sizes and more.
 #' 
 #' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
@@ -29,11 +29,42 @@
 
 pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
                 legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
-                controlscale = FALSE, scale = 1, low = 'blue', high = 'red', colvec = c("sky blue", "gold"),
+                controlscale = FALSE, scale = 1, low = 'grey', high = 'red', colvec = c("sky blue", "gold"),
                 printheight = 20, printwidth = 22){
+  
+  ## basic error handling
+  
+  if ( controlscale == TRUE && class(labels) %in% c( "character", "factor") && scale %in% c(1,2) ) {
+    stop("when categorical labels, use scale=3")
+  }
+  if ( controlscale == TRUE && class(labels) %in% c( "numeric") && scale %in% c(3) ) {
+    stop("when continuous labels, use scale=1 or scale=2")
+  }
+  if ( controlscale == FALSE && scale %in% c(2,3) ) {
+    warning("if your trying to control the scale, please set controlscale=TRUE")
+  }
+  if (sum(is.na(labels)) > 0 && class(labels) %in% c('character','factor')){
+    warning("there is NA values in the labels vector, setting to unknown")
+    labels <- as.character(labels)
+    labels[is.na(labels)] <- 'Unknown'
+  }
+  if (sum(is.na(text)) > 0 && class(text) %in% c('character','factor')){
+    warning("there is NA values in the text vector, setting to unknown")
+    text <- as.character(text)
+    text[is.na(text)] <- 'Unknown'
+  }
+  
+  ##
+  
+  message('***PCA wrapper function***')
+  message('running...')
+  
+  ##
   if (K == FALSE && labels == FALSE && text == FALSE){
+    
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
+    
     p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 
       theme_bw() + 
       theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -42,21 +73,26 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.title.x = element_text(size = axistextsize),
             axis.title.y = element_text(size = axistextsize)) +
       scale_colour_manual(values = colvec)
+    
     if (printres == TRUE){
       message('printing PCA to current directory...')
-      png('PCApriorclustering.png', height = printheight, width = printwidth, units = 'cm',
+      png('PCA.png', height = printheight, width = printwidth, units = 'cm',
           res = 900, type = 'cairo')
       print(p) # print ggplot CDF in main plotting window
       dev.off()
     }
+    
   }else if (K != FALSE && labels == FALSE){
+    
     res <- mydata
     mydata <- res$realdataresults[[K]]$ordered_data
     annon <- res$realdataresults[[K]]$ordered_annotation
     annon$id <- row.names(annon)
     annon <- annon[match(colnames(mydata), annon$id),]
+    
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
+    
     p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(annon$consensuscluster)), size = dotsize) + 
       theme_bw() + 
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -67,16 +103,20 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             legend.title = element_text(size = legendtextsize),
             legend.text = element_text(size = legendtextsize)) + 
       guides(colour=guide_legend(title="Cluster")) 
+    
     if (printres == TRUE){
       message('printing PCA to current directory...')
-      png('PCApostclustering.png', height = printheight, width = printwidth, units = 'cm',
+      png('PCApostM3C.png', height = printheight, width = printwidth, units = 'cm',
           res = 900, type = 'cairo')
       print(p) # print ggplot CDF in main plotting window
       dev.off()
     }
-  }else if (K == FALSE && labels != FALSE){ ################ KEY
+    
+  }else if (K == FALSE && labels != FALSE && text == FALSE){ #### KEY
+    
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
+    
     if (controlscale == TRUE){
       if (scale == 1){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
@@ -103,7 +143,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
           labs(colour = legendtitle) + #scale_colour_distiller(palette = "Spectral")
-        scale_colour_gradient(low=low, high=high)
+          scale_colour_gradient(low=low, high=high)
       }else if (scale == 3){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
           theme_bw() + 
@@ -131,6 +171,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
         #guides(colour=guide_legend(title=legendtitle)) +
         labs(colour = legendtitle)
     }
+    
     if (printres == TRUE){
       message('printing PCA to current directory...')
       png('PCAlabeled.png', height = printheight, width = printwidth, units = 'cm',
@@ -138,10 +179,82 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
       print(p) # print ggplot CDF in main plotting window
       dev.off()
     }
-  }else if (K == FALSE && labels == FALSE && text != FALSE){
+    
+  }else if (K == FALSE && labels != FALSE && text != FALSE){ ##### KEY
+    
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
     scores$label <- text
+    
+    if (controlscale == TRUE){
+      if (scale == 1){
+        p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+          theme_bw() + 
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                axis.text.y = element_text(size = axistextsize, colour = 'black'),
+                axis.text.x = element_text(size = axistextsize, colour = 'black'),
+                axis.title.x = element_text(size = axistextsize),
+                axis.title.y = element_text(size = axistextsize),
+                legend.title = element_text(size = legendtextsize),
+                legend.text = element_text(size = legendtextsize)) + 
+          #guides(colour=guide_legend(title=legendtitle)) +
+          labs(colour = legendtitle) + scale_colour_distiller(palette = "Spectral")+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+        #scale_colour_gradient(low="red", high="white")
+      }else if (scale == 2){
+        p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+          theme_bw() + 
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                axis.text.y = element_text(size = axistextsize, colour = 'black'),
+                axis.text.x = element_text(size = axistextsize, colour = 'black'),
+                axis.title.x = element_text(size = axistextsize),
+                axis.title.y = element_text(size = axistextsize),
+                legend.title = element_text(size = legendtextsize),
+                legend.text = element_text(size = legendtextsize)) + 
+          #guides(colour=guide_legend(title=legendtitle)) +
+          labs(colour = legendtitle) + #scale_colour_distiller(palette = "Spectral")
+          scale_colour_gradient(low=low, high=high)+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+      }else if (scale == 3){
+        p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+          theme_bw() + 
+          theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+                axis.text.y = element_text(size = axistextsize, colour = 'black'),
+                axis.text.x = element_text(size = axistextsize, colour = 'black'),
+                axis.title.x = element_text(size = axistextsize),
+                axis.title.y = element_text(size = axistextsize),
+                legend.title = element_text(size = legendtextsize),
+                legend.text = element_text(size = legendtextsize)) + 
+          #guides(colour=guide_legend(title=legendtitle)) +
+          labs(colour = legendtitle) +
+          scale_colour_manual(values = colvec)+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+      }
+    }else{
+      p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+        theme_bw() + 
+        theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
+              axis.text.y = element_text(size = axistextsize, colour = 'black'),
+              axis.text.x = element_text(size = axistextsize, colour = 'black'),
+              axis.title.x = element_text(size = axistextsize),
+              axis.title.y = element_text(size = axistextsize),
+              legend.title = element_text(size = legendtextsize),
+              legend.text = element_text(size = legendtextsize)) + 
+        #guides(colour=guide_legend(title=legendtitle)) +
+        labs(colour = legendtitle)+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+    }
+    
+    if (printres == TRUE){
+      message('printing PCA to current directory...')
+      png('PCAlabeled.png', height = printheight, width = printwidth, units = 'cm',
+          res = 900, type = 'cairo')
+      print(p) # print ggplot CDF in main plotting window
+      dev.off()
+    }
+    
+  }else if (K == FALSE && labels == FALSE && text != FALSE){
+    
+    pca1 = prcomp(t(mydata))
+    scores <- data.frame(pca1$x) # PC score matrix
+    scores$label <- text
+    
     p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + 
       geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 
       theme_bw() + 
@@ -151,15 +264,20 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.title.x = element_text(size = axistextsize),
             axis.title.y = element_text(size = axistextsize)) +
       scale_colour_manual(values = colvec) + geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+    
     if (printres == TRUE){
       message('printing PCA to current directory...')
-      png('PCApriorclustering.png', height = printheight, width = printwidth, units = 'cm',
+      png('PCA.png', height = printheight, width = printwidth, units = 'cm',
           res = 900, type = 'cairo')
       print(p) # print ggplot CDF in main plotting window
       dev.off()
     }
+    
   }else{
     message('no valid options detected')
   }
+  
+  message('done.')
+  
   return(p)
 }

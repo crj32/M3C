@@ -29,7 +29,9 @@
 
 pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
                 legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
-                controlscale = FALSE, scale = 1, low = 'grey', high = 'red', colvec = c("sky blue", "gold"),
+                controlscale = FALSE, scale = 1, low = 'grey', high = 'red', 
+                colvec = c("sky blue", "gold", "violet", "darkorchid", "slateblue", "forestgreen", 
+                           "violetred", "orange", "midnightblue", "grey31", "black"),
                 printheight = 20, printwidth = 22){
   
   ## basic error handling

@@ -31,7 +31,9 @@
 
 tsne <- function(mydata, K=FALSE, labels=FALSE, perplex=15, printres=FALSE, seed=FALSE, axistextsize = 18,
                  legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
-                 controlscale = FALSE, scale = 1, low = 'grey', high = 'red', colvec = c("sky blue", "gold"),
+                 controlscale = FALSE, scale = 1, low = 'grey', high = 'red', 
+                 colvec = c("sky blue", "gold", "violet", "darkorchid", "slateblue", "forestgreen", 
+                            "violetred", "orange", "midnightblue", "grey31", "black"),
                  printheight = 20, printwidth = 22, text = FALSE){
   
   ## basic error handling
@@ -88,7 +90,7 @@ tsne <- function(mydata, K=FALSE, labels=FALSE, perplex=15, printres=FALSE, seed
             axis.text.x = element_text(size = axistextsize, colour = 'black'),
             axis.title.x = element_text(size = axistextsize),
             axis.title.y = element_text(size = axistextsize))+
-      scale_colour_manual(values = c("1"='sky blue'))
+      scale_colour_manual(values = colvec)
     
     if (printres == TRUE){
       message('printing t-SNE to current directory...')

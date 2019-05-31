@@ -22,11 +22,14 @@ A list, containing:
 }
 \description{
 This function is to filter features based on the coefficient of variation (A) or its second
-order derivative (A2) (Kvalseth, 2015). A is standardised according to the mean so is better
+order derivative (A2) (Kvalseth, 2017). A is standardised according to the mean so is better
 for gene/ feature expression than variance or standard deviation, however, it comes with 
-disadvantages. This is why we have included its second order derivative. See the study in the 
-journal of applied statistics for more information on these two statistics.
+disadvantages. This is why we have included its second order derivative.
 }
 \examples{
 filtered <- featurefilter(mydata,percentile=10)
+}
+\references{
+Reference for second order coefficient of variation
+Kvålseth, Tarald O. "Coefficient of variation: the second-order alternative." Journal of Applied Statistics 44.3 (2017): 402-415.
 }

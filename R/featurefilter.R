@@ -1,10 +1,9 @@
 #' featurefilter: A function for filtering features
 #'
 #' This function is to filter features based on the coefficient of variation (A) or its second
-#' order derivative (A2) (Kvalseth, 2015). A is standardised according to the mean so is better
+#' order derivative (A2) (Kvalseth, 2017). A is standardised according to the mean so is better
 #' for gene/ feature expression than variance or standard deviation, however, it comes with 
-#' disadvantages. This is why we have included its second order derivative. See the study in the 
-#' journal of applied statistics for more information on these two statistics.
+#' disadvantages. This is why we have included its second order derivative.
 #'
 #' @param mydata Data frame: should have samples as columns and rows as features
 #' @param percentile Numerical value: the top X percent most variable features should be kept
@@ -14,6 +13,11 @@
 #' @return A list, containing: 
 #' 1) filtered data
 #' 2) statistics for each feature order according to A or A2
+#' 
+#' @references 
+#' Reference for second order coefficient of variation
+#' Kvålseth, Tarald O. "Coefficient of variation: the second-order alternative." Journal of Applied Statistics 44.3 (2017): 402-415.
+#' 
 #' @export
 #'
 #' @examples
@@ -34,7 +38,7 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     # calculate mean and variance
     u <- rowMeans(mydata)
     sigma <- apply(mydata,1,sd)
-    # calc co efficient of variation for all rows (features)
+    # calc coefficient of variation for all rows (features)
     CV <- sigma/u
     A <- CV
     # get features with CV in the given percentile
@@ -46,7 +50,7 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     sigma <- apply(mydata,1,sd)
     A <- sigma/u
     AA <- A^2
-    # get second order co efficient of variation (Kvalseth, 2015)
+    # get second order co efficient of variation
     A2 <- sqrt((AA/(AA+1)))
     CV <- A2
     # get features with CV in the given percentile
@@ -61,12 +65,12 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
   if (method == 'A'){
     test <- data.frame('feature'=row.names(mydata),'mean'=u,'sd'=sigma,'A'=A)
     test <- test[order(-test[,4]), ]
-    message('printing 20 most variable features with statistics...')
+    message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }else if (method == 'A2'){
     test <- data.frame('feature'=row.names(mydata),'mean'=u,'sd'=sigma,'A'=A,'A2'=A2)
     test <- test[order(-test[,5]), ]
-    message('printing 20 most variable features with statistics...')
+    message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }
   

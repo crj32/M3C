@@ -221,9 +221,9 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ## Filtering features by the coefficient of variation
 
-A feature filter function has been included in M3C that uses Pearson's coefficient of variation (A) or its second order derivative (A2) to filter features of a data frame. A is standardised using the mean, therefore it is suitable to filter all rows of a given platform's dataset. However, when the data contains negative and positive values or values close to zero or extreme outliers, A has some undesirable properties (Kvålseth, 2017). This is why we have included A2, a new statistic which rectifies the issues with A. 
+A feature filter function has been included in M3C that uses Pearson's coefficient of variation (A) or its second order derivative (A2) to filter features of a data frame. A is standardised using the mean, therefore it is suitable to filter all rows of a given platform's dataset. However, when the data contains negative and positive values or values close to zero or extreme outliers, A has some undesirable statistical properties (Kvålseth, 2017). This is why we have included A2 from Kvalseth et al. This is a statistic which rectifies the issues with A. 
 
-The statistics for each feature (and the filtered data itself) are saved in a data frame in the results list. We suggest to do some manual examination and plotting, for example, with the qplot function from ggplot2. 
+The statistics for each feature (and the filtered data itself) are saved in a data frame in the results list. We suggest to do some manual examination and plotting, for example, with the qplot function from ggplot2 of the mean-variance trend.
 
 Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using the second order derivative of the coefficient of variation (A2). The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
 

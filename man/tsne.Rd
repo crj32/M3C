@@ -8,8 +8,10 @@ tsne(mydata, K = FALSE, labels = FALSE, perplex = 15,
   printres = FALSE, seed = FALSE, axistextsize = 18,
   legendtextsize = 18, dotsize = 5, textlabelsize = 4,
   legendtitle = "Group", controlscale = FALSE, scale = 1,
-  low = "grey", high = "red", colvec = c("sky blue", "gold"),
-  printheight = 20, printwidth = 22, text = FALSE)
+  low = "grey", high = "red", colvec = c("sky blue", "gold",
+  "violet", "darkorchid", "slateblue", "forestgreen", "violetred",
+  "orange", "midnightblue", "grey31", "black"), printheight = 20,
+  printwidth = 22, text = FALSE)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}

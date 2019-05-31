@@ -104,7 +104,7 @@ This is a CDF plot of the consensus matrices for our test data. We are looking f
   
 ![*Figure 2: CDF plot for real data*](CDF.png)
 
-This figure below is the PAC score, we can see an elbow at K = 4 which is suggestive this is the best K. However, the bias of the PAC score can be seen here as it naturaly tends towards lower values as K increases, thus making selecting K without taking this into account challenging to say the least. Furthermore, the PAC score cannot reject the null hypothesis K=1, for that we have introduced p values into the consensus clustering methodology. 
+This figure below is the PAC score, we can see an elbow at K = 4 which is suggestive this is the best K. However, the bias of the PAC score can be seen here as it naturally tends towards lower values as K increases, thus making selecting K without taking this into account challenging to say the least. Furthermore, the PAC score cannot reject the null hypothesis K=1, for that we have introduced p values into the consensus clustering methodology. 
 
 ![*Figure 3: PAC score for real data*](PACscore.png){width=90%}
 

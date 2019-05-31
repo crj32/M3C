@@ -40,6 +40,7 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     sigma <- apply(mydata,1,sd)
     # calc coefficient of variation for all rows (features)
     CV <- sigma/u
+    CV[is.na(CV)] <- 0
     A <- CV
     # get features with CV in the given percentile
     CVthresh <- quantile(CV, percentile) 
@@ -49,6 +50,7 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     u <- rowMeans(mydata)
     sigma <- apply(mydata,1,sd)
     A <- sigma/u
+    A[is.na(A)] <- 0
     AA <- A^2
     # get second order co efficient of variation
     A2 <- sqrt((AA/(AA+1)))

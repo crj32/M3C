@@ -157,7 +157,7 @@ NMF::aheatmap(data, annCol = annon, Colv = NA, distfun = 'pearson',
 
 Another plot we may want to do for publications is print the consensus matrix for our optimal clustering solution (in this case, K = 4). This should be quite crisp reflecting the significant stability of the results. We can see in this heatmap below of the consensus matrix the clusters do indeed look quite clear supporting our view that there is 4 clusters. 
 
-Viewing consensus matrices manually should not be used to decide K, better to use the RCSI or p values that M3C provides to quantify the mixing proportions in the matrix. We also caution against the use of cluster validity metrics on the consensus matrices without first testing their behaviour on simulated positive control datasets. Our data indicates that these metrics may have substantial bias in them as well.
+Viewing consensus matrices manually should not be used to decide K, better to use the RCSI or p values that M3C provides to quantify the mixing proportions in the consensus matrix versus the K=1 null model. We also caution against the use of cluster validity metrics on the consensus matrices without first testing their behaviour in details on simulated positive control datasets. Our data indicates that these metrics may have substantial bias in them as well due to the underlying method.
 
 ```{r,fig.show = 'hide'}
 # set up colours

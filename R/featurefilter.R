@@ -15,7 +15,6 @@
 #' 2) statistics for each feature order according to A or A2
 #' 
 #' @references 
-#' Reference for second order coefficient of variation
 #' Kvålseth, Tarald O. "Coefficient of variation: the second-order alternative." Journal of Applied Statistics 44.3 (2017): 402-415.
 #' 
 #' @export

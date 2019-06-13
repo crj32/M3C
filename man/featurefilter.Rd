@@ -30,6 +30,5 @@ disadvantages. This is why we have included its second order derivative.
 filtered <- featurefilter(mydata,percentile=10)
 }
 \references{
-Reference for second order coefficient of variation
 Kvålseth, Tarald O. "Coefficient of variation: the second-order alternative." Journal of Applied Statistics 44.3 (2017): 402-415.
 }

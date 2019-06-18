@@ -67,6 +67,11 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
     
+    eigs <- pca1$sdev^2
+    variance_percentage <- (eigs / sum(eigs))*100
+    pc1var <- round(variance_percentage[1],digits=0)
+    pc2var <- round(variance_percentage[2],digits=0)
+    
     p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 
       theme_bw() + 
       theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -74,7 +79,9 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.text.x = element_text(size = axistextsize, colour = 'black'),
             axis.title.x = element_text(size = axistextsize),
             axis.title.y = element_text(size = axistextsize)) +
-      scale_colour_manual(values = colvec)
+      scale_colour_manual(values = colvec) +
+      xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+      ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
     
     if (printres == TRUE){
       message('printing PCA to current directory...')
@@ -95,6 +102,11 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
     
+    eigs <- pca1$sdev^2
+    variance_percentage <- (eigs / sum(eigs))*100
+    pc1var <- round(variance_percentage[1],digits=0)
+    pc2var <- round(variance_percentage[2],digits=0)
+    
     p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = factor(annon$consensuscluster)), size = dotsize) + 
       theme_bw() + 
       theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -104,7 +116,9 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.title.y = element_text(size = axistextsize),
             legend.title = element_text(size = legendtextsize),
             legend.text = element_text(size = legendtextsize)) + 
-      guides(colour=guide_legend(title="Cluster")) 
+      guides(colour=guide_legend(title="Cluster"))  +
+      xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+      ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
     
     if (printres == TRUE){
       message('printing PCA to current directory...')
@@ -119,6 +133,11 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
     
+    eigs <- pca1$sdev^2
+    variance_percentage <- (eigs / sum(eigs))*100
+    pc1var <- round(variance_percentage[1],digits=0)
+    pc2var <- round(variance_percentage[2],digits=0)
+    
     if (controlscale == TRUE){
       if (scale == 1){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
@@ -131,7 +150,9 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.title = element_text(size = legendtextsize),
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
-          labs(colour = legendtitle) + scale_colour_distiller(palette = "Spectral")
+          labs(colour = legendtitle) + scale_colour_distiller(palette = "Spectral") +
+          xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+          ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
         #scale_colour_gradient(low="red", high="white")
       }else if (scale == 2){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
@@ -145,7 +166,9 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
           labs(colour = legendtitle) + #scale_colour_distiller(palette = "Spectral")
-          scale_colour_gradient(low=low, high=high)
+          scale_colour_gradient(low=low, high=high) +
+          xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+          ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
       }else if (scale == 3){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
           theme_bw() + 
@@ -158,7 +181,9 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
           labs(colour = legendtitle) +
-          scale_colour_manual(values = colvec)
+          scale_colour_manual(values = colvec) +
+          xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+          ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
       }
     }else{
       p <- ggplot(data = scores, aes(x = PC1, y = PC2) ) + geom_point(aes(colour = labels), size = dotsize) + 
@@ -171,7 +196,9 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
               legend.title = element_text(size = legendtextsize),
               legend.text = element_text(size = legendtextsize)) + 
         #guides(colour=guide_legend(title=legendtitle)) +
-        labs(colour = legendtitle)
+        labs(colour = legendtitle) +
+        xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+        ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
     }
     
     if (printres == TRUE){
@@ -188,6 +215,11 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     scores <- data.frame(pca1$x) # PC score matrix
     scores$label <- text
     
+    eigs <- pca1$sdev^2
+    variance_percentage <- (eigs / sum(eigs))*100
+    pc1var <- round(variance_percentage[1],digits=0)
+    pc2var <- round(variance_percentage[2],digits=0)
+    
     if (controlscale == TRUE){
       if (scale == 1){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
@@ -200,7 +232,10 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.title = element_text(size = legendtextsize),
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
-          labs(colour = legendtitle) + scale_colour_distiller(palette = "Spectral")+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+          labs(colour = legendtitle) + scale_colour_distiller(palette = "Spectral")+ 
+          geom_text(vjust="inward",hjust="inward",size=textlabelsize) +
+          xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+          ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
         #scale_colour_gradient(low="red", high="white")
       }else if (scale == 2){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
@@ -214,7 +249,10 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
           labs(colour = legendtitle) + #scale_colour_distiller(palette = "Spectral")
-          scale_colour_gradient(low=low, high=high)+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+          scale_colour_gradient(low=low, high=high)+ 
+          geom_text(vjust="inward",hjust="inward",size=textlabelsize) +
+          xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+          ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
       }else if (scale == 3){
         p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
           theme_bw() + 
@@ -227,7 +265,10 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
                 legend.text = element_text(size = legendtextsize)) + 
           #guides(colour=guide_legend(title=legendtitle)) +
           labs(colour = legendtitle) +
-          scale_colour_manual(values = colvec)+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+          scale_colour_manual(values = colvec)+ 
+          geom_text(vjust="inward",hjust="inward",size=textlabelsize) +
+          xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+          ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
       }
     }else{
       p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
@@ -240,7 +281,10 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
               legend.title = element_text(size = legendtextsize),
               legend.text = element_text(size = legendtextsize)) + 
         #guides(colour=guide_legend(title=legendtitle)) +
-        labs(colour = legendtitle)+ geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+        labs(colour = legendtitle) + 
+        geom_text(vjust="inward",hjust="inward",size=textlabelsize) +
+        xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+        ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
     }
     
     if (printres == TRUE){
@@ -257,6 +301,11 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     scores <- data.frame(pca1$x) # PC score matrix
     scores$label <- text
     
+    eigs <- pca1$sdev^2
+    variance_percentage <- (eigs / sum(eigs))*100
+    pc1var <- round(variance_percentage[1],digits=0)
+    pc2var <- round(variance_percentage[2],digits=0)
+    
     p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + 
       geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 
       theme_bw() + 
@@ -265,7 +314,10 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
             axis.text.x = element_text(size = axistextsize, colour = 'black'),
             axis.title.x = element_text(size = axistextsize),
             axis.title.y = element_text(size = axistextsize)) +
-      scale_colour_manual(values = colvec) + geom_text(vjust="inward",hjust="inward",size=textlabelsize)
+      scale_colour_manual(values = colvec) + 
+      geom_text(vjust="inward",hjust="inward",size=textlabelsize) +
+      xlab(paste('PC1 ','(',pc1var,'%)',sep='')) +
+      ylab(paste('PC2 ','(',pc2var,'%)',sep=''))
     
     if (printres == TRUE){
       message('printing PCA to current directory...')

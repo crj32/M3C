@@ -67,6 +67,8 @@ You can read more about the assumptions of clustering algorithms here:
 
 Spectral clustering may be used to cluster more unusual structures using M3C, but this normally is not necessary. Ward's hierarchical clustering (HC) is faster than these 3 algorithms and is an option included in M3C, although in practice PAM and KM usually perform better.
 
+It is also extremely important to check batch effects and other unwanted sources of variation do not drive the main variation in the data. The PCA function has a labels flag for adding categorical and continuous variables to the below plot (type ?pca), but for a more quantitative analysis before clustering I would strongly suggest David Watson's plot_drivers function from the bioplotr package (https://github.com/dswatson/bioplotr).
+
 ```{r, message=FALSE, results='hide'}
 PCA1 <- pca(mydata)
 ```

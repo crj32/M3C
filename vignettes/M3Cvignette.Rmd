@@ -67,7 +67,7 @@ You can read more about the assumptions of clustering algorithms here:
 
 Spectral clustering may be used to cluster more unusual structures using M3C, but this normally is not necessary. Ward's hierarchical clustering (HC) is faster than these 3 algorithms and is an option included in M3C, although in practice PAM and KM usually perform better.
 
-It is also extremely important to check batch effects and other unwanted sources of variation do not drive the main variation in the data. The PCA function has a labels flag for adding categorical and continuous variables to the below plot (type ?pca), but for a more quantitative analysis before clustering I would strongly suggest David Watson's plot_drivers function from the bioplotr package (https://github.com/dswatson/bioplotr).
+It is also extremely important to check batch effects and other unwanted sources of variation do not drive the main variation in the data. The PCA function has a labels flag for adding categorical and continuous variables to the below plot (type ?pca), but for a more quantitative analysis of these variables before clustering we recommend David Watson's plot_drivers function from the bioplotr package (https://github.com/dswatson/bioplotr).
 
 ```{r, message=FALSE, results='hide'}
 PCA1 <- pca(mydata)
@@ -77,7 +77,7 @@ PCA1 <- pca(mydata)
 
 ## Running M3C
 
-In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-5x. The inner replications needs to be at least 100x, changing this up to 250x will lead to increased result stability on some datasets.
+In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-5x. The inner replications needs to be at least 100x, changing this up to 250x will lead to increased result stability on some datasets. If your features are on different scales it is helpful to scale the data before cluster analysis.
 
 Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set 'doanalysis' to TRUE and 'analysistype' to 'chi', to do a chi-squared test for significance. The 'variable' parameter is set to class (tumour histology in this data).
 

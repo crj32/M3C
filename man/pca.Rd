@@ -10,7 +10,8 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
   controlscale = FALSE, scale = 1, low = "grey", high = "red",
   colvec = c("sky blue", "gold", "violet", "darkorchid", "slateblue",
   "forestgreen", "violetred", "orange", "midnightblue", "grey31", "black"),
-  printheight = 20, printwidth = 22)
+  printheight = 20, printwidth = 22, pcx = 1, pcy = 2,
+  scaler = FALSE)
 }
 \arguments{
 \item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
@@ -43,9 +44,15 @@ pca(mydata, K = FALSE, printres = FALSE, labels = FALSE,
 
 \item{colvec}{Character vector: a series of colours in vector for categorical labels, e.g. c("sky blue", "gold")}
 
-\item{printheight}{Numerical value: png height}
+\item{printheight}{Numerical value: png height (default=20)}
 
-\item{printwidth}{Numerical value: png width}
+\item{printwidth}{Numerical value: png width (default=22)}
+
+\item{pcx}{Numerical value: which PC to plot on X axis (default=1)}
+
+\item{pcy}{Numerical value: which PC to plot on Y axis (default=2)}
+
+\item{scaler}{Logical flag: whether to scale the features of the input data (rows) (default=FALSE)}
 }
 \value{
 A PCA plot object

@@ -11,7 +11,7 @@ featurefilter(mydata, percentile = 10, method = "A", topN = 20)
 
 \item{percentile}{Numerical value: the top X percent most variable features should be kept}
 
-\item{method}{Character vector: coefficient of variation (A), the A second order derivative (A2)}
+\item{method}{Character vector: variance (var), coefficient of variation (A), or the A second order derivative (A2)}
 
 \item{topN}{Numerical value: the number of most variable features to display}
 }
@@ -21,10 +21,13 @@ A list, containing:
 2) statistics for each feature order according to A or A2
 }
 \description{
-This function is to filter features based on the coefficient of variation (A) or its second
-order derivative (A2) (Kvalseth, 2017). A is standardised according to the mean so is better
-for gene/ feature expression than variance or standard deviation, however, it comes with 
-disadvantages. This is why we have included its second order derivative.
+This function is to filter features based on variance. Depending on the data different
+metrics will be more appropiate, simple variance is included if variance does not tend to
+increase with the mean. The coefficient of variation (A) or its second
+order derivative (A2) (Kvalseth, 2017) are also included which standardise variance with
+respect to the mean. It is best to examine the mean-variance relationship of the data and 
+the distribution of variance of all features, for example, using the results from this function 
+together with the qplot function from ggplot2.
 }
 \examples{
 filtered <- featurefilter(mydata,percentile=10)

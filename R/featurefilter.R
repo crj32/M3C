@@ -1,13 +1,16 @@
 #' featurefilter: A function for filtering features
 #'
-#' This function is to filter features based on the coefficient of variation (A) or its second
-#' order derivative (A2) (Kvalseth, 2017). A is standardised according to the mean so is better
-#' for gene/ feature expression than variance or standard deviation, however, it comes with 
-#' disadvantages. This is why we have included its second order derivative.
+#' This function is to filter features based on variance. Depending on the data different
+#' metrics will be more appropiate, simple variance is included if variance does not tend to
+#' increase with the mean. The coefficient of variation (A) or its second
+#' order derivative (A2) (Kvalseth, 2017) are also included which standardise variance with
+#' respect to the mean. It is best to examine the mean-variance relationship of the data and 
+#' the distribution of variance of all features, for example, using the results from this function 
+#' together with the qplot function from ggplot2.
 #'
 #' @param mydata Data frame: should have samples as columns and rows as features
 #' @param percentile Numerical value: the top X percent most variable features should be kept
-#' @param method Character vector: coefficient of variation (A), the A second order derivative (A2)
+#' @param method Character vector: variance (var), coefficient of variation (A), or the A second order derivative (A2)
 #' @param topN Numerical value: the number of most variable features to display
 #'
 #' @return A list, containing: 
@@ -37,6 +40,7 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     # calculate mean and variance
     u <- rowMeans(mydata)
     sigma <- apply(mydata,1,sd)
+    vars <- sigma^2
     # calc coefficient of variation for all rows (features)
     CV <- sigma/u
     CV[is.na(CV)] <- 0
@@ -48,6 +52,7 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     # calculations
     u <- rowMeans(mydata)
     sigma <- apply(mydata,1,sd)
+    vars <- sigma^2
     A <- sigma/u
     A[is.na(A)] <- 0
     AA <- A^2
@@ -55,6 +60,12 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     A2 <- sqrt((AA/(AA+1)))
     CV <- A2
     # get features with CV in the given percentile
+    CVthresh <- quantile(CV, percentile)
+  }else if (method == 'var'){
+    u <- rowMeans(mydata)
+    sigma <- apply(mydata,1,sd)
+    vars <- sigma^2
+    CV <- vars
     CVthresh <- quantile(CV, percentile)
   }
   
@@ -64,13 +75,18 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
   
   # make data frame of results
   if (method == 'A'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'sd'=sigma,'A'=A)
-    test <- test[order(-test[,4]), ]
+    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma,'A'=A)
+    test <- test[order(-test[,5]), ]
     message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }else if (method == 'A2'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'sd'=sigma,'A'=A,'A2'=A2)
-    test <- test[order(-test[,5]), ]
+    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma,'A'=A,'A2'=A2)
+    test <- test[order(-test[,6]), ]
+    message('printing topN most variable features with statistics...')
+    print(head(test,topN))
+  }else if (method == 'var'){
+    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars)
+    test <- test[order(-test[,3]), ]
     message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }
@@ -78,9 +94,9 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
   ## make results list
   mylist <- list('filtered_data'=filtered_data,'statistics'=test)
   
-  # message
+  ## message
   message(paste('features remaining:',nrow(filtered_data)))
   
-  #
+  ##
   return(mylist)
 }

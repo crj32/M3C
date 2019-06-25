@@ -2,20 +2,21 @@
 #'
 #' This function is to filter features based on variance. Depending on the data different
 #' metrics will be more appropiate, simple variance is included if variance does not tend to
-#' increase with the mean. The coefficient of variation (A) or its second
-#' order derivative (A2) (Kvalseth, 2017) are also included which standardise variance with
-#' respect to the mean. It is best to examine the mean-variance relationship of the data and 
-#' the distribution of variance of all features, for example, using the results from this function 
-#' together with the qplot function from ggplot2.
+#' increase with the mean. There is also the median absolute deviation which is a more robust
+#' metric than variance. The coefficient of variation (A) or its second
+#' order derivative (A2) (Kvalseth, 2017) are also included which standardise the standard
+#' deviation with respect to the mean. It is best to examine the mean-variance relationship of 
+#' the data and the distribution of variance of all features when selecting a metric, for 
+#' example, using the results from this function together with the qplot function from ggplot2.
 #'
 #' @param mydata Data frame: should have samples as columns and rows as features
 #' @param percentile Numerical value: the top X percent most variable features should be kept
-#' @param method Character vector: variance (var), coefficient of variation (A), or the A second order derivative (A2)
+#' @param method Character vector: variance (var), coefficient of variation (A), second order A (A2), median absolute deviation (MAD)
 #' @param topN Numerical value: the number of most variable features to display
 #'
 #' @return A list, containing: 
 #' 1) filtered data
-#' 2) statistics for each feature order according to A or A2
+#' 2) statistics for each feature order according to the defined filtering metric
 #' 
 #' @references 
 #' Kvålseth, Tarald O. "Coefficient of variation: the second-order alternative." Journal of Applied Statistics 44.3 (2017): 402-415.
@@ -25,7 +26,7 @@
 #' @examples
 #' filtered <- featurefilter(mydata,percentile=10)
 
-featurefilter <- function(mydata,percentile=10,method='A',topN=20){
+featurefilter <- function(mydata,percentile=10,method='MAD',topN=20){
   
   message('***feature filter function***')
   
@@ -62,10 +63,19 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
     # get features with CV in the given percentile
     CVthresh <- quantile(CV, percentile)
   }else if (method == 'var'){
+    message('performing calculations for variance')
     u <- rowMeans(mydata)
     sigma <- apply(mydata,1,sd)
     vars <- sigma^2
     CV <- vars
+    CVthresh <- quantile(CV, percentile)
+  }else if (method == 'MAD'){
+    message('performing calculations for median absolute deviation')
+    u <- rowMeans(mydata)
+    MAD <- apply(mydata,1,mad)
+    sigma <- apply(mydata,1,sd)
+    vars <- sigma^2
+    CV <- MAD
     CVthresh <- quantile(CV, percentile)
   }
   
@@ -87,6 +97,11 @@ featurefilter <- function(mydata,percentile=10,method='A',topN=20){
   }else if (method == 'var'){
     test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars)
     test <- test[order(-test[,3]), ]
+    message('printing topN most variable features with statistics...')
+    print(head(test,topN))
+  }else if (method == 'MAD'){
+    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'MAD'=MAD)
+    test <- test[order(-test[,4]), ]
     message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }

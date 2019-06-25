@@ -225,14 +225,18 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ## Filtering features by the coefficient of variation
 
-A simple feature filter function has been included in M3C that uses one of variance, Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. It is best to examine the distribution of variance with respect to the mean and its density with respect to all features when selecting a filtering metric and cut-off. We suggest to do some manual examination and plotting, for example, with the qplot function from ggplot2 of the mean-variance trend. If the variance increases with the mean, A or A2 may be more appropiate than variance. 
+A simple feature filter function has been included in M3C that uses one of variance, median absolute deviation, Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. 
+
+It is best to examine the distribution of variance with respect to the mean and its density with respect to all features when selecting a filtering metric and cut-off setting. We suggest to do some manual examination and plotting using the results of this function, for example, with the qplot function from ggplot2 of the mean-variance trend. If the variance increases with the mean, A or A2 may be more appropiate than variance. 
+
+Median absolute deviation will yield similar results to variance, however, because it uses the median it will be more robust to outliers. This will be the preferable metric in many cases, although if the variance increases with the mean then A2 should be considered.
 
 The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list. 
 
 Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using variance as the filtering metric. The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
 
 ```{r}
-  filtered_results <- featurefilter(mydata, percentile=10, method='var', topN=5)
+  filtered_results <- featurefilter(mydata, percentile=10, method='MAD', topN=5)
 ```
 
 # Closing comments

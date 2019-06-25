@@ -4,30 +4,31 @@
 \alias{featurefilter}
 \title{featurefilter: A function for filtering features}
 \usage{
-featurefilter(mydata, percentile = 10, method = "A", topN = 20)
+featurefilter(mydata, percentile = 10, method = "MAD", topN = 20)
 }
 \arguments{
 \item{mydata}{Data frame: should have samples as columns and rows as features}
 
 \item{percentile}{Numerical value: the top X percent most variable features should be kept}
 
-\item{method}{Character vector: variance (var), coefficient of variation (A), or the A second order derivative (A2)}
+\item{method}{Character vector: variance (var), coefficient of variation (A), second order A (A2), median absolute deviation (MAD)}
 
 \item{topN}{Numerical value: the number of most variable features to display}
 }
 \value{
 A list, containing: 
 1) filtered data
-2) statistics for each feature order according to A or A2
+2) statistics for each feature order according to the defined filtering metric
 }
 \description{
 This function is to filter features based on variance. Depending on the data different
 metrics will be more appropiate, simple variance is included if variance does not tend to
-increase with the mean. The coefficient of variation (A) or its second
-order derivative (A2) (Kvalseth, 2017) are also included which standardise variance with
-respect to the mean. It is best to examine the mean-variance relationship of the data and 
-the distribution of variance of all features, for example, using the results from this function 
-together with the qplot function from ggplot2.
+increase with the mean. There is also the median absolute deviation which is a more robust
+metric than variance. The coefficient of variation (A) or its second
+order derivative (A2) (Kvalseth, 2017) are also included which standardise the standard
+deviation with respect to the mean. It is best to examine the mean-variance relationship of 
+the data and the distribution of variance of all features when selecting a metric, for 
+example, using the results from this function together with the qplot function from ggplot2.
 }
 \examples{
 filtered <- featurefilter(mydata,percentile=10)

@@ -225,25 +225,23 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ## Filtering features by the coefficient of variation
 
-A feature filter function has been included in M3C that uses Pearson's coefficient of variation (A) or its second order derivative (A2) to filter features of a data frame. A is standardised using the mean, therefore it is suitable to filter all rows of a given platform's dataset. However, when the data contains negative and positive values or values close to zero or extreme outliers, A has some undesirable statistical properties (Kvålseth, 2017). This is why we have included A2 from Kvalseth et al. This is a statistic which rectifies the issues with A. 
+A simple feature filter function has been included in M3C that uses one of variance, Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. It is best to examine the distribution of variance with respect to the mean and its density with respect to all features when selecting a filtering metric and cut-off. We suggest to do some manual examination and plotting, for example, with the qplot function from ggplot2 of the mean-variance trend. If the variance increases with the mean, A or A2 may be more appropiate than variance. 
 
-The statistics for each feature (and the filtered data itself) are saved in a data frame in the results list. We suggest to do some manual examination and plotting, for example, with the qplot function from ggplot2 of the mean-variance trend.
+The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list. 
 
-Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using the second order derivative of the coefficient of variation (A2). The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
+Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using variance as the filtering metric. The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
 
 ```{r}
-  filtered_results <- featurefilter(mydata, percentile=10, method='A2', topN=5)
+  filtered_results <- featurefilter(mydata, percentile=10, method='var', topN=5)
 ```
-
-In this case the data has been filtered for variance beforehand, so the A2 values are all 1 or close to 1.
 
 # Closing comments
 
-In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Senbabaoglu et al. (2014), and Monti et al. (2003). 
+In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Senbabaoglu et al. (2014), and Monti et al. (2003). Notably, it is best to use M3C after careful consideration of the format of the data, its normalisation and transformation, correction for any batch effects, and in conjunction with dimensionality reduction tools such as PCA and t-SNE to confirm the structure.
 
 During the development of M3C, we also devised a flexible method and associated CRAN package for generating Gaussian clusters called, clusterlab (https://cran.r-project.org/web/packages/clusterlab/index.html). This tool should prove useful in testing the performance of class discovery algorithms.
 
-For much faster clustering of either single and multi-omic data using a different method, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration procedure, a density-aware kernel, and contains a data compression method to cluster 1000s of samples quickly.
+For fast clustering of multi-omic data, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration and diffusion procedure, a density-aware kernel, and contains a data compression method to cluster 1000s of samples quickly. The method is also effective on the single view situation.
 
 # References
 

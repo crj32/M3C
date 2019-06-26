@@ -28,7 +28,7 @@ A matrix or data frame of normalised continuous expression data (e.g. microarray
 
 For example, for RNA-seq data, VST or rlog transformed count data, log2(CPM), log2(TPM), and log2(RPKM), are all acceptable forms of normalisation.
 
-The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses the coefficient of variation in the package which is demonstrated later in the vignette. This function also provides a number of other useful statistics for each gene.
+The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function which is demonstrated later in the vignette. 
 
 Outliers should be removed, we include an easy to use PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
@@ -223,15 +223,15 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ![*Figure 12: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
-## Filtering features by the coefficient of variation
+## Filtering features by variance
 
-A simple feature filter function has been included in M3C that uses one of variance, median absolute deviation, Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. 
+A simple feature filter function has been included in M3C that uses one of variance, median absolute deviation (MAD), Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. 
 
-It is best to examine the distribution of variance with respect to the mean and its density with respect to all features when selecting a filtering metric and cut-off setting. We suggest to do some manual examination and plotting using the results of this function, for example, with the qplot function from ggplot2 of the mean-variance trend. If the variance increases with the mean, A or A2 may be more appropiate than variance. 
+It is best to examine the distribution of variance with respect to the mean when selecting a filtering metric and cut-off setting. We suggest to do some manual examination and plotting using the results of this function, for example, with the qplot function from ggplot2 of the mean-variance trend. If the variance increases with the mean, A or A2 may be more appropiate than variance or MAD. 
 
-Median absolute deviation will yield similar results to variance, however, because it uses the median it will be more robust to outliers. This will be the preferable metric in many cases, although if the variance increases with the mean then A2 should be considered.
+MAD will yield similar results to variance, however, because it uses the median it will be more robust to outliers. This will be the preferable metric in many cases, although if the variance increases with the mean then A2 should be considered.
 
-The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list. 
+The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list for plotting and further analysis. 
 
 Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using variance as the filtering metric. The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
 
@@ -245,7 +245,7 @@ In this tutorial, we have seen that M3C provides a rigourous approach for select
 
 During the development of M3C, we also devised a flexible method and associated CRAN package for generating Gaussian clusters called, clusterlab (https://cran.r-project.org/web/packages/clusterlab/index.html). This tool should prove useful in testing the performance of class discovery algorithms.
 
-For fast clustering of multi-omic data, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration and diffusion procedure, a density-aware kernel, and contains a data compression method to cluster 1000s of samples quickly. The method is also effective on the single view situation.
+For fast clustering of multi-omic data, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration and diffusion procedure, a density-aware kernel, and contains an optional data compression method to cluster 1000s of samples quickly. The method is also effective at single view cluster analysis.
 
 # References
 

@@ -3,11 +3,11 @@
 #' This function is to filter features based on variance. Depending on the data different
 #' metrics will be more appropiate, simple variance is included if variance does not tend to
 #' increase with the mean. There is also the median absolute deviation which is a more robust
-#' metric than variance. The coefficient of variation (A) or its second
+#' metric than variance, this is preferable. The coefficient of variation (A) or its second
 #' order derivative (A2) (Kvalseth, 2017) are also included which standardise the standard
-#' deviation with respect to the mean. It is best to examine the mean-variance relationship of 
-#' the data and the distribution of variance of all features when selecting a metric, for 
-#' example, using the results from this function together with the qplot function from ggplot2.
+#' deviation with respect to the mean. It is best to manually examine the mean-variance relationship of 
+#' the data, for example, using the results from this function together with the qplot function 
+#' from ggplot2.
 #'
 #' @param mydata Data frame: should have samples as columns and rows as features
 #' @param percentile Numerical value: the top X percent most variable features should be kept
@@ -47,7 +47,7 @@ featurefilter <- function(mydata,percentile=10,method='MAD',topN=20){
     CV[is.na(CV)] <- 0
     A <- CV
     # get features with CV in the given percentile
-    CVthresh <- quantile(CV, percentile) 
+    CVthresh <- quantile(CV, percentile, na.rm = TRUE) 
   }else if (method == 'A2'){
     message('performing calculations for second order co efficient of variation/A2')
     # calculations
@@ -61,14 +61,14 @@ featurefilter <- function(mydata,percentile=10,method='MAD',topN=20){
     A2 <- sqrt((AA/(AA+1)))
     CV <- A2
     # get features with CV in the given percentile
-    CVthresh <- quantile(CV, percentile)
+    CVthresh <- quantile(CV, percentile, na.rm = TRUE)
   }else if (method == 'var'){
     message('performing calculations for variance')
     u <- rowMeans(mydata)
     sigma <- apply(mydata,1,sd)
     vars <- sigma^2
     CV <- vars
-    CVthresh <- quantile(CV, percentile)
+    CVthresh <- quantile(CV, percentile, na.rm = TRUE)
   }else if (method == 'MAD'){
     message('performing calculations for median absolute deviation')
     u <- rowMeans(mydata)
@@ -76,7 +76,7 @@ featurefilter <- function(mydata,percentile=10,method='MAD',topN=20){
     sigma <- apply(mydata,1,sd)
     vars <- sigma^2
     CV <- MAD
-    CVthresh <- quantile(CV, percentile)
+    CVthresh <- quantile(CV, percentile, na.rm = TRUE)
   }
   
   ## filter data
@@ -95,12 +95,12 @@ featurefilter <- function(mydata,percentile=10,method='MAD',topN=20){
     message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }else if (method == 'var'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars)
+    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma)
     test <- test[order(-test[,3]), ]
     message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }else if (method == 'MAD'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'MAD'=MAD)
+    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma,'MAD'=MAD)
     test <- test[order(-test[,4]), ]
     message('printing topN most variable features with statistics...')
     print(head(test,topN))

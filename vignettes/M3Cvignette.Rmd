@@ -3,7 +3,7 @@ title: "M3C: Monte Carlo Reference-based Consensus Clustering"
 author: "Christopher R John"
 date: "26/06/2019"
 output: 
-  BiocStyle::pdf_document
+  BiocStyle::html_document
 vignette: >
   %\VignetteIndexEntry{M3C}
   %\VignetteEngine{knitr::rmarkdown}
@@ -66,7 +66,7 @@ You can read more about the assumptions of clustering algorithms here:
 
 Spectral clustering may be used to cluster more unusual structures using M3C, but this normally is not necessary. Ward's hierarchical clustering (HC) is faster than these 3 algorithms and is an option included in M3C, although in practice PAM and KM usually perform better.
 
-It is also important to check batch effects and other unwanted sources of variation do not drive the main variation in the data. The PCA function has a labels flag for adding categorical and continuous variables to the below plot (type ?pca), but for a more quantitative analysis of these variables before clustering there is David Watson's plot_drivers excellent function from the bioplotr package (https://github.com/dswatson/bioplotr).
+It is also important to check that batch effects and other uninteresting sources of variation do not drive the main variation in the data. The PCA function has a labels flag for adding categorical and continuous variables to the below plot (type ?pca). For a more quantitative analysis of these variables before clustering there is the excellent plot_drivers function from the bioplotr package which produces a very nice plot (https://github.com/dswatson/bioplotr).
 
 The data should have been transformed to be homoskedastic (or nearly so) by this point (e.g. vst or log2), otherwise the larger features will have larger variances and dominate the PCA and cluster analysis. If the data contains different kinds of features, e.g. both protein and miRNA, then they should also be z-score normalised to be comparable.
 

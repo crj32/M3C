@@ -101,7 +101,7 @@ featurefilter <- function(mydata,percentile=10,method='MAD',topN=20){
     print(head(test,topN))
   }else if (method == 'MAD'){
     test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma,'MAD'=MAD)
-    test <- test[order(-test[,4]), ]
+    test <- test[order(-test[,5]), ]
     message('printing topN most variable features with statistics...')
     print(head(test,topN))
   }

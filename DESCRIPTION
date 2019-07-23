@@ -1,6 +1,6 @@
 Package: M3C
 Title: Monte Carlo Reference-based Consensus Clustering
-Version: 1.7.998
+Version: 1.7.999
 Author: Christopher John, David Watson
 Maintainer: Christopher John <chris.r.john86@gmail.com>
 Description: M3C is a consensus clustering algorithm that uses a Monte Carlo simulation to eliminate overestimation of K and can reject the null hypothesis K=1.

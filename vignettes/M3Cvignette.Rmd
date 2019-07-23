@@ -95,7 +95,7 @@ The scores and p values are contained within the res$scores object. We can see b
 res$scores
 ```
 
-Also important is the relationship between the clinical variables and the discovered clusters. In this data we want to compare with a categorical variable so perform a chi-squared test. We are reassured to see below K=4 is highly significant (p=5.5x10-14), however, K=5 is slightly more so. It is important to bear in mind the clinical or biological relationships as well as the structural nature of the data when deciding K.
+Also important is the relationship between the clinical variables and the discovered clusters. In this data we want to compare with a categorical variable so perform a chi-squared test. We are reassured to see below K=4 is highly significant (p=5.5x10-14). It is important to bear in mind the clinical or biological relationships as well as the structural nature of the data when deciding K.
 
 ```{r}
 res$clinicalres

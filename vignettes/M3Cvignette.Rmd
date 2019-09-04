@@ -1,7 +1,7 @@
 ---
 title: "M3C: Monte Carlo Reference-based Consensus Clustering"
 author: "Christopher R John"
-date: "26/06/2019"
+date: "04/09/2019"
 output: 
   BiocStyle::html_document
 vignette: >
@@ -12,15 +12,15 @@ vignette: >
 
 # Abstract
 
-Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm is a widely applied method to identify the number of clusters (K), however; it has inherant bias towards greater values of K and yields high numbers of false positives. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of stability scores along the range of K which are used when deciding the optimal value. Using a reference, that maintains the correlation structure of the input features, improves on the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. 
+Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm is a widely applied method to identify the number of clusters (K), however; it has inherant bias towards greater values of K and yields high numbers of false positives. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of stability scores along the range of K which are used when deciding the optimal value. Using a reference, that maintains the correlation structure of the input features, improves on the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. A faster method is included that uses a penalty term to eliminate the bias towards greater values of K.
 
 # Prerequisites
 
 **M3C recommended spec**
 
-For the Monte Carlo simulation (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If your machine is not particuarly fast, you can reduce the Monte Carlo iterations down to 10-50x. 
+For the Monte Carlo simulation (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If the machine is not particuarly fast, the Monte Carlo iterations parameter may be reduced to 5-50x. 
 
-The second method (method=2) that uses a penalty term to eliminate overestimation of K is faster, but you will not get p values for each value of K.
+The second method (method=2) that uses a penalty term to eliminate overestimation of K is faster, but the user will not get p values for each value of K.
 
 **M3C requires**   
 
@@ -28,15 +28,15 @@ A matrix or data frame of normalised continuous expression data (e.g. microarray
 
 For example, for RNA-seq data, VST or rlog transformed count data, log2(CPM), log2(TPM), and log2(RPKM), are all acceptable forms of normalisation.
 
-The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function which is demonstrated later in the vignette. 
+The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses variance which is demonstrated later in the vignette. This variance function should be applied after removing the tendency of the variance to increase with the mean (e.g. VST or log2 transformation).
 
 Outliers should be removed, we include an easy to use PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
-We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix it makes, it is not suited for single cell RNA-seq data, better to use SC3 or Seurat, for example.
+We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix it makes, it is not well suited for single cell RNA-seq data, better to use SC3 or Spectrum, for example.
 
 **M3C also accepts optionally**
 
-Annotation data frame, where every row is a patient or sample and columns refer to meta-data, e.g. age, sex, time until death, etc. M3C will automatically rearrange your annotation to match the clustering output and add the consensus cluster grouping to it. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the user supplied annotation data frame.
+Annotation data frame, where every row is a patient or sample and columns refer to meta-data, e.g. age, sex, time until death, etc. M3C will automatically rearrange the annotation to match the clustering output and add the consensus cluster grouping to it. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the user supplied annotation data frame.
 
 M3C also accepts clinical or biological data for a basic statistical analysis with the discovered classes. Again the 'ID' column must exist in the annotation data frame. If the data is continuous or categorical, a Kruskal-Wallis or chi-squared test are performed, respectively. For these two tests, a 'variable' parameter must be given which is a string that defines the dependent variable in the users annotation data frame. If the data is survival data for cancer, the annotation data frame must have an 'ID' column first, followed by a 'Time' and 'Death' column (where 0 is no death and 1 is death or time until last visit). 
 
@@ -61,7 +61,7 @@ This is an important exploratory step prior to running M3C. It is best to remove
 i) Clusters are approximately spherical - not severely elongated in one direction (anisotropic) or non-linear
 ii) Clusters are approximately equal in variance
 
-You can read more about the assumptions of clustering algorithms here:
+There is more info about the assumptions of clustering algorithms here:
 (http://scikit-learn.org/stable/modules/clustering.html)
 
 Spectral clustering may be used to cluster more unusual structures using M3C, but this normally is not necessary. Ward's hierarchical clustering (HC) is faster than these 3 algorithms and is an option included in M3C, although in practice PAM and KM usually perform better.
@@ -78,11 +78,11 @@ PCA1 <- pca(mydata)
 
 ## Running M3C
 
-In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If you are running a slow machine, have a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 50-5x. The inner replications needs to be at least 100x, changing this up to 250x will lead to increased result stability on some datasets.
+In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If the user is running a slow machine, has a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 5-50x. The inner replications needs to be at least 100x, changing this up to 250x will lead to increased result stability on some datasets.
 
-Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase you wish to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set 'doanalysis' to TRUE and 'analysistype' to 'chi', to do a chi-squared test for significance. The 'variable' parameter is set to class (tumour histology in this data).
+Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase the user wishes to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set 'doanalysis' to TRUE and 'analysistype' to 'chi', to do a chi-squared test for significance. The 'variable' parameter is set to class (tumour histology in this data).
 
-It is recommended to save the workspace after M3C if you are working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the 'removeplots' parameter to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
+It is recommended to save the workspace after M3C if the user is working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the 'removeplots' parameter to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
 
 ```{r, message=FALSE, results='hide'}
 res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, 
@@ -200,6 +200,8 @@ We can see in the PCA and t-SNE plots that clusters 3 and 4 are closer together.
 
 The second method minimises log(PAC) subject to lambda*K to find the optimal K. This metric is called the Penalised Cluster Stability Index (PCSI). 
 
+Lambda is a small constant that controls the regularisation strength, it has a preset value defined from experimental observations.
+
 We recommend using this method if the user has a massive dataset or little time. It will correct for the overestimation of K observed with the PAC score.
 
 ```{r,fig.show = 'hide',message=FALSE,results='hide'}
@@ -209,6 +211,8 @@ res <- M3C(mydata, method = 2)
 Here we can see the PCSI is minimised at K=4, this is the optimal K using this method.
 
 ![*Figure 11: PCSI results *](PCSI.png)
+
+For this method, it is a lot faster than running a Monte Carlo simulation so it is suggested to increase the 'repsreal' parameter to 250-1000 for increased result stability.
 
 # Additional functions
 
@@ -226,11 +230,9 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
 
 ## Filtering features by variance
 
-A simple feature filter function has been included in M3C that uses one of variance, median absolute deviation (MAD), Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. It is best to examine the distribution of variance with respect to the mean when selecting a filtering metric and cut-off setting. 
+A simple feature filter function has been included in M3C that uses one of variance, median absolute deviation (MAD), Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. MAD will yield similar results to variance, however, because it uses the median instead of the mean it will be more robust to outliers. This will be the preferable metric in many cases.
 
-MAD will yield similar results to variance, however, because it uses the median instead of the mean it will be more robust to outliers. This will be the preferable metric in many cases, although if the variance increases with the mean then A2 should be considered.
-
-The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list for plotting and further analysis. In the first case we recommend to set percentile to 100 which collects statistics for all features. We then suggest to do some manual examination and plotting using the results of this function, for example, with the qplot function from ggplot2 of the mean-variance trend. If the variance increases with the mean, A or A2 may be more appropiate than variance or MAD. 
+The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list for plotting and further analysis. In the first case, the user could set percentile to 100 which collects statistics for all features. We then suggest to do some manual examination and plotting using the results of this function, for example, with the qplot function from ggplot2 of the mean-variance trend. If the data is appropiately transformed there should be little increase of variance with the mean, so we can use MAD or variance to filter the data. If the variance increases linearly with the mean, A or A2 may be more appropiate than variance or MAD. 
 
 Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using MAD as the filtering metric. In this case the example data has been already been filtered for variance then scaled additionally, so the results are not intended to be interpreteted as it is just an example. The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
 

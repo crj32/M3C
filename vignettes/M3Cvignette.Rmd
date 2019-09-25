@@ -1,9 +1,9 @@
 ---
 title: "M3C: Monte Carlo Reference-based Consensus Clustering"
 author: "Christopher R John"
-date: "04/09/2019"
+date: "25/09/2019"
 output: 
-  BiocStyle::html_document
+  BiocStyle::pdf_document
 vignette: >
   %\VignetteIndexEntry{M3C}
   %\VignetteEngine{knitr::rmarkdown}
@@ -12,7 +12,7 @@ vignette: >
 
 # Abstract
 
-Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm is a widely applied method to identify the number of clusters (K), however; it has inherant bias towards greater values of K and yields high numbers of false positives. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of stability scores along the range of K which are used when deciding the optimal value. Using a reference, that maintains the correlation structure of the input features, improves on the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. A faster method is included that uses a penalty term to eliminate the bias towards greater values of K.
+Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm is a widely applied method to identify the number of clusters (K), however when combined with the PAC score (Senbabaoglu et al., 2014); it has inherant bias towards greater values of K. While the original delta K metric to find K is often subjective as it relies on finding an elbow point and has been demonstrated to be inferior to the PAC score (Senbabaoglu et al., 2014). Both prior methods do not test the null hypothesis K=1. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of stability (PAC) scores along the range of K which are used to decide the optimal value. Using a reference, that maintains the correlation structure of the input features, improves on the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. 
 
 # Prerequisites
 
@@ -28,7 +28,7 @@ A matrix or data frame of normalised continuous expression data (e.g. microarray
 
 For example, for RNA-seq data, VST or rlog transformed count data, log2(CPM), log2(TPM), and log2(RPKM), are all acceptable forms of normalisation.
 
-The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses variance which is demonstrated later in the vignette. This variance function should be applied after removing the tendency of the variance to increase with the mean (e.g. VST or log2 transformation).
+The data should be filtered to remove features with no or very low signal, and filtered using variance to reduce dimensionality (unsupervised), or p value from a statistical test (supervised). We include a feature filter function that uses variance which is demonstrated later in the vignette. This variance function should be applied after removing the tendency of the variance to increase with the mean (e.g. after VST or log2 transformation).
 
 Outliers should be removed, we include an easy to use PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
@@ -66,7 +66,7 @@ There is more info about the assumptions of clustering algorithms here:
 
 Spectral clustering may be used to cluster more unusual structures using M3C, but this normally is not necessary. Ward's hierarchical clustering (HC) is faster than these 3 algorithms and is an option included in M3C, although in practice PAM and KM usually perform better.
 
-It is also important to check that batch effects and other uninteresting sources of variation do not drive the main variation in the data. The PCA function has a labels flag for adding categorical and continuous variables to the below plot (type ?pca). For a more quantitative analysis of these variables before clustering there is the excellent plot_drivers function from the bioplotr package which produces a very nice plot (https://github.com/dswatson/bioplotr).
+It is also important to check that batch effects and other uninteresting sources of variation do not drive the main variation in the data. The PCA function has a labels flag for adding categorical and continuous variables to the below plot (type ?pca). For a more quantitative analysis of these variables before clustering there is the 'plot_drivers' function from the bioplotr package which produces a nice plot (https://github.com/dswatson/bioplotr).
 
 The data should have been transformed to be homoskedastic (or nearly so) by this point (e.g. vst or log2), otherwise the larger features will have larger variances and dominate the PCA and cluster analysis. If the data contains different kinds of features, e.g. both protein and miRNA, then they should also be z-score normalised to be comparable.
 
@@ -85,8 +85,12 @@ Plots from the tool and an .csv file with the numerical outputs may be printed i
 It is recommended to save the workspace after M3C if the user is working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the 'removeplots' parameter to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
 
 ```{r, message=FALSE, results='hide'}
+# for vignette
 res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, 
            analysistype = 'chi', doanalysis = TRUE, variable = 'class')
+
+# ordinary usage
+# res <- M3C(mydata)
 ```
 
 The scores and p values are contained within the res$scores object. We can see below the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this optimal K decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters. For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033.
@@ -103,12 +107,16 @@ res$clinicalres
 
 Now we will take a look at some of the plots M3C generates.  
 
-This is a CDF plot of the consensus matrices for our test data. We are looking for the value of K with the flattest curve and this can be quantified using the PAC metric (Senbabaoglu et al., 2014). In the CDF and following PAC plot we can see the inherant bias of consensus clustering where as K increases so does the apparent stability of the results for any given dataset, this we correct for by using a reference.
+This is a CDF plot of the consensus matrices for our test data. We are looking for the value of K with the flattest curve and this can be quantified using the PAC metric (Senbabaoglu et al., 2014). In the CDF and following PAC plot we can see the inherant bias of consensus clustering where as K increases so does the apparent stability of the results (or CDF plot flatness) for any given dataset, this we correct for by using a reference. This makes the method more sensitive to detection of structure in noisy data.
 \newline  
   
 ![*Figure 2: CDF plot for real data*](CDF.png)
 
-This figure below is the PAC score, we can see an elbow at K = 4 which is suggestive this is the best K. However, the bias of the PAC score can be seen here as it naturally tends towards lower values as K increases, thus making selecting K without taking this into account challenging to say the least. Furthermore, the PAC score cannot reject the null hypothesis K=1, for that we have introduced p values into the consensus clustering methodology. 
+This figure below shows the PAC score (Senbabaoglu et al., 2014), we can see an elbow at K = 4 which is suggestive this is the best K. However, the bias of the PAC score can be seen here as it naturally tends towards lower values as K increases (see above plot), making selecting K without taking this into account subject to this inherant  bias. Selecting the minimal PAC score will only work when the clusters are well seperated.
+
+Another option would be to use the original delta K metric here from the Monti method, however, identifying the elbow in this plot or 'value before the floor' is often very subjective, especially on noisy datasets like commonly occur in precision medicine. This metric has been shown to perform poorly on real data (Senbabaoglu et al., 2014) and like the PAC score has the theoretical issue of not accounting for CDF convergence as K increases.
+
+In addition, these methods cannot reject the null hypothesis K=1, for that we have introduced p values into the consensus clustering methodology. 
 
 ![*Figure 3: PAC score for real data*](PACscore.png){width=90%}
 
@@ -121,10 +129,6 @@ Finally, we calculate a p value from the distribution, here we display the p val
 ![*Figure 5: Empirical p values*](pscore.png){width=90%}
 
 Now we are pretty convinced there are 4 clusters within this dataset which are not likely simply to have occurred by chance alone. 
-
-A further analysis that M3C conducts (if the dend flag is set to TRUE) is to make a dendrogram for the optimal K using the consensus cluster medoids, then sigclust is run to calculate p values for each branchpoint. This allows quantification of the structural relationships between consensus clusters. In this case CC3 and CC4 have a closer relationship, whilst the other clusters are quite far apart.
-
-![*Figure 6: Dendrogram*](dendrogram2.png)
 
 We can turn to examine the output objects that M3C generates. These allow heatmap generation for publications.
 

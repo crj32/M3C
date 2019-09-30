@@ -12,15 +12,15 @@ vignette: >
 
 # Abstract
 
-Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm is a widely applied method to identify the number of clusters (K), however when combined with the PAC score (Senbabaoglu et al., 2014); it has inherant bias towards greater values of K. While the original delta K metric to find K is often subjective as it relies on finding an elbow point and has been demonstrated to be inferior to the PAC score (Senbabaoglu et al., 2014). Both prior methods do not test the null hypothesis K=1. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of stability (PAC) scores along the range of K which are used to decide the optimal value. Using a reference, that maintains the correlation structure of the input features, improves on the limitations of consensus clustering. M3C uses the Relative Cluster Stability Index (RCSI) and p values to decide on the value of K and reject the null hypothesis, K=1. 
+Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm (Monti et al., 2003) is a widely applied method to identify the number of clusters (K) through the principal of stability selection. This algorithm works by resampling and clustering the data for each K and a NXN consensus matrix is calculated, where each unit represents the fraction of times two samples clustered together. A perfectly stable matrix would consist entirely of 0s and 1s, representing all sample pairs always clustering together or not together over resampling iterations. The Proportion of Ambiguous Clustering (PAC) score (Senbabaoglu et al., 2014) has been recommended to assess consensus matrix stability for each K, however, it has bias towards greater values of K. While the delta K metric to find K is subjective as it relies on finding an elbow point and has been demonstrated to be inferior to the PAC score. Additionally, neither method tests the null hypothesis K=1. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of PAC scores along the range of K which, by comparing with the real PAC scores, are used to decide the optimal K and reject the null hypothesis. 
 
 # Prerequisites
 
 **M3C recommended spec**
 
-For the Monte Carlo simulation (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If the machine is not particuarly fast, the Monte Carlo iterations parameter may be reduced to 5-50x. 
+For the Monte Carlo simulation (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If the machine is not particuarly fast, the Monte Carlo iterations parameter may be reduced to 5-50. 
 
-The second method (method=2) that uses a penalty term to eliminate overestimation of K is faster, but the user will not get p values for each value of K.
+The second method (method=2) that uses a penalty term to eliminate overestimation of K is faster, but the user will not get p values for each value of K. It is preferable to use method 1 with a low number of iterations (e.g. 5-10) instead of this approach if possible.
 
 **M3C requires**   
 
@@ -89,7 +89,7 @@ It is recommended to save the workspace after M3C if the user is working with a 
 res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, 
            analysistype = 'chi', doanalysis = TRUE, variable = 'class')
 
-# ordinary usage
+# basic usage
 # res <- M3C(mydata)
 ```
 
@@ -107,7 +107,7 @@ res$clinicalres
 
 Now we will take a look at some of the plots M3C generates.  
 
-This is a CDF plot of the consensus matrices for our test data. We are looking for the value of K with the flattest curve and this can be quantified using the PAC metric (Senbabaoglu et al., 2014). In the CDF and following PAC plot we can see the inherant bias of consensus clustering where as K increases so does the apparent stability of the results (or CDF plot flatness) for any given dataset, this we correct for by using a reference. This makes the method more sensitive to detection of structure in noisy data.
+This is a cumulative density function (CDF) plot of the consensus matrices for the test data from 2...maxK. In the perfect case there would be a flat line to indicate a matrix of just 0s and 1s. CDF flatness can be quantified using the PAC metric (Senbabaoglu et al., 2014). However, in the CDF and following PAC plot we can see the inherant bias of consensus clustering where as K increases so does the apparent stability of the results (or CDF plot flatness), this we correct for by using a reference. This makes the method more sensitive to detection of the underlying structure in noisy data.
 \newline  
   
 ![*Figure 2: CDF plot for real data*](CDF.png)
@@ -206,7 +206,7 @@ The second method minimises log(PAC) subject to lambda*K to find the optimal K. 
 
 Lambda is a small constant that controls the regularisation strength, it has a preset value defined from experimental observations.
 
-We recommend using this method if the user has a massive dataset or little time. It will correct for the overestimation of K observed with the PAC score.
+We recommend using this method if the user has a massive dataset or little time. It will correct for the overestimation of K observed with the PAC score. Although it is not as rigorous as running a Monte Carlo simulation.
 
 ```{r,fig.show = 'hide',message=FALSE,results='hide'}
 res <- M3C(mydata, method = 2)
@@ -216,7 +216,7 @@ Here we can see the PCSI is minimised at K=4, this is the optimal K using this m
 
 ![*Figure 11: PCSI results *](PCSI.png)
 
-For this method, it is a lot faster than running a Monte Carlo simulation so it is suggested to increase the 'repsreal' parameter to 250-1000 for increased result stability.
+For this method, it is a lot faster than running a Monte Carlo simulation so it is suggested to increase the 'repsreal' parameter to e.g. 250 for increased result stability.
 
 # Additional functions
 

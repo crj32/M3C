@@ -888,7 +888,7 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
       ggplot2::xlab('K') +
       ggplot2::labs(title = "Real Data")
     if (printres == TRUE){
-      png('PACscore.png', height = 14, width = 23, units = 'cm', 
+      png('PACscore.png', height = 14, width = 20, units = 'cm', 
           type = 'cairo', res = 900)
     }
     print(p2)

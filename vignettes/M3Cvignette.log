@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.3.1)  25 SEP 2019 12:14
+This is pdfTeX, Version 3.14159265-2.6-1.40.18 (TeX Live 2017/Debian) (preloaded format=pdflatex 2019.3.1)  30 SEP 2019 07:46
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -1213,7 +1213,7 @@ LaTeX Font Info:    Font shape `T1/lmss/bx/it' in size <14.4> not available
 
 {/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}]
 LaTeX Font Info:    Font shape `T1/phv/bx/n' in size <10> not available
-(Font)              Font shape `T1/phv/b/n' tried instead on input line 171.
+(Font)              Font shape `T1/phv/b/n' tried instead on input line 167.
 [2]
 LaTeX Font Info:    Try loading font information for T1+fvm on input line 179.
 (/usr/share/texlive/texmf-dist/tex/latex/bera/t1fvm.fd
@@ -1315,7 +1315,8 @@ Overfull \hbox (42.67912pt too wide) in paragraph at lines 301--301
 [] [] 
  []
 
-<RCSI.png, id=131, 569.0058pt x 398.288pt>
+[6 <./CDF.png (PNG copy)>]
+<RCSI.png, id=136, 569.0058pt x 398.288pt>
 File: RCSI.png Graphic file (type png)
 <use RCSI.png>
 Package pdftex.def Info: RCSI.png  used on input line 308.
@@ -1325,7 +1326,7 @@ Overfull \hbox (42.67912pt too wide) in paragraph at lines 309--309
 [] [] 
  []
 
-<pscore.png, id=132, 569.0058pt x 398.288pt>
+<pscore.png, id=137, 569.0058pt x 398.288pt>
 File: pscore.png Graphic file (type png)
 <use pscore.png>
 Package pdftex.def Info: pscore.png  used on input line 316.
@@ -1335,8 +1336,8 @@ Overfull \hbox (42.67912pt too wide) in paragraph at lines 317--317
 [] [] 
  []
 
-[6 <./CDF.png (PNG copy)>] [7 <./PACscore.png (PNG copy)> <./RCSI.png (PNG copy
-)>] [8 <./pscore.png (PNG copy)>]
+[7 <./PACscore.png (PNG copy)> <./RCSI.png (PNG copy)>] [8 <./pscore.png (PNG c
+opy)>]
 <aheatmapGBMfour-vin2.png, id=152, 4231.55907pt x 2086.04344pt>
 File: aheatmapGBMfour-vin2.png Graphic file (type png)
 <use aheatmapGBMfour-vin2.png>
@@ -1347,7 +1348,8 @@ Overfull \hbox (42.67912pt too wide) in paragraph at lines 368--368
 [] [] 
  []
 
-<aheatmapconsensusmatrix-vin2.png, id=154, 369.8618pt x 213.3571pt>
+[9 <./aheatmapGBMfour-vin2.png>]
+<aheatmapconsensusmatrix-vin2.png, id=160, 369.8618pt x 213.3571pt>
 File: aheatmapconsensusmatrix-vin2.png Graphic file (type png)
 <use aheatmapconsensusmatrix-vin2.png>
 Package pdftex.def Info: aheatmapconsensusmatrix-vin2.png  used on input line 3
@@ -1358,8 +1360,7 @@ Overfull \hbox (42.67912pt too wide) in paragraph at lines 393--393
 [] [] 
  []
 
-[9 <./aheatmapGBMfour-vin2.png>]
-<PCApostclustering.png, id=162, 739.7236pt x 569.0058pt>
+<PCApostclustering.png, id=161, 739.7236pt x 569.0058pt>
 File: PCApostclustering.png Graphic file (type png)
 <use PCApostclustering.png>
 Package pdftex.def Info: PCApostclustering.png  used on input line 412.
@@ -1369,7 +1370,7 @@ Overfull \hbox (42.67912pt too wide) in paragraph at lines 413--413
 [] [] 
  []
 
-<TSNEpostclustering.png, id=163, 739.7236pt x 569.0058pt>
+<TSNEpostclustering.png, id=162, 739.7236pt x 569.0058pt>
 File: TSNEpostclustering.png Graphic file (type png)
 <use TSNEpostclustering.png>
 Package pdftex.def Info: TSNEpostclustering.png  used on input line 418.
@@ -1414,13 +1415,13 @@ Package rerunfilecheck Info: File `M3Cvignette.out' has not changed.
 Package atveryend Info: Empty hook `AtVeryVeryEnd' on input line 524.
  ) 
 Here is how much of TeX's memory you used:
- 14065 strings out of 492982
- 214487 string characters out of 6134897
+ 14068 strings out of 492982
+ 214526 string characters out of 6134897
  342380 words of memory out of 5000000
- 17173 multiletter control sequences out of 15000+600000
- 79235 words of font info for 106 fonts, out of 8000000 for 9000
+ 17174 multiletter control sequences out of 15000+600000
+ 79336 words of font info for 107 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 51i,14n,45p,1138b,519s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 51i,14n,45p,1390b,519s stack positions out of 5000i,500n,10000p,200000b,80000s
 {/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc}{/usr/share/texmf/
 fonts/enc/dvips/lm/lm-ec.enc}</usr/share/texlive/texmf-dist/fonts/type1/public/
 bera/fvmr8a.pfb></usr/share/texlive/texmf-dist/fonts/type1/public/bera/fvmro8a.
@@ -1429,7 +1430,7 @@ type1/public/lm/lmssbo10.pfb></usr/share/texmf/fonts/type1/public/lm/lmssbx10.p
 fb></usr/share/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvb8a.pfb></usr/sha
 re/texlive/texmf-dist/fonts/type1/urw/helvetic/uhvbo8a.pfb></usr/share/texlive/
 texmf-dist/fonts/type1/urw/helvetic/uhvr8a.pfb>
-Output written on M3Cvignette.pdf (15 pages, 4109939 bytes).
+Output written on M3Cvignette.pdf (15 pages, 4211578 bytes).
 PDF statistics:
  253 PDF objects out of 1000 (max. 8388607)
  199 compressed objects within 2 object streams

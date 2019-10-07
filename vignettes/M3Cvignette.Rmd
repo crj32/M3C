@@ -1,7 +1,7 @@
 ---
 title: "M3C: Monte Carlo Reference-based Consensus Clustering"
 author: "Christopher R John"
-date: "25/09/2019"
+date: "07/10/2019"
 output: 
   BiocStyle::pdf_document
 vignette: >
@@ -12,7 +12,7 @@ vignette: >
 
 # Abstract
 
-Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm (Monti et al., 2003) is a widely applied method to identify the number of clusters (K) through the principal of stability selection. This algorithm works by resampling and clustering the data for each K and a NXN consensus matrix is calculated, where each unit represents the fraction of times two samples clustered together. A perfectly stable matrix would consist entirely of 0s and 1s, representing all sample pairs always clustering together or not together over resampling iterations. The Proportion of Ambiguous Clustering (PAC) score (Senbabaoglu et al., 2014) has been recommended to assess consensus matrix stability for each K, however, it has bias towards greater values of K. While the delta K metric to find K is subjective as it relies on finding an elbow point and has been demonstrated to be inferior to the PAC score. Additionally, neither method tests the null hypothesis K=1. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of PAC scores along the range of K which, by comparing with the real PAC scores, are used to decide the optimal K and reject the null hypothesis. 
+Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm (Monti et al., 2003) is a widely applied method to identify the number of clusters (K) through the principle of stability selection. This algorithm works by resampling and clustering the data for each K and a NXN consensus matrix is calculated, where each unit represents the fraction of times two samples clustered together. A perfectly stable matrix would consist entirely of 0s and 1s, representing all sample pairs always clustering together or not together over resampling iterations. The Proportion of Ambiguous Clustering (PAC) score (Senbabaoglu et al., 2014) has been recommended to assess consensus matrix stability for each K, however, it has bias towards greater values of K. While the delta K metric to find K is subjective as it relies on finding an elbow point and has been demonstrated to be inferior to the PAC score. Additionally, neither method tests the null hypothesis K=1. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of PAC scores along the range of K which, by comparing with the real PAC scores, are used to decide the optimal K and reject the null hypothesis. 
 
 # Prerequisites
 

@@ -74,7 +74,7 @@ The data should have been transformed to be homoskedastic (or nearly so) by this
 PCA1 <- pca(mydata)
 ```
 
-![*Figure 1: Preliminary PCA to check structure*](PCApriorclustering.png)
+![*Preliminary PCA to check structure*](PCApriorclustering.png)
 
 ## Running M3C
 
@@ -110,7 +110,7 @@ Now we will take a look at some of the plots M3C generates.
 This is a cumulative density function (CDF) plot of the consensus matrices for the test data from 2...maxK. In the perfect case there would be a flat line to indicate a matrix of just 0s and 1s. CDF flatness can be quantified using the PAC metric (Senbabaoglu et al., 2014). However, in the CDF and following PAC plot we can see the inherant bias of consensus clustering where as K increases so does the apparent stability of the results (or CDF plot flatness), this we correct for by using a reference. This makes the method more sensitive to detection of the underlying structure in noisy data.
 \newline  
   
-![*Figure 2: CDF plot for real data*](CDF.png)
+![*CDF plot for real data*](CDF.png)
 
 This figure below shows the PAC score (Senbabaoglu et al., 2014), we can see an elbow at K = 4 which is suggestive this is the best K. However, the bias of the PAC score can be seen here as it naturally tends towards lower values as K increases (see above plot), making selecting K without taking this into account subject to this inherant  bias. Selecting the minimal PAC score will only work when the clusters are well seperated.
 
@@ -118,15 +118,15 @@ Another option would be to use the original delta K metric here from the Monti m
 
 In addition, these methods cannot reject the null hypothesis K=1, for that we have introduced p values into the consensus clustering methodology. 
 
-![*Figure 3: PAC score for real data*](PACscore.png){width=90%}
+![*PAC score for real data*](PACscore.png){width=90%}
 
 We then derive the Relative Cluster Stability Index (RCSI) which takes into account the reference PAC scores using the reference mean. This metric is better than the PAC score for deciding class number, where the maximum value corresponds to the optimal K. In this example the RCSI has an optima at K=4. We recommend the RCSI be used to select K, and the p values to reject the null in most cases.
 
-![*Figure 4: RCSI*](RCSI.png){width=90%}
+![*RCSI*](RCSI.png){width=90%}
 
 Finally, we calculate a p value from the distribution, here we display the p values from the beta distribution. If none of the p values reach significance over a reasonable range of K (e.g. 10), then we accept the null hypothesis. In the GBM dataset, we can see K = 4 reaches signfiicance with an alpha of 0.05 (red dotted line), therefore we can reject the null hypothesis K=1 for the GBM dataset.
 
-![*Figure 5: Empirical p values*](pscore.png){width=90%}
+![*Empirical p values*](pscore.png){width=90%}
 
 Now we are pretty convinced there are 4 clusters within this dataset which are not likely simply to have occurred by chance alone. 
 
@@ -162,7 +162,7 @@ NMF::aheatmap(data, annCol = annon, Colv = NA, distfun = 'pearson',
 
 ```
 
-![*Figure 7: aheatmap of GBM consensus clusters with tumour classification *](aheatmapGBMfour-vin2.png)
+![*aheatmap of GBM consensus clusters with tumour classification *](aheatmapGBMfour-vin2.png)
 
 Another plot we may want to do for publications is print the consensus matrix for our optimal clustering solution (in this case, K = 4). This should be quite crisp reflecting the significant stability of the results. We can see in this heatmap below of the consensus matrix the clusters do indeed look quite clear supporting our view that there is 4 clusters. 
 
@@ -181,7 +181,7 @@ NMF::aheatmap(ccmatrix,
               Colv=NA,Rowv=NA,annColors = list(consensuscluster=ann_colors2))
 ```
 
-![*Figure 8: aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
+![*aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
 
 ## Final check of consensus cluster structure
 
@@ -194,9 +194,9 @@ A last analysis we recommend to do is to examine how the clusters are arranged i
 
 We can see in the PCA and t-SNE plots that clusters 3 and 4 are closer together. Doing a visual check like this allows the user to ensure there are no obvious artifacts that have occured. 
 
-![*Figure 9: PCA of a 4 cluster test dataset *](PCApostclustering.png)
+![*PCA of a 4 cluster test dataset *](PCApostclustering.png)
 
-![*Figure 10: t-SNE of a 4 cluster simulated dataset *](TSNEpostclustering.png)
+![*t-SNE of a 4 cluster simulated dataset *](TSNEpostclustering.png)
 
 # Example workflow II: Fast penalty method
 
@@ -214,7 +214,7 @@ res <- M3C(mydata, method = 2)
 
 Here we can see the PCSI is minimised at K=4, this is the optimal K using this method.
 
-![*Figure 11: PCSI results *](PCSI.png)
+![*PCSI results *](PCSI.png)
 
 For this method, it is a lot faster than running a Monte Carlo simulation so it is suggested to increase the 'repsreal' parameter to e.g. 250 for increased result stability.
 
@@ -230,7 +230,7 @@ Note, clustersim's method has recently been replaced with the CRAN package, clus
   res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = FALSE, seed=123)
 ```
 
-![*Figure 12: PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
+![*PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
 
 ## Filtering features by variance
 

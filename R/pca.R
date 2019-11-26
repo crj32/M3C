@@ -1,7 +1,8 @@
 #' pca: A principal component analysis function
 #' 
 #' This is a flexible PCA function that can be run on a standard data frame (or the M3C results object).
-#' It is a wrapper for prcomp/ggplot2 code and can be customised with different colours and font sizes and more.
+#' It is a wrapper for prcomp/ggplot2 code and can be customised with different colours and font sizes 
+#' and more.
 #' 
 #' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
 #' @param printres Logical flag: whether to print the PCA into current directory
@@ -237,7 +238,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     
     if (controlscale == TRUE){
       if (scale == 1){
-        p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+        p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy], label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
           theme_bw() + 
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                 axis.text.y = element_text(size = axistextsize, colour = 'black'),
@@ -254,7 +255,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
         
         #scale_colour_gradient(low="red", high="white")
       }else if (scale == 2){
-        p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+        p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy], label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
           theme_bw() + 
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                 axis.text.y = element_text(size = axistextsize, colour = 'black'),
@@ -271,7 +272,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
           ylab(paste('PC',PC2,' (',pc2var,'% variance)',sep=''))
         
       }else if (scale == 3){
-        p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+        p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy], label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
           theme_bw() + 
           theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
                 axis.text.y = element_text(size = axistextsize, colour = 'black'),
@@ -289,7 +290,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
         
       }
     }else{
-      p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
+      p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy], label = label) ) + geom_point(aes(colour = labels), size = dotsize) + 
         theme_bw() + 
         theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
               axis.text.y = element_text(size = axistextsize, colour = 'black'),
@@ -326,7 +327,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     pc1var <- round(variance_percentage[PC1],digits=0)
     pc2var <- round(variance_percentage[PC2],digits=0)
     
-    p <- ggplot(data = scores, aes(x = PC1, y = PC2, label = label) ) + 
+    p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy], label = label) ) + 
       geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 
       theme_bw() + 
       theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(),

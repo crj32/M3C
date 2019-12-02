@@ -1,12 +1,11 @@
 #' pca: A principal component analysis function
 #' 
-#' This is a flexible PCA function that can be run on a standard data frame (or the M3C results object).
+#' This is a flexible PCA function that can be run on a standard data frame.
 #' It is a wrapper for prcomp/ggplot2 code and can be customised with different colours and font sizes 
 #' and more.
 #' 
-#' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
+#' @param mydata Data frame or matrix: if dataframe/matrix should have samples as columns and rows as features
 #' @param printres Logical flag: whether to print the PCA into current directory
-#' @param K Numerical value: if running on the M3C results object, which value was the optimal K?
 #' @param labels Character vector: if we want to just label with gender for example
 #' @param text Character vector: if we wanted to label the samples with text IDs to look for outliers
 #' @param axistextsize Numerical value: axis text size
@@ -31,10 +30,10 @@
 #' @examples
 #' PCA <- pca(mydata)
 
-pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
+pca <- function(mydata, printres = FALSE, labels = FALSE, text = FALSE, axistextsize = 18,
                 legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
                 controlscale = FALSE, scale = 1, low = 'grey', high = 'red', 
-                colvec = c("sky blue", "gold", "violet", "darkorchid", "slateblue", "forestgreen", 
+                colvec = c("skyblue", "gold", "violet", "darkorchid", "slateblue", "forestgreen", 
                            "violetred", "orange", "midnightblue", "grey31", "black"),
                 printheight = 20, printwidth = 22, pcx=1, pcy=2, scaler=FALSE){
   
@@ -71,7 +70,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
   PC2 <- pcy
   
   ##
-  if (K == FALSE && labels == FALSE && text == FALSE){
+  if (labels[1] == FALSE && text[1] == FALSE){
     
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
@@ -81,7 +80,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
     pc1var <- round(variance_percentage[PC1],digits=0)
     pc2var <- round(variance_percentage[PC2],digits=0)
     
-    p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy]) ) + geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 
+    p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy]) ) + geom_point(colour='skyblue', size = dotsize) + 
       theme_bw() + 
       theme(legend.position = "none", panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
             axis.text.y = element_text(size = axistextsize, colour = 'black'),
@@ -100,45 +99,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
       dev.off()
     }
     
-  }else if (K != FALSE && labels == FALSE){
-    
-    res <- mydata
-    mydata <- res$realdataresults[[K]]$ordered_data
-    annon <- res$realdataresults[[K]]$ordered_annotation
-    annon$id <- row.names(annon)
-    annon <- annon[match(colnames(mydata), annon$id),]
-    
-    pca1 = prcomp(t(mydata))
-    scores <- data.frame(pca1$x) # PC score matrix
-    
-    eigs <- pca1$sdev^2
-    variance_percentage <- (eigs / sum(eigs))*100
-    
-    pc1var <- round(variance_percentage[PC1],digits=0)
-    pc2var <- round(variance_percentage[PC2],digits=0)
-    
-    p <- ggplot(data = scores, aes(x = scores[,pcx], y = scores[,pcy]) ) + geom_point(aes(colour = factor(annon$consensuscluster)), size = dotsize) + 
-      theme_bw() + 
-      theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-            axis.text.y = element_text(size = axistextsize, colour = 'black'),
-            axis.text.x = element_text(size = axistextsize, colour = 'black'),
-            axis.title.x = element_text(size = axistextsize),
-            axis.title.y = element_text(size = axistextsize),
-            legend.title = element_text(size = legendtextsize),
-            legend.text = element_text(size = legendtextsize)) + 
-      guides(colour=guide_legend(title="Cluster"))  +
-      xlab(paste('PC',PC1,' (',pc1var,'% variance)',sep='')) +
-      ylab(paste('PC',PC2,' (',pc2var,'% variance)',sep=''))
-    
-    if (printres == TRUE){
-      message('printing PCA to current directory...')
-      png('PCApostM3C.png', height = printheight, width = printwidth, units = 'cm',
-          res = 900, type = 'cairo')
-      print(p) # print ggplot CDF in main plotting window
-      dev.off()
-    }
-    
-  }else if (K == FALSE && labels != FALSE && text == FALSE){ #### KEY
+  }else if (labels[1] != FALSE && text[1] == FALSE){ #### KEY
     
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
@@ -224,7 +185,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
       dev.off()
     }
     
-  }else if (K == FALSE && labels != FALSE && text != FALSE){ ##### KEY
+  }else if (labels[1] != FALSE && text[1] != FALSE){ ##### KEY
     
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix
@@ -315,7 +276,7 @@ pca <- function(mydata, K = FALSE, printres = FALSE, labels = FALSE, text = FALS
       dev.off()
     }
     
-  }else if (K == FALSE && labels == FALSE && text != FALSE){
+  }else if (labels[1] == FALSE && text[1] != FALSE){
     
     pca1 = prcomp(t(mydata))
     scores <- data.frame(pca1$x) # PC score matrix

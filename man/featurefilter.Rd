@@ -24,11 +24,11 @@ A list, containing:
 This function is to filter features based on variance. Depending on the data different
 metrics will be more appropiate, simple variance is included if variance does not tend to
 increase with the mean. There is also the median absolute deviation which is a more robust
-metric than variance. The coefficient of variation (A) or its second
+metric than variance, this is preferable. The coefficient of variation (A) or its second
 order derivative (A2) (Kvalseth, 2017) are also included which standardise the standard
-deviation with respect to the mean. It is best to examine the mean-variance relationship of 
-the data and the distribution of variance of all features when selecting a metric, for 
-example, using the results from this function together with the qplot function from ggplot2.
+deviation with respect to the mean. It is best to manually examine the mean-variance relationship of 
+the data, for example, using the results from this function together with the qplot function 
+from ggplot2.
 }
 \examples{
 filtered <- featurefilter(mydata,percentile=10)

@@ -1,11 +1,10 @@
 #' umap: A umap function
 #'
-#' This is a flexible umap function that can be run on a standard data frame (or the M3C results object).
+#' This is a flexible umap function that can be run on a standard data frame.
 #' It is a wrapper for umap/ggplot2 code and can be customised with different colours and font sizes and more.
 #' 
-#' @param mydata Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features
+#' @param mydata Data frame or matrix: if dataframe/matrix should have samples as columns and rows as features
 #' @param printres Logical flag: whether to print the UMAP into current directory
-#' @param K Numerical value: if running on the M3C results object, which value was the optimal K?
 #' @param labels Character vector: if we want to just label with gender for example
 #' @param text Character vector: if we wanted to label the samples with text IDs to look for outliers
 #' @param axistextsize Numerical value: axis text size
@@ -28,10 +27,10 @@
 #' @examples
 #' UMAP <- umap(mydata)
 
-umap <- function(mydata, K=FALSE, labels=FALSE, printres=FALSE, seed=FALSE, axistextsize = 18,
+umap <- function(mydata, labels=FALSE, printres=FALSE, seed=FALSE, axistextsize = 18,
                  legendtextsize = 18, dotsize = 5, textlabelsize = 4, legendtitle = 'Group',
                  controlscale = FALSE, scale = 1, low = 'grey', high = 'red', 
-                 colvec = c("sky blue", "gold", "violet", "darkorchid", "slateblue", "forestgreen", 
+                 colvec = c("skyblue", "gold", "violet", "darkorchid", "slateblue", "forestgreen", 
                             "violetred", "orange", "midnightblue", "grey31", "black"),
                  printheight = 20, printwidth = 22, text = FALSE){
   
@@ -66,12 +65,12 @@ umap <- function(mydata, K=FALSE, labels=FALSE, printres=FALSE, seed=FALSE, axis
     set.seed(seed)
   }
   
-  if (K == FALSE && labels == FALSE && text == FALSE){
+  if (labels[1] == FALSE && text[1] == FALSE){
     
     umap <- umap::umap(t(as.matrix(mydata)))
     scores <- data.frame(umap$layout) # PC score matrix
     
-    p <- ggplot(data = scores, aes(x = X1, y = X2) ) + geom_point(aes(colour = factor(rep(1, ncol(mydata)))), size = dotsize) + 
+    p <- ggplot(data = scores, aes(x = X1, y = X2) ) + geom_point(colour='skyblue', size = dotsize) + 
       theme_bw() + 
       theme(legend.position = "none", 
             panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
@@ -89,36 +88,7 @@ umap <- function(mydata, K=FALSE, labels=FALSE, printres=FALSE, seed=FALSE, axis
       dev.off()
     }
     
-  }else if (K != FALSE && labels == FALSE){
-    
-    res <- mydata
-    mydata <- res$realdataresults[[K]]$ordered_data
-    annon <- res$realdataresults[[K]]$ordered_annotation
-    annon$id <- row.names(annon)
-    annon <- annon[match(colnames(mydata), annon$id),]
-    
-    umap <- umap::umap(t(as.matrix(mydata)))
-    scores <- data.frame(umap$layout) # PC score matrix
-    
-    p <- ggplot(data = scores, aes(x = X1, y = X2) ) + geom_point(aes(colour = factor(annon$consensuscluster)), size = dotsize) + 
-      theme_bw() + 
-      theme(legend.position = "none", 
-            panel.grid.major = element_blank(), panel.grid.minor = element_blank(),
-            axis.text.y = element_text(size = axistextsize, colour = 'black'),
-            axis.text.x = element_text(size = axistextsize, colour = 'black'),
-            axis.title.x = element_text(size = axistextsize),
-            axis.title.y = element_text(size = axistextsize))#+
-    #scale_colour_manual(values = c("1"='sky blue'))
-    
-    if (printres == TRUE){
-      message('printing UMAP to current directory...')
-      png('UMAPpostM3C.png', height = printheight, width = printwidth, units = 'cm',
-          res = 900, type = 'cairo')
-      print(p) # print ggplot CDF in main plotting window
-      dev.off()
-    }
-    
-  }else if (K == FALSE && labels != FALSE && text == FALSE){ ##### KEY
+  }else if (labels[1] != FALSE && text[1] == FALSE){ ##### KEY
     
     umap <- umap::umap(t(as.matrix(mydata)))
     scores <- data.frame(umap$layout) # PC score matrix
@@ -186,7 +156,7 @@ umap <- function(mydata, K=FALSE, labels=FALSE, printres=FALSE, seed=FALSE, axis
       dev.off()
     }
     
-  }else if (K == FALSE && labels != FALSE && text != FALSE){ ##### KEY
+  }else if (labels[1] != FALSE && text[1] != FALSE){ ##### KEY
     
     umap <- umap::umap(t(as.matrix(mydata)))
     scores <- data.frame(umap$layout) # PC score matrix
@@ -255,7 +225,7 @@ umap <- function(mydata, K=FALSE, labels=FALSE, printres=FALSE, seed=FALSE, axis
       dev.off()
     }
     
-  }else if (K == FALSE && labels == FALSE && text != FALSE){
+  }else if (labels[1] == FALSE && text[1] != FALSE){
     
     umap <- umap::umap(t(as.matrix(mydata)))
     scores <- data.frame(umap$layout) # PC score matrix

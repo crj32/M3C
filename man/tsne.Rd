@@ -4,19 +4,16 @@
 \alias{tsne}
 \title{tsne: A t-SNE function}
 \usage{
-tsne(mydata, K = FALSE, labels = FALSE, perplex = 15,
-  printres = FALSE, seed = FALSE, axistextsize = 18,
-  legendtextsize = 18, dotsize = 5, textlabelsize = 4,
-  legendtitle = "Group", controlscale = FALSE, scale = 1,
-  low = "grey", high = "red", colvec = c("sky blue", "gold",
-  "violet", "darkorchid", "slateblue", "forestgreen", "violetred",
-  "orange", "midnightblue", "grey31", "black"), printheight = 20,
-  printwidth = 22, text = FALSE)
+tsne(mydata, labels = FALSE, perplex = 15, printres = FALSE,
+  seed = FALSE, axistextsize = 18, legendtextsize = 18,
+  dotsize = 5, textlabelsize = 4, legendtitle = "Group",
+  controlscale = FALSE, scale = 1, low = "grey", high = "red",
+  colvec = c("skyblue", "gold", "violet", "darkorchid", "slateblue",
+  "forestgreen", "violetred", "orange", "midnightblue", "grey31", "black"),
+  printheight = 20, printwidth = 22, text = FALSE)
 }
 \arguments{
-\item{mydata}{Data frame or matrix or M3C results object: if dataframe/matrix should have samples as columns and rows as features}
-
-\item{K}{Numerical value: if running on the M3C results object, which value was the optimal K?}
+\item{mydata}{Data frame or matrix: if dataframe/matrix should have samples as columns and rows as features}
 
 \item{labels}{Character vector: if we want to just label with gender for example}
 
@@ -56,7 +53,7 @@ tsne(mydata, K = FALSE, labels = FALSE, perplex = 15,
 A t-SNE plot object
 }
 \description{
-This is a flexible t-SNE function that can be run on a standard data frame (or the M3C results object).
+This is a flexible t-SNE function that can be run on a standard data frame.
 It is a wrapper for Rtsne/ggplot2 code and can be customised with different colours and font sizes and more.
 }
 \examples{

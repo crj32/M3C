@@ -1,28 +1,35 @@
 ---
 title: "M3C: Monte Carlo Reference-based Consensus Clustering"
 author: "Christopher R John"
-date: "07/10/2019"
+date: "29/11/2019"
 output: 
-  BiocStyle::pdf_document
+  pdf_document: default
 vignette: >
-  %\VignetteIndexEntry{M3C}
-  %\VignetteEngine{knitr::rmarkdown}
-  %\VignetteEncoding{UTF-8}  
+  %\VignetteEngine{knitr::rmarkdown} 
+  %\VignetteIndexEntry{M3C}  
+  %\VignetteEncoding{UTF-8}
 ---
 
-# Abstract
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
 
-Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm (Monti et al., 2003) is a widely applied method to identify the number of clusters (K) through the principle of stability selection. This algorithm works by resampling and clustering the data for each K and a NXN consensus matrix is calculated, where each unit represents the fraction of times two samples clustered together. A perfectly stable matrix would consist entirely of 0s and 1s, representing all sample pairs always clustering together or not together over resampling iterations. The Proportion of Ambiguous Clustering (PAC) score (Senbabaoglu et al., 2014) has been recommended to assess consensus matrix stability for each K, however, it has bias towards greater values of K. While the delta K metric to find K is subjective as it relies on finding an elbow point and has been demonstrated to be inferior to the PAC score. Additionally, neither method tests the null hypothesis K=1. As a solution, we developed Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018). M3C uses a Monte Carlo simulation to generate null distributions of PAC scores along the range of K which, by comparing with the real PAC scores, are used to decide the optimal K and reject the null hypothesis. 
+# Summary
+
+Genome-wide expression data is used to stratify patients into classes using clustering algorithms for precision medicine. The Monti consensus clustering algorithm (Monti et al., 2003) is a widely applied method to identify the number of clusters (K) through the principle of stability selection. This algorithm works by resampling and clustering the data for each K and a NXN consensus matrix is calculated, where each element represents the fraction of times two samples clustered together. A perfectly stable matrix would consist entirely of 0s and 1s, representing all sample pairs always clustering together or not together over resampling iterations. The next step is to compare the stability of these consensus matrices to decide K. The Proportion of Ambiguous Clustering (PAC) score (Senbabaoglu et al., 2014) has been proposed to assess consensus matrix stability for each K, however, it has bias towards greater values of K. This is due to a general problem with this type of consensus clustering algorithm that occurs because as K increases the consensus matrix converges towards a matrix of perfect stability simply by chance. The alternative well used delta K metric to find K is subjective as it relies on finding an elbow point and has been demonstrated to be inferior to the PAC score. Monte Carlo reference-based consensus clustering (M3C) (John et al., 2018) was made to solve these problems by comparing the real stability scores with those expected under a random model. M3C uses a Monte Carlo simulation to generate null distributions of stability scores along the range of K which, by comparing with the real stability scores, are used to decide the optimal K and reject the null hypothesis K=1. 
 
 # Prerequisites
 
 **M3C recommended spec**
 
-For the Monte Carlo simulation (method=1), M3C is best run on a relatively new and fast multi-core computer or cluster. If the machine is not particuarly fast, the Monte Carlo iterations parameter may be reduced to 5-50. 
+For the Monte Carlo simulation method (method=1), M3C is best run on a relatively new and fast multi-core computer. If the machine is not particuarly fast, the Monte Carlo iterations parameter may be reduced to 5-15.
 
-The second method (method=2) that uses a penalty term to eliminate overestimation of K is faster, but the user will not get p values for each value of K. It is preferable to use method 1 with a low number of iterations (e.g. 5-10) instead of this approach if possible.
+The regularised consensus clustering method (method=2) that uses a penalty term to eliminate overestimation of K is faster, but the user will not get p values.
 
-**M3C requires**   
+**M3C requires**
 
 A matrix or data frame of normalised continuous expression data (e.g. microarray, RNA-seq, methylation arrays, protein arrays) where columns equal samples and rows equal features. M3C's reference will work better if the feature data is approximately normally distributed across biological replicates.
 
@@ -32,23 +39,18 @@ The data should be filtered to remove features with no or very low signal, and f
 
 Outliers should be removed, we include an easy to use PCA function which has a text label parameter to help remove outliers (type ?pca for more information).
 
-We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix it makes, it is not well suited for single cell RNA-seq data, better to use SC3 or Spectrum, for example.
+We recommend M3C only be used to cluster datasets with high numbers of samples (e.g. 60-1000). M3C is mainly aimed at large patient cohort datasets such as those produced by TCGA and other consortia. Because of the high complexity of the algorithm and the type of consensus matrix it makes, it is not that well suited for single cell RNA-seq data, better to use SC3 or Spectrum, for example.
 
 **M3C also accepts optionally**
 
 Annotation data frame, where every row is a patient or sample and columns refer to meta-data, e.g. age, sex, time until death, etc. M3C will automatically rearrange the annotation to match the clustering output and add the consensus cluster grouping to it. Note, this only works if the IDs (column names in data) match the entries in a column called "ID" in the user supplied annotation data frame.
 
-M3C also accepts clinical or biological data for a basic statistical analysis with the discovered classes. Again the 'ID' column must exist in the annotation data frame. If the data is continuous or categorical, a Kruskal-Wallis or chi-squared test are performed, respectively. For these two tests, a 'variable' parameter must be given which is a string that defines the dependent variable in the users annotation data frame. If the data is survival data for cancer, the annotation data frame must have an 'ID' column first, followed by a 'Time' and 'Death' column (where 0 is no death and 1 is death or time until last visit). 
-
-# Example workflow I: TCGA glioblastoma dataset
+# Example I: TCGA glioblastoma dataset
 
 The M3C package contains the glioblastoma (GBM) cancer microarray dataset for testing (reduced to 50 samples randomly). The original optimal cluster decision was 4. First, we load M3C which also loads the GBM data.
 
 ```{r, message=FALSE}
 library(M3C)
-library(NMF) 
-library(gplots)
-library(ggsci)
 # now we have loaded the mydata and desx objects (with the package automatically)
 # mydata is the expression data for GBM
 # desx is the annotation for this data
@@ -58,7 +60,7 @@ library(ggsci)
 
 This is an important exploratory step prior to running M3C. It is best to remove extreme outliers. It is also important to be aware of the assumptions of PAM, K-means, and HC. K means, PAM, and HC assume the following;
 
-i) Clusters are approximately spherical - not severely elongated in one direction (anisotropic) or non-linear
+i) Clusters are approximately spherical - not severely elongated in one direction (anisotropic) or non-Gaussian
 ii) Clusters are approximately equal in variance
 
 There is more info about the assumptions of clustering algorithms here:
@@ -70,63 +72,67 @@ It is also important to check that batch effects and other uninteresting sources
 
 The data should have been transformed to be homoskedastic (or nearly so) by this point (e.g. vst or log2), otherwise the larger features will have larger variances and dominate the PCA and cluster analysis. If the data contains different kinds of features, e.g. both protein and miRNA, then they should also be z-score normalised to be comparable.
 
-```{r, message=FALSE, results='hide'}
-PCA1 <- pca(mydata)
+```{r,fig.width=4,fig.height=4}
+pca(mydata,legendtextsize = 10,axistextsize = 10,dotsize=2)
 ```
-
-![*Preliminary PCA to check structure*](PCApriorclustering.png)
 
 ## Running M3C
 
-In our example, we run the algorithm using the default settings (100x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If the user is running a slow machine, has a massive dataset, or want results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 5-50x. The inner replications needs to be at least 100x, changing this up to 250x will lead to increased result stability on some datasets.
+In our example, we run the algorithm using the default settings (25x Monte Carlo iterations and 100x inner replications). We have found the results generally stable using these parameters. If the user wants results quickly, it is reasonable to lower the Monte Carlo iterations parameter to 5-20x. The inner replications needs to be at least 100x, changing this up to 250x will lead to increased result stability on some datasets. 
 
-Plots from the tool and an .csv file with the numerical outputs may be printed into the working directory (by adding printres = TRUE). We will set the seed in this example, incase the user wishes to repeat our results exactly (seed = 123). We will add an annotation file for streamlined downstream analyses (des = desx), and because we are comparing the classes with a categorical variable (tumour type) we shall set 'doanalysis' to TRUE and 'analysistype' to 'chi', to do a chi-squared test for significance. The 'variable' parameter is set to class (tumour histology in this data).
+We use the PAC objective function here to minimise, but, we also have provided an entropy objective function demonstrated later in the vignette. It is the entropy objective function that is used as default. The subsequent steps are the same for either objective function, but entropy does not require setting a window or first calculating a CDF.
 
-It is recommended to save the workspace after M3C if the user is working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. We will set the 'removeplots' parameter to TRUE in this example to remove plots from the vignette, normally this is FALSE by default.
+It is recommended to save the workspace after M3C if the user is working with a large dataset because the runtimes can be quite long. M3C uses by default PAM with Euclidean distance in the consensus clustering loop because we have found this runs fast with good results. 
 
-```{r, message=FALSE, results='hide'}
+```{r, results='hide'}
 # for vignette
-res <- M3C(mydata, cores=1, seed = 123, des = desx, removeplots = TRUE, 
-           analysistype = 'chi', doanalysis = TRUE, variable = 'class')
-
-# basic usage
-# res <- M3C(mydata)
+res <- M3C(mydata, des = desx, removeplots = TRUE, iters=25, 
+           objective='PAC', fsize=8, lthick=1, dotsize=1.25)
 ```
 
-The scores and p values are contained within the res$scores object. We can see below the RCSI reaches a maxima at K = 4 (RSCI=0.33), the Monte Carlo p value supports this optimal K decision (p=0.033). This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters. For p values that extend beyond the lower limits imposed by the Monte Carlo simulation, M3C estimates parameters from the simulation to generate a beta distribution. The BETA_P in this case study is 0.033.
+The scores and p values are contained within the res$scores object. We can see below the RCSI reaches a maxima at K = 4, the p value supports this optimal K decision. This means the null hypothesis that K = 1 can be rejected for this dataset because we have achieved significance (alpha=0.05) versus a dataset with no clusters.
 
 ```{r}
 res$scores
 ```
 
-Also important is the relationship between the clinical variables and the discovered clusters. In this data we want to compare with a categorical variable so perform a chi-squared test. We are reassured to see below K=4 is highly significant (p=5.5x10-14). It is important to bear in mind the clinical or biological relationships as well as the structural nature of the data when deciding K.
+Also important is the relationship between the clinical variables and the discovered clusters. In this data we want to compare with a categorical variable so perform a chi-squared test. We are reassured to see below K=4 is highly significant.
 
 ```{r}
-res$clinicalres
+for (k in seq(2,10)){
+  myresults <- res$realdataresults[[k]]$ordered_annotation
+  chifit <- suppressWarnings(chisq.test(table(myresults[c('consensuscluster','class')])))
+  print(chifit$p.value)
+}
 ```
 
 Now we will take a look at some of the plots M3C generates.  
 
-This is a cumulative density function (CDF) plot of the consensus matrices for the test data from 2...maxK. In the perfect case there would be a flat line to indicate a matrix of just 0s and 1s. CDF flatness can be quantified using the PAC metric (Senbabaoglu et al., 2014). However, in the CDF and following PAC plot we can see the inherant bias of consensus clustering where as K increases so does the apparent stability of the results (or CDF plot flatness), this we correct for by using a reference. This makes the method more sensitive to detection of the underlying structure in noisy data.
-\newline  
-  
-![*CDF plot for real data*](CDF.png)
+This is a CDF plot of the consensus matrices for the test data from 2...maxK. In the perfect case there would be a flat line to indicate a matrix of just 0s and 1s. CDF flatness can be quantified using the PAC metric (Senbabaoglu et al., 2014), or entropy can be used directly on the probabilities (see later section). In the CDF and following PAC plot we can see the inherant bias of consensus clustering where as K increases so does the apparent stability of the results (or CDF plot flatness), this we correct for by using a reference. This makes the method more sensitive to detection of the underlying structure in noisy data.
 
-This figure below shows the PAC score (Senbabaoglu et al., 2014), we can see an elbow at K = 4 which is suggestive this is the best K. However, the bias of the PAC score can be seen here as it naturally tends towards lower values as K increases (see above plot), making selecting K without taking this into account subject to this inherant  bias. Selecting the minimal PAC score will only work when the clusters are well seperated.
+```{r,fig.width=5,fig.height=3.5}
+res$plots[[1]]
+```
+  
+This figure below shows the PAC score (Senbabaoglu et al., 2014), we can see an elbow at K = 4 which is suggestive this is the best K. However, the bias of consensus clustering can be seen here as the PAC score naturally tends towards lower values as K increases (see above plot), making selecting K without taking this into account subject to bias. Selecting the minimal PAC score will only work when the clusters are very well seperated.
+
+```{r,fig.width=4,fig.height=3}
+res$plots[[2]]
+```
 
 Another option would be to use the original delta K metric here from the Monti method, however, identifying the elbow in this plot or 'value before the floor' is often very subjective, especially on noisy datasets like commonly occur in precision medicine. This metric has been shown to perform poorly on real data (Senbabaoglu et al., 2014) and like the PAC score has the theoretical issue of not accounting for CDF convergence as K increases.
 
-In addition, these methods cannot reject the null hypothesis K=1, for that we have introduced p values into the consensus clustering methodology. 
+We derive the Relative Cluster Stability Index (RCSI) and associated 95% confidence intervals which take into account the reference PAC scores using the reference mean. This metric is better than the PAC score for deciding class number, where the maximum value corresponds to the optimal K. In this example the RCSI has an optima at K=4. Either the RCSI or p values can be used to select K, in the Bioinformatics paper we used M3C with the p values to select K (results in Supplementary Information).
 
-![*PAC score for real data*](PACscore.png){width=90%}
+```{r,fig.width=4,fig.height=3}
+res$plots[[4]]
+```
 
-We then derive the Relative Cluster Stability Index (RCSI) which takes into account the reference PAC scores using the reference mean. This metric is better than the PAC score for deciding class number, where the maximum value corresponds to the optimal K. In this example the RCSI has an optima at K=4. We recommend the RCSI be used to select K, and the p values to reject the null in most cases.
+Finally, we calculate a p value from the distribution, here we display the p values from the beta distribution. If none of the p values reach significance over a reasonable range of K (e.g. 10), then we accept the null hypothesis. In the GBM dataset, we can see K = 4 reaches signfiicance with an alpha of 0.05, therefore we can reject the null hypothesis K=1 for the GBM dataset.
 
-![*RCSI*](RCSI.png){width=90%}
-
-Finally, we calculate a p value from the distribution, here we display the p values from the beta distribution. If none of the p values reach significance over a reasonable range of K (e.g. 10), then we accept the null hypothesis. In the GBM dataset, we can see K = 4 reaches signfiicance with an alpha of 0.05 (red dotted line), therefore we can reject the null hypothesis K=1 for the GBM dataset.
-
-![*Empirical p values*](pscore.png){width=90%}
+```{r,fig.width=4,fig.height=3}
+res$plots[[3]]
+```
 
 Now we are pretty convinced there are 4 clusters within this dataset which are not likely simply to have occurred by chance alone. 
 
@@ -134,109 +140,100 @@ We can turn to examine the output objects that M3C generates. These allow heatma
 
 ## Understanding M3C outputs
 
-The first 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C for a 4 cluster solution. If we, for example, wanted to extract the data for a 5 cluster solution from the M3C results list, we would simply replace 4 in the below lines to 5. We then take a brief glance at the annotation object M3C outputs, a consensus cluster column has been added by M3C. 
+The 3 lines below extract the ordered (according in clustering results) expression data and the ordered annotation data from the results object after running M3C for a 4 cluster solution. If we, for example, wanted to extract the data for a 5 cluster solution from the M3C results list, we would simply replace 4 in the below lines to 5. We then take a look at the annotation object M3C outputs, a consensus cluster column has been added by M3C. 
 
 ```{r,fig.show = 'hide'}
-# get the data out of the results list (by using $ - dollar sign) for K=4
-data <- res$realdataresults[[4]]$ordered_data # this is the data
-annon <- res$realdataresults[[4]]$ordered_annotation # this is the annotation
-ccmatrix <- res$realdataresults[[4]]$consensus_matrix # this is the consensus matrix
+data <- res$realdataresults[[4]]$ordered_data 
+annon <- res$realdataresults[[4]]$ordered_annotation 
+ccmatrix <- res$realdataresults[[4]]$consensus_matrix
 head(annon)
 ```
 
-Next, we scale the data here row wise according to z-score, prior to some light data compression for visualisation purposes in the heatmap. Remember to set Colv = NA for heatmap plotting because the data columns (samples) are already ordered.
+Example code for making consensus matrix heatmaps from M3C output with ComplexHeatmap.
 
-Note, we are going to use the NMF aheatmap function to draw the heatmap because it is simple, but for more complex heatmap designs for publication, ComplexHeatmap is definately preferable (https://bioconductor.org/packages/release/bioc/html/ComplexHeatmap.html).
-
-```{r,fig.show = 'hide'}
-data <- t(scale(t(data))) # z-score normalise each row
-data <- apply(data, 2, function(x) ifelse(x > 4, 4, x)) # compress data 
-data <- apply(data, 2, function(x) ifelse(x < -4, -4, x)) # compress data
-
-ann_colors <- ggsci::pal_startrek("uniform")(4)
-ann_colors2 <- ggsci::pal_futurama()(4) #
-pal <- rev(colorRampPalette(RColorBrewer::brewer.pal(10, "RdBu"))(256))
-NMF::aheatmap(data, annCol = annon, Colv = NA, distfun = 'pearson', 
-         color = gplots::bluered(256), 
-         annColors = list(class=ann_colors, consensuscluster=ann_colors2))
-
+```{r}
+# library(ComplexHeatmap)
+# ccl <- list()
+# x <- c("skyblue", "gold", "violet", "darkorchid", "slateblue", "forestgreen", 
+#                 "violetred", "orange", "midnightblue", "grey31", "black")
+# names(x) <- as.character(seq(1,11,by=1))
+# for (i in seq(2,10)){
+#   # get cc matrix and labels
+#   ccmatrix <- res$realdataresults[[i]]$consensus_matrix
+#   annon <- res$realdataresults[[i]]$ordered_annotation
+#   # do heatmap
+#   n <- 10
+#   seq <- rev(seq(0,255,by=255/(n)))
+#   palRGB <- cbind(seq,seq,255)
+#   mypal <- rgb(palRGB,maxColorValue=255)
+#   ha = HeatmapAnnotation(
+#   df= data.frame(Cluster=as.character(annon[,1])), col = list(Cluster=x))
+#   ccl[[i]] <-  Heatmap(ccmatrix, name = "Consensus_index", top_annotation = ha, 
+#                col=mypal, show_row_dend = FALSE,
+#                show_column_dend = FALSE, cluster_rows = FALSE, cluster_columns = FALSE,
+#                show_column_names = FALSE)
+# }
 ```
 
-![*aheatmap of GBM consensus clusters with tumour classification *](aheatmapGBMfour-vin2.png)
+Viewing consensus matrices manually should not be used to decide K, better to use the RCSI or p values that M3C provides to quantify the mixing proportions in the consensus matrix versus the null model. 
 
-Another plot we may want to do for publications is print the consensus matrix for our optimal clustering solution (in this case, K = 4). This should be quite crisp reflecting the significant stability of the results. We can see in this heatmap below of the consensus matrix the clusters do indeed look quite clear supporting our view that there is 4 clusters. 
+## Visual check of consensus cluster structure
 
-Viewing consensus matrices manually should not be used to decide K, better to use the RCSI or p values that M3C provides to quantify the mixing proportions in the consensus matrix versus the K=1 null model. We also caution against the use of cluster validity metrics on the consensus matrices without first testing their behaviour in details on simulated positive control datasets. Our data indicates that these metrics may have substantial bias in them as well due to the underlying method.
+A last analysis we recommend to do is to examine how the clusters are arranged in principal component space. It is also possible to run t-SNE and UMAP on the data, see ?tsne or ?umap.
 
-```{r,fig.show = 'hide'}
-# set up colours
-n <- 10
-seq = rev(seq(0,255,by=255/(n)))
-palRGB = cbind(seq,seq,255)
-mypal <-rgb(palRGB,maxColorValue=255)
-# plot consensus matrix heatmap, do not cluster rows and columns
-NMF::aheatmap(ccmatrix, 
-              annCol = annon[,1,drop=FALSE], 
-              color = mypal, scale = 'none', cexRow = 0, cexCol = 0,
-              Colv=NA,Rowv=NA,annColors = list(consensuscluster=ann_colors2))
+```{r,fig.width=5,fig.height=4}
+pca(data,labels=annon$consensuscluster,legendtextsize = 10,axistextsize = 10,dotsize=2)
 ```
 
-![*aheatmap of GBM consensus matrix *](aheatmapconsensusmatrix-vin2.png)
+Doing a visual check like this allows the user to ensure there are no obvious artifacts that have occured. 
 
-## Final check of consensus cluster structure
+# Example II: Regularised consensus clustering
 
-A last analysis we recommend to do is to examine how the clusters are arranged in principal component and t-SNE latent variable space. To do this the pca and t-SNE functions can be run directly on the M3C output object. We may need to experiment with the perplexity parameter of t-SNE in the range of 5-20 to better suit the data. Both functions can also be used to print their results to the working directory. It is also possible to run UMAP on the data in a streamlined manner, see ?umap.
+## Running regularised consensus clustering
 
-```{r,fig.show = 'hide',message=FALSE,results='hide'}
-  PCA2 <- pca(res, K=4)
-  TSNE <- tsne(res, K=4, perplex=15)
+The second method minimises log(PAC) subject to lambda*K to find the optimal K. The resultant metric is called the Penalised Cluster Stability Index (PCSI). To tune lambda, we use the log-likelihood and search a sequence of lambda to find the K with the higher log-likelihood. A good predefined lambda value to use is 0.1. 
+
+The log-likelihood is calculated through clustering once from 2...maxK then this gives the ground truth probabilities, the perturbed probabilities for each K are those made from the resampling algorithm. Ultimately, the better K (or lambda) is that which gives the minimal distance between these two sets of probabilities.
+
+```{r,fig.show = 'hide',results='hide'}
+res <- M3C(mydata, method = 2, objective='PAC',fsize=8, lthick=1, dotsize=1.25)
 ```
 
-We can see in the PCA and t-SNE plots that clusters 3 and 4 are closer together. Doing a visual check like this allows the user to ensure there are no obvious artifacts that have occured. 
+Here we can see the PCSI is minimised at K=5, this is the optimal K using this method.
 
-![*PCA of a 4 cluster test dataset *](PCApostclustering.png)
-
-![*t-SNE of a 4 cluster simulated dataset *](TSNEpostclustering.png)
-
-# Example workflow II: Fast penalty method
-
-## Running M3C in fast mode
-
-The second method minimises log(PAC) subject to lambda*K to find the optimal K. This metric is called the Penalised Cluster Stability Index (PCSI). 
-
-Lambda is a small constant that controls the regularisation strength, it has a preset value defined from experimental observations.
-
-We recommend using this method if the user has a massive dataset or little time. It will correct for the overestimation of K observed with the PAC score. Although it is not as rigorous as running a Monte Carlo simulation.
-
-```{r,fig.show = 'hide',message=FALSE,results='hide'}
-res <- M3C(mydata, method = 2)
+```{r,fig.width=4,fig.height=3}
+res$plots[[3]]
 ```
 
-Here we can see the PCSI is minimised at K=4, this is the optimal K using this method.
+For this method, it is faster than running a Monte Carlo simulation so we increase the 'repsreal' parameter to e.g. 250 for increased result stability.
 
-![*PCSI results *](PCSI.png)
+# Example III: Entropy objective function
 
-For this method, it is a lot faster than running a Monte Carlo simulation so it is suggested to increase the 'repsreal' parameter to e.g. 250 for increased result stability.
+Treating the consensus matrix elements as probabilities makes entropy a very suitable objective function for consensus clustering. We use information entropy and aim to minimise it to find K, where lower values correspond to less uncertainty in the system (more stability during resampling). Whilst this function often gives pretty similar results to the PAC score, it makes better theoretical sense because it does not rely on a subjective window, neither does it rely on calculating a CDF first and a metric from this CDF second.
+
+Entropy can be used with the Monte Carlo simulation or the regularised consensus clustering method we provide. 
+
+```{r,fig.show = 'hide',results='hide'}
+res <- M3C(mydata, method = 2,fsize=8, lthick=1, dotsize=1.25)
+```
+
+This is entropy not corrected for bias. We can see it is subject to the same problem the PAC score is as it tends to decrease with increasing K.
+
+```{r,fig.width=4,fig.height=3}
+res$plots[[2]]
+```
+
+This is the PCSI calculated from entropy, now K=5, so the bias has been eliminated.
+
+```{r,fig.width=4,fig.height=3}
+res$plots[[3]]
+```
 
 # Additional functions
 
-## Generating simulated data
-
-We have included a function for generating simulated data to test various clustering algorithms. This cluster simulator is simple to use. Using the code below, clustersim generates a dataset with 225 samples, 900 features, a radius cut-off for the initial square of 8, a cluster number of 4, a seperation of clusters of 0.75, and a degree of noise added to each co-ordinate of 0.025. After running, a PCA will print of the data so we can visualise the 4 clusters in principle component space. 
-
-Note, clustersim's method has recently been replaced with the CRAN package, clusterlab. We recommend using this for more sophisticated benchmarking. Clusterlab can generate Gaussian clusters with controlled variance and spacing, it can also create more complex higher order structures.
-
-```{r,fig.show = 'hide',message=FALSE,results='hide'}
-  res <- clustersim(225, 900, 8, 4, 0.75, 0.025, print = FALSE, seed=123)
-```
-
-![*PCA of a 4 cluster simulated dataset *](PCAsim.png){width=80%}
-
 ## Filtering features by variance
 
-A simple feature filter function has been included in M3C that uses one of variance, median absolute deviation (MAD), Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. MAD will yield similar results to variance, however, because it uses the median instead of the mean it will be more robust to outliers. This will be the preferable metric in many cases.
-
-The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list for plotting and further analysis. In the first case, the user could set percentile to 100 which collects statistics for all features. We then suggest to do some manual examination and plotting using the results of this function, for example, with the qplot function from ggplot2 of the mean-variance trend. If the data is appropiately transformed there should be little increase of variance with the mean, so we can use MAD or variance to filter the data. If the variance increases linearly with the mean, A or A2 may be more appropiate than variance or MAD. 
+A simple feature filter function has been included in M3C that uses one of variance, median absolute deviation (MAD), Pearson's coefficient of variation (A), or its second order derivative (A2) to filter the data. MAD will yield similar results to variance, however, because it uses the median instead of the mean it will be more robust to outliers. This will be the preferable metric in many cases. The statistics for each feature (and the filtered data itself) are saved in a convienient data frame in the results list for plotting and further analysis.
 
 Below, we set the percentile to filter by and input the data. The code below extracts the 10% most variable features using MAD as the filtering metric. In this case the example data has been already been filtered for variance then scaled additionally, so the results are not intended to be interpreteted as it is just an example. The statistics for the topN features will be printed to the console. Type ?featurefilter for more information.
 
@@ -246,13 +243,19 @@ Below, we set the percentile to filter by and input the data. The code below ext
 
 # Closing comments
 
-In this tutorial, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Senbabaoglu et al. (2014), and Monti et al. (2003). Notably, it is best to use M3C after careful consideration of the format of the data, its normalisation and transformation, correction for any batch effects, and in conjunction with dimensionality reduction tools such as PCA and t-SNE to confirm the structure.
+In this document, we have seen that M3C provides a rigourous approach for selecting the number of clusters in the data. We have found in our analyses this approach results in increased performance relative to other methods and the removal of systematic bias inherant in the results. M3C's methodological and software developments are primarily built on the work of Tibshirani et al. (2001), Senbabaoglu et al. (2014), and Monti et al. (2003). Notably, it is best to use M3C after careful consideration of the format of the data, its normalisation and transformation, correction for any batch effects, and in conjunction with dimensionality reduction tools such as PCA and t-SNE to confirm the structure.
 
 During the development of M3C, we also devised a flexible method and associated CRAN package for generating Gaussian clusters called, clusterlab (https://cran.r-project.org/web/packages/clusterlab/index.html). This tool should prove useful in testing the performance of class discovery algorithms.
 
 For fast clustering of multi-omic data, we recommend Spectrum (https://cran.r-project.org/web/packages/Spectrum/index.html) (John et al., 2019). Spectrum is a self-tuning spectral clustering algorithm that can integrate heterogenous data sources and reduce noise. It uses a tensor product graph data integration and diffusion procedure, a density-aware kernel, and contains an optional data compression method to cluster 1000s of samples quickly. The method is also effective at single view cluster analysis.
 
+For analyses demonstrating the effciency of M3C, please see either the Supplementary Information of the Bioinformatics spectral clustering manuscript where it was tested in parallel with Spectrum on several TCGA RNA-seq datasets, with the p value method used to select K, or the M3C manuscript which is on bioRxiv.
+
+M3C code is hosted here: https://github.com/crj32/M3C.
+
 # References
+
+Christopher R John, David Watson, Michael R Barnes, Costantino Pitzalis, Myles J Lewis, Spectrum: fast density-aware spectral clustering for single and multi-omic data, Bioinformatics, , btz704, https://doi.org/10.1093/bioinformatics/btz704
 
 John, Christopher Robert, et al. "M3C: A Monte Carlo reference-based consensus clustering algorithm." bioRxiv (2018): 377002.
 

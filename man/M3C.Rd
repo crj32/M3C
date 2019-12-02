@@ -4,65 +4,60 @@
 \alias{M3C}
 \title{M3C: Monte Carlo Reference-based Consensus Clustering}
 \usage{
-M3C(mydata, cores = 1, iters = 100, maxK = 10, des = NULL,
-  ref_method = c("reverse-pca", "chol"), repsref = 100,
+M3C(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
+  des = NULL, ref_method = c("reverse-pca", "chol"), repsref = 100,
   repsreal = 100, clusteralg = c("pam", "km", "spectral", "hc"),
-  distance = "euclidean", pacx1 = 0.1, pacx2 = 0.9,
-  printres = FALSE, printheatmaps = FALSE, showheatmaps = FALSE,
-  seed = NULL, removeplots = FALSE, dend = FALSE, silent = FALSE,
-  doanalysis = FALSE, analysistype = c("survival", "kw", "chi"),
-  variable = NULL, fsize = 18, method = 1, lambda = 0.1)
+  pacx1 = 0.1, pacx2 = 0.9, seed = 123, objective = "entropy",
+  removeplots = FALSE, silent = FALSE, fsize = 18, method = 1,
+  lambdadefault = 0.1, tunelambda = TRUE, lseq = seq(0.02, 0.1, by =
+  0.02), lthick = 2, dotsize = 3)
 }
 \arguments{
 \item{mydata}{Data frame or matrix: Contains the data, with samples as columns and rows as features}
 
 \item{cores}{Numerical value: how many cores to split the monte carlo simulation over}
 
-\item{iters}{Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 5-200)}
+\item{iters}{Numerical value: how many Monte Carlo iterations to perform (default: 25, recommended: 5-100)}
 
 \item{maxK}{Numerical value: the maximum number of clusters to test for, K (default: 10)}
 
+\item{pItem}{Numerical value: the fraction of points to resample each iteration (default: 0.8)}
+
 \item{des}{Data frame: contains annotation data for the input data for automatic reordering}
 
-\item{ref_method}{Character string: refers to which reference method to use (recommended: leaving as default)}
+\item{ref_method}{Character string: refers to which reference method to use}
 
 \item{repsref}{Numerical value: how many resampling reps to use for reference (default: 100, recommended: 100-250)}
 
 \item{repsreal}{Numerical value: how many resampling reps to use for real data (default: 100, recommended: 100-250)}
 
-\item{clusteralg}{String: dictates which inner clustering algorithm to use for M3C}
-
-\item{distance}{String: dictates which distance metric to use for M3C (recommended: leaving as default)}
+\item{clusteralg}{String: dictates which inner clustering algorithm to use (default: PAM)}
 
 \item{pacx1}{Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)}
 
 \item{pacx2}{Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default: 0.9)}
 
-\item{printres}{Logical flag: whether to print all results into current directory}
+\item{seed}{Numerical value: specifies seed, set to NULL for different results each time}
 
-\item{printheatmaps}{Logical flag: whether to print all the heatmaps into current directory}
+\item{objective}{Character string: whether to use 'PAC' or 'entropy' objective function (default = entropy)}
 
-\item{showheatmaps}{Logical flag: whether to show the heatmaps on screen}
-
-\item{seed}{Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here}
-
-\item{removeplots}{Logical flag: whether to remove all plots}
-
-\item{dend}{Logical flag: whether to compute the dendrogram and p values for the optimal K or not}
+\item{removeplots}{Logical flag: whether to remove all plots from view}
 
 \item{silent}{Logical flag: whether to remove messages or not}
 
-\item{doanalysis}{Logical flag: whether to analyse the clinical variable supplied (univariate only)}
-
-\item{analysistype}{Character string: refers to which kind of statistical analysis to do on the data, survival, Kruskal-Wallis (kw), or chi-squared (chi)}
-
-\item{variable}{Character string: if not doing survival what is the dependant variable (column name) called in the data frame}
-
 \item{fsize}{Numerical value: determines the font size of the ggplot2 plots}
 
-\item{method}{Numerical value: 1 refers to the Monte Carlo reference procedure, 2 to using a penalty term (faster)}
+\item{method}{Numerical value: 1 refers to the Monte Carlo simulation method, 2 to regularised consensus clustering}
 
-\item{lambda}{Numerical value: controls the strength of the penalty on the PAC score (default = 0.1)}
+\item{lambdadefault}{Numerical value: if not tuning fixes the default (default: 0.1)}
+
+\item{tunelambda}{Logical flag: whether to tune lambda or not}
+
+\item{lseq}{Numerical vector: vector of lambda values to tune over (default = seq(0.05,0.1,by=0.01))}
+
+\item{lthick}{Numerical value: determines the line thickness of the ggplot2 plot}
+
+\item{dotsize}{Numerical value: determines the dotsize of the ggplot2 plot}
 }
 \value{
 A list, containing: 
@@ -78,8 +73,8 @@ of stability scores. The Monte Carlo simulations maintains the feature correlati
 input data. Then the null distribution is used to compare the reference scores with the real scores
 and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
 the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
-comparison against the reference mean. A faster alternative is included that includes a penalty
-term to prevent overfitting, called the Penalised Cluster Stability Index (PCSI).
+comparison against the reference mean. A fast alternative is also included that includes a penalty
+term to prevent overestimation of K, we call regularised consensus clustering.
 }
 \examples{
 res <- M3C(mydata)

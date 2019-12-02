@@ -6,34 +6,32 @@
 #' input data. Then the null distribution is used to compare the reference scores with the real scores
 #' and an empirical p value is calculated for every value of K to test the null hypothesis K=1. We derive 
 #' the Relative Cluster Stability Index (RCSI) as a metric for selecting K, which is based on a 
-#' comparison against the reference mean. A faster alternative is included that includes a penalty
-#' term to prevent overfitting, called the Penalised Cluster Stability Index (PCSI). 
+#' comparison against the reference mean. A fast alternative is also included that includes a penalty
+#' term to prevent overestimation of K, we call regularised consensus clustering.
 #'
 #' @param mydata Data frame or matrix: Contains the data, with samples as columns and rows as features
 #' @param cores Numerical value: how many cores to split the monte carlo simulation over
-#' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 100, recommended: 5-200)
+#' @param iters Numerical value: how many Monte Carlo iterations to perform (default: 25, recommended: 5-100)
 #' @param maxK Numerical value: the maximum number of clusters to test for, K (default: 10)
 #' @param des Data frame: contains annotation data for the input data for automatic reordering
-#' @param ref_method Character string: refers to which reference method to use (recommended: leaving as default)
+#' @param ref_method Character string: refers to which reference method to use
 #' @param repsref Numerical value: how many resampling reps to use for reference (default: 100, recommended: 100-250)
 #' @param repsreal Numerical value: how many resampling reps to use for real data (default: 100, recommended: 100-250)
-#' @param clusteralg String: dictates which inner clustering algorithm to use for M3C
-#' @param distance String: dictates which distance metric to use for M3C (recommended: leaving as default)
+#' @param clusteralg String: dictates which inner clustering algorithm to use (default: PAM)
 #' @param pacx1 Numerical value: The 1st x co-ordinate for calculating the pac score from the CDF (default: 0.1)
 #' @param pacx2 Numerical value: The 2nd x co-ordinate for calculating the pac score from the CDF (default: 0.9)
-#' @param printres Logical flag: whether to print all results into current directory
-#' @param printheatmaps Logical flag: whether to print all the heatmaps into current directory
-#' @param showheatmaps Logical flag: whether to show the heatmaps on screen
-#' @param removeplots Logical flag: whether to remove all plots
+#' @param removeplots Logical flag: whether to remove all plots from view
 #' @param fsize Numerical value: determines the font size of the ggplot2 plots
-#' @param method Numerical value: 1 refers to the Monte Carlo reference procedure, 2 to using a penalty term (faster)
-#' @param lambda Numerical value: controls the strength of the penalty on the PAC score (default = 0.1)
-#' @param seed Numerical value: fixes the seed if you want to repeat results, set the seed to 123 for example here
-#' @param dend Logical flag: whether to compute the dendrogram and p values for the optimal K or not
+#' @param lthick Numerical value: determines the line thickness of the ggplot2 plot
+#' @param dotsize Numerical value: determines the dotsize of the ggplot2 plot
+#' @param method Numerical value: 1 refers to the Monte Carlo simulation method, 2 to regularised consensus clustering
+#' @param seed Numerical value: specifies seed, set to NULL for different results each time
+#' @param tunelambda Logical flag: whether to tune lambda or not
+#' @param lseq Numerical vector: vector of lambda values to tune over (default = seq(0.05,0.1,by=0.01))
+#' @param lambdadefault Numerical value: if not tuning fixes the default (default: 0.1)
 #' @param silent Logical flag: whether to remove messages or not
-#' @param doanalysis Logical flag: whether to analyse the clinical variable supplied (univariate only)
-#' @param analysistype Character string: refers to which kind of statistical analysis to do on the data, survival, Kruskal-Wallis (kw), or chi-squared (chi)
-#' @param variable Character string: if not doing survival what is the dependant variable (column name) called in the data frame
+#' @param objective Character string: whether to use 'PAC' or 'entropy' objective function (default = entropy)
+#' @param pItem Numerical value: the fraction of points to resample each iteration (default: 0.8)
 #'
 #' @return A list, containing: 
 #' 1) the stability results and 
@@ -44,12 +42,12 @@
 #'
 #' @examples
 #' res <- M3C(mydata)
-M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
+M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
                 des = NULL, ref_method = c('reverse-pca', 'chol'), repsref = 100, repsreal = 100,
-                clusteralg = c('pam', 'km', 'spectral', 'hc'), distance = 'euclidean', pacx1 = 0.1, pacx2 = 0.9, printres = FALSE,
-                printheatmaps = FALSE, showheatmaps = FALSE, seed=NULL, removeplots = FALSE, dend = FALSE,
-                silent = FALSE, doanalysis = FALSE , analysistype = c('survival','kw','chi'), variable = NULL,
-                fsize = 18, method = 1, lambda = 0.1){
+                clusteralg = c('pam', 'km', 'spectral', 'hc'), pacx1 = 0.1, 
+                pacx2 = 0.9, seed=123, objective='entropy', removeplots = FALSE,
+                silent = FALSE, fsize = 18, method = 1, lambdadefault = 0.1, tunelambda = TRUE,
+                lseq = seq(0.02,0.1,by=0.02), lthick=2, dotsize=3){
   
   if (is.null(seed) == FALSE){
     set.seed(seed)
@@ -57,7 +55,7 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
   
   ref_method <- match.arg(ref_method)
   clusteralg <- match.arg(clusteralg)
-  analysistype <- match.arg(analysistype)
+  distance <- 'euclidean' # always use this
   
   if (method == 1){
     montecarlo <- TRUE 
@@ -70,7 +68,12 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     if (method == 1){
       message('method: Monte Carlo simulation')
     }else if (method == 2){
-      message('method: penalised stability')
+      message('method: regularised consensus clustering')
+    }
+    if (objective == 'entropy'){
+      message('objective: entropy')
+    }else if (objective == 'PAC'){
+      message('objective: pac')
     }
     message(paste('clustering algorithm:',clusteralg))
   }
@@ -82,23 +85,6 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
   }
   if ( inherits( mydata,"ExpressionSet" ) ) {
     mydata <- exprs(mydata)
-  }
-  if (clusteralg == 'spectral'){
-    if (silent != TRUE){
-      message('warning km or pam is usually preferred to spectral, unless there are highly imbalanced or non linear structures')
-    }
-  }
-  if (clusteralg == 'pam' && distance != 'euclidean'){
-    if (silent != TRUE){
-      message('warning pam must be used with euclidean distance, changing to euclidean')
-    }
-    distance <- 'euclidean'
-  }
-  if (clusteralg == 'km' && distance != 'euclidean'){
-    if (silent != TRUE){
-      message('warning kmeans must be used with euclidean distance, changing to euclidean')
-    }
-    distance <- 'euclidean'
   }
   if (method == 1){
     if (ncol(mydata) > nrow(mydata)){
@@ -127,18 +113,6 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     }
     if (nrow(des) != ncol(mydata)){
       stop('the dimensions of your annotation object do not match data object')
-    }
-    if (doanalysis == TRUE){ # if running analysis run checking on description file
-      if (analysistype == 'survival'){
-        vec <- c(c('Death','Time')%in%colnames(des))
-        if(sum(vec==TRUE)!=2)
-        {
-          stop('we are doing survival analysis, but there are not both \'Time\' and \'Death\' columns or analysistype not set')
-        }
-      }
-      if (is.null(variable) == TRUE && analysistype != 'survival'){
-        stop('if using kw or chi, we should define the dependent variable as a string, i.e. column name')
-      }
     }
   }
   if (class(mydata) == 'matrix'){
@@ -178,7 +152,7 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
       }
     }
     ## for each loop to use all cores
-    ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref",
+    ls<-foreach(i = 1:iters, .export=c("ccRun", "CDF", "connectivityMatrix", "M3Cref","entropy",
                                        "sampleCols", "triangle", "rbfkernel"),
                 .packages=c("cluster", "base", "Matrix"), .combine='rbind', .options.snow = opts) %dopar% {
                   
@@ -196,12 +170,12 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
                   }
                   
                   m_matrix <- as.matrix(mydata2)
-                  results <- M3Cref(m_matrix,maxK=maxK,reps=repsref,pItem=0.8,pFeature=1,
+                  results <- M3Cref(m_matrix,maxK=maxK,reps=repsref,pItem=pItem,pFeature=1,
                                     clusterAlg=clusteralg, # use pam it is fast
                                     distance=distance, # with pam always use euclidean
                                     title = '/home/christopher/Desktop/',
-                                    x1=pacx1, x2=pacx2, printres=FALSE, seed=seed,
-                                    silent=silent)
+                                    x1=pacx1, x2=pacx2, seed=seed,
+                                    silent=silent, objective=objective)
                   pacresults <- results$pac_scores$PAC_SCORE
                   return(pacresults)
                 }
@@ -212,32 +186,35 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     }
     ## finished monte carlo, results are in ls matrix
     ## real data PAC score calculation
-    results2 <- M3Creal(as.matrix(mydata),maxK=maxK,reps=repsreal,pItem=0.8,pFeature=1,
+    results2 <- M3Creal(as.matrix(mydata),maxK=maxK,reps=repsreal,pItem=pItem,pFeature=1,
                         clusterAlg=clusteralg, # use pam it is fast
                         distance=distance, # with pam always use euclidean
                         title = '/home/christopher/Desktop/',
-                        printres = printres,
-                        showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
+                        des = des, lthick=lthick, dotsize=dotsize,
                         x1=pacx1, x2=pacx2, seed=seed, removeplots=removeplots, silent=silent,
-                        doanalysis=doanalysis, analysistype=analysistype,variable=variable,
-                        fsize=fsize,method=method) # png to file
+                        fsize=fsize,method=method, objective=objective) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
-    if (doanalysis == TRUE){
-      clinicalres <- results2$clinicalres
-    }
+    plots <- results2$plots
     
     ## process reference data and calculate scores and p values (simulations are in ls matrix)
     colnames(real)[2] <- 'PAC_REAL'
     real$PAC_REF <- colMeans(ls)
-    #real$RCSI <- real$PAC_REF - real$PAC_REAL # alternative rcsi calculation without taking log
     
-    ## if PAC is zero set it to really really small 
-    real$PAC_REAL[real$PAC_REAL==0] <- 0.0000001
-    pacreal <- real$PAC_REAL
-    PACREALLOG <- log(pacreal)
-    PACREFLOG <- log(real$PAC_REF)
-    real$RCSI <- PACREFLOG - PACREALLOG # calculate RSCI
+    ## if PAC/entropy is zero set it to really really small 
+    ptemp <- real$PAC_REAL
+    ptemp[ptemp==0] <- 0.0001 ## changed
+    pacreal <- ptemp
+    
+    ## old RCSI calculation log of mean 
+    # PACREALLOG <- log(pacreal)
+    # PACREFLOG <- log(real$PAC_REF)
+    # real$RCSI <- PACREFLOG - PACREALLOG # calculate RSCI
+    
+    diffM <- sweep(log(ls),2,log(pacreal))
+    #diffM <- sweep(ls,2,pacreal)
+    real$RCSI <- colMeans(diffM)
+    real$RCSI_SE <- (apply(diffM, 2, sd))/sqrt(nrow(ls))
     
     ## usual p value derivation
     pvals <- vapply(seq_len(ncol(ls)), function(i) {
@@ -246,91 +223,90 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     }, numeric(1))
     real$MONTECARLO_P <- pvals
     
-    ## estimate p values using a beta distribution
-    variance <- apply(ls, 2, var)
-    pvals2 <- vapply(seq_len(nrow(real)), function(i) {
-      mean <- real$PAC_REF[i]
-      var <- variance[[i]]
-      realpac <- real$PAC_REAL[i]
-      params2 <- estBetaParams(mu=mean, var=var)
-      pbeta(realpac, params2[[1]], params2[[2]])
-    }, numeric(1))
-    real$BETA_P <- pvals2
-    real$P_SCORE <- -log10(real$BETA_P)
-    
-    if (removeplots == FALSE){ # we are doing the plots
-      # plot real vs reference results
-      # RCSI
-      px <- ggplot(data=real, aes(x=K, y=RCSI)) + geom_line(colour = "midnightblue", size = 2) + 
-        geom_point(colour = "black", size = 3) +
-        theme_bw() +
-        theme(axis.text.y = element_text(size = fsize, colour = 'black'),
-              axis.text.x = element_text(size = fsize, colour = 'black'),
-              axis.title.x = element_text(size = fsize),
-              axis.title.y = element_text(size = fsize),
-              legend.text = element_text(size = fsize),
-              legend.title = element_text(size = fsize),
-              plot.title = element_text(size = fsize, colour = 'black', hjust = 0.5),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-        scale_x_continuous(breaks=c(seq(0,maxK,1))) +
-        ylab('RCSI') +
-        xlab('K')
-      
-      # pval score
-      col = ifelse(real$P_SCORE > 1.30103,'tomato','black')
-      py <- ggplot(data=real, aes(x=K, y=P_SCORE)) + geom_point(colour = col, size = 3) +
-        theme_bw() +
-        theme(axis.text.y = element_text(size = fsize, colour = 'black'),
-              axis.text.x = element_text(size = fsize, colour = 'black'),
-              axis.title.x = element_text(size = fsize),
-              axis.title.y = element_text(size = fsize),
-              legend.text = element_text(size = fsize),
-              legend.title = element_text(size = fsize),
-              plot.title = element_text(size = fsize, colour = 'black', hjust = 0.5),
-              panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-        scale_x_continuous(breaks=c(seq(0,maxK,1))) +
-        ylab(expression('-log'[10]*'p')) +
-        xlab('K') +
-        geom_hline(yintercept=1.30103, size=0.75, linetype='dashed', colour='tomato') # 0.05 sig threshold
-      
-      if (printres == TRUE){
-        png(paste('pscore.png'), height = 14, width = 20, units = 'cm',
-            res = 900, type = 'cairo')
-      }
-      print(py) # print ggplot CDF in main plotting window
-      if (printres == TRUE){
-        dev.off()
-      }
-      if (printres == TRUE){
-        png(paste('RCSI.png'), height = 14, width = 20, units = 'cm',
-            res = 900, type = 'cairo')
-      }
-      print(px) # print ggplot CDF in main plotting window
-      if (printres == TRUE){
-        dev.off()
-      }
-      if (printres == TRUE){
-        print(py)
-        print(px)
-      }
+    if (objective == 'PAC'){
+      ## estimate p values using a beta distribution
+      variance <- apply(ls, 2, var)
+      pvals2 <- vapply(seq_len(nrow(real)), function(i) {
+        mean <- real$PAC_REF[i]
+        var <- variance[[i]]
+        realpac <- real$PAC_REAL[i]
+        params2 <- estBetaParams(mu=mean, var=var)
+        pbeta(realpac, params2[[1]], params2[[2]])
+      }, numeric(1))
+      real$BETA_P <- pvals2
+      real$P_SCORE <- -log10(real$BETA_P)
+    }else if (objective == 'entropy'){
+      ## estimate p values using a beta distribution
+      variance <- apply(ls, 2, sd)
+      pvals2 <- vapply(seq_len(nrow(real)), function(i) {
+        mean <- real$PAC_REF[i]
+        var <- variance[[i]]
+        realpac <- real$PAC_REAL[i]
+        pnorm(realpac, mean=mean,sd=var)
+      }, numeric(1))
+      real$NORM_P <- pvals2
+      real$P_SCORE <- -log10(real$NORM_P)
+      # fix names
+      colnames(real)[2:3]<-c('ENTROPY_REAL','ENTROPY_REF')
     }
+
+    # plot real vs reference results
+    # RCSI
+    px <- ggplot(data=real, aes(x=K, y=RCSI)) + geom_line(colour = "slateblue", size = lthick) + 
+      geom_point(colour = "slateblue", size = dotsize) +
+      theme_bw() +
+      theme(axis.text.y = element_text(size = fsize, colour = 'black'),
+            axis.text.x = element_text(size = fsize, colour = 'black'),
+            axis.title.x = element_text(size = fsize),
+            axis.title.y = element_text(size = fsize),
+            legend.text = element_text(size = fsize),
+            legend.title = element_text(size = fsize),
+            plot.title = element_text(size = fsize, colour = 'black', hjust = 0.5),
+            panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+      scale_x_continuous(breaks=c(seq(0,maxK,1))) +
+      ylab('RCSI') +
+      xlab('K') + 
+      geom_errorbar(aes(ymin=RCSI-qnorm(0.975)*RCSI_SE, ymax=RCSI+qnorm(0.975)*RCSI_SE), 
+                    width=.1, colour = "slateblue",size=lthick)
+    # pval score
+    col = ifelse(real$P_SCORE > 1.30103,'tomato','black')
+    py <- ggplot(data=real, aes(x=K, y=P_SCORE)) + geom_point(colour = col, size = dotsize) +
+      theme_bw() +
+      theme(axis.text.y = element_text(size = fsize, colour = 'black'),
+            axis.text.x = element_text(size = fsize, colour = 'black'),
+            axis.title.x = element_text(size = fsize),
+            axis.title.y = element_text(size = fsize),
+            legend.text = element_text(size = fsize),
+            legend.title = element_text(size = fsize),
+            plot.title = element_text(size = fsize, colour = 'black', hjust = 0.5),
+            panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+      scale_x_continuous(breaks=c(seq(0,maxK,1))) +
+      ylab(expression('-log'[10]*'p')) +
+      xlab('K') #+
+    #geom_hline(yintercept=1.30103, size=0.75, linetype='dashed', colour='tomato') # 0.05 sig threshold
+    if (removeplots){
+      # not much to do here
+    }else{
+      print(py)
+      print(px)
+    }
+    plots[[3]] <- py
+    plots[[4]] <- px
   }
   
   if (montecarlo == FALSE){
-    results2 <- M3Creal(as.matrix(mydata),maxK=maxK,reps=repsreal,pItem=0.8,pFeature=1, 
+    results2 <- M3Creal(as.matrix(mydata),maxK=maxK,reps=repsreal,pItem=pItem,pFeature=1, 
                         clusterAlg=clusteralg, # default = pam, others = hc, km
                         distance=distance, # seed=1262118388.71279,
                         title = '/home/christopher/Desktop/',
-                        printres = printres, x1=pacx1, x2=pacx2,
-                        showheatmaps = showheatmaps, printheatmaps = printheatmaps, des = des,
-                        seed=seed, removeplots=removeplots, variable = variable,
-                        silent=silent, doanalysis=doanalysis, analysistype=analysistype, 
-                        method=method, fsize=fsize, lambda=lambda) # png to file
+                        x1=pacx1, x2=pacx2,
+                        des = des,lthick=lthick, dotsize=dotsize,
+                        seed=seed, removeplots=removeplots, 
+                        silent=silent, 
+                        method=method, fsize=fsize, lambda=lambda, objective=objective) # png to file
     real <- results2$pac_scores
     allresults <- results2$allresults
-    if (doanalysis == TRUE){
-      clinicalres <- results2$clinicalres
-    }
+    plots <- results2$plots
   }
   
   if (file.exists('Rplots.pdf') == TRUE){ # random file pops up
@@ -338,25 +314,55 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     unlink('Rplots.pdf') # this needs to be removed
   }
   
-  if (printres == TRUE){
-    write.csv(real, file = 'pacresultfile.csv', row.names = FALSE)
+  ### tuning lambda
+  if (method == 2 & tunelambda == TRUE){
+    llv <- c()
+    i = 1
+    #lseq <- seq(0.05,0.1,by=0.01)
+    ## diff matrix
+    for (lambda in lseq){
+      if (silent == FALSE){
+        message(paste('tuning lambda:',lambda))
+      }
+      ent <- log(real$PAC_SCORE)+lambda*real$K
+      min <- which.min(ent)+1
+      #message(paste('K:',min))
+      ll <- getl(allresults,min,clusteralg=clusteralg)
+      if (silent == FALSE){
+        message(paste('K =',min,', log-likelihood',ll))
+      }
+      llv[i] <- ll
+      i = i + 1
+    }
+    if (silent == FALSE){
+      message(paste('optimal lambda:',lseq[tail(which(llv==max(llv)),1)])) # last max
+    }
+    lambdadefault <- lseq[tail(which(llv==max(llv)),1)]
   }
   
+  ### penalised method
+  if (objective == 'entropy' & method == 2){
+    colnames(real)[2] <- 'ENTROPY'
+    real$PCSI <- log(real$ENTROPY)+lambdadefault*real$K
+    pz <- PCSI_plot(real,fsize=fsize,maxK=maxK,lthick=lthick, dotsize=dotsize)
+    if (removeplots == FALSE){
+      print(pz)
+    }
+    plots[[3]] <- pz
+  }else if (objective == 'PAC' & method == 2){
+    real$PCSI <- log(real$PAC_SCORE)+lambdadefault*real$K
+    pz2 <- PCSI_plot(real,fsize=fsize,maxK=maxK,lthick=lthick, dotsize=dotsize)
+    if (removeplots == FALSE){
+      print(pz2)
+    }
+    plots[[3]] <- pz2
+  }
+  
+  ### ground truth compare method
   if (method == 1){
     optk <- which.max(real$RCSI)+1
   }else if (method == 2){
     optk <- which.min(real$PCSI)+1
-  }
-  
-  ## dend code
-  if (dend == TRUE){
-    if (silent != TRUE){
-      message('doing the dendrogram')
-    }
-    M3Cdendcompres <- M3Cdendcomputations(optk, mydata, allresults, printres=printres)
-    if (silent != TRUE){
-      message('done.')
-    }
   }
   
   if (silent != TRUE){
@@ -375,28 +381,13 @@ M3C <- function(mydata, cores = 1, iters = 100, maxK = 10,
     ls <- data.frame(ls)
     row.names(ls) <- gsub('result', 'iteration', row.names(ls))
     colnames(ls) <- c(2:maxK)
-    if (dend == TRUE & doanalysis == TRUE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
-                  'dendres' = M3Cdendcompres, 'clinicalres' = clinicalres, 'assignments' = assignments))
-    }else if (dend == TRUE & doanalysis == FALSE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls,
-                  'dendres' = M3Cdendcompres, 'assignments' = assignments))
-    }else if (dend == FALSE & doanalysis == TRUE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
-                  'clinicalres' = clinicalres, 'assignments' = assignments))
-    }else if (dend == FALSE & doanalysis == FALSE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
-                  'assignments' = assignments))
-    }
+    return(list("realdataresults" = allresults, 'scores' = real, 'refpacscores' = ls, 
+                'assignments' = assignments, 'plots'=plots))
   }
   if (montecarlo == FALSE){
     # return results without monte carlo
-    if (doanalysis == TRUE){
-      return(list("realdataresults" = allresults, 'scores' = real, 'clinicalres' = clinicalres, 
-                  'assignments' = assignments)) 
-    }else{
-      return(list("realdataresults" = allresults, 'scores' = real, 'assignments'= assignments)) 
-    }
+    return(list("realdataresults" = allresults, 'scores' = real, 'assignments'= assignments,
+                "plots"=plots)) 
   }
 }
 
@@ -432,18 +423,12 @@ M3Creal <- function( d=NULL, # function for real data
                      weightsItem=NULL,
                      weightsFeature=NULL,
                      corUse="everything",
-                     showheatmaps=FALSE,
-                     printheatmaps=FALSE,
-                     printres=FALSE,
                      x1=0.1,
-                     x2=0.9,
+                     x2=0.9,lthick=lthick, dotsize=dotsize,
                      des = NULL,
                      removeplots=removeplots,
                      silent=silent,
-                     doanalysis=doanalysis,
-                     analysistype=analysistype,
-                     variable=variable,
-                     fsize=fsize,
+                     fsize=fsize,objective=objective,
                      method=method,
                      lambda=lambda) {
   if (silent != TRUE){
@@ -482,28 +467,6 @@ M3Creal <- function( d=NULL, # function for real data
     pc = pc[hc$order,]
     colcols <- as.factor(as.numeric(ct))
     #pc = rbind(pc,0)
-    cols <- colorRampPalette(RColorBrewer::brewer.pal(9,'Reds')[1:6])(256)
-    if (showheatmaps == TRUE & printheatmaps == FALSE){
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
-                    col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-    }
-    if (showheatmaps == TRUE & printheatmaps == TRUE){
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
-                    col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-      png(paste('K=',tk,'heatmap.png'), height = 12, width = 12, units = 'cm', 
-          res = 900, type = 'cairo')
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
-                    col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-      dev.off()
-    }
-    if (showheatmaps == FALSE & printheatmaps == TRUE){
-      png(paste('K=',tk,'heatmap.png'), height = 12, width = 12, units = 'cm', 
-          res = 900, type = 'cairo')
-      NMF::aheatmap(pc, Colv = as.dendrogram(hc), Rowv = NA, annCol = data.frame(CC = colcols), 
-                    col = cols, cexRow = 0, cexCol = 0, annLegend = FALSE)
-      dev.off()
-    }
-    
     ## start code for extracting ordered data out for user (removed the X reformatting)
     usethisorder <- hc$order
     colnames(pc) <- seq(1,ncol(pc))
@@ -564,47 +527,11 @@ M3Creal <- function( d=NULL, # function for real data
     resultslist[[tk]] <- newList
   }
   
-  # if running a clinical analysis run here
-  if (doanalysis == TRUE){
-    statisticalres <- matrix(nrow=maxK-1,ncol=2)
-    statisticalres[,1] <- seq(2,maxK)
-    if (silent != TRUE){
-      message(paste('running clinical analysis type:',analysistype))
-    }
-    for (k in seq(2,maxK)){
-      myresults <- resultslist[[k]]$ordered_annotation
-      if (analysistype == 'survival'){
-        myresults$Death <- as.numeric(as.character(myresults$Death))
-        coxFit <- suppressWarnings(coxph(Surv(time = Time, event = Death) ~ as.factor(myresults$consensuscluster), data = myresults, ties = "exact"))
-        coxresults <- summary(coxFit)
-        statisticalres[k-1,2] <- coxresults$logtest[3]
-      }else if (analysistype == 'kw'){ # continuous non parametric
-        formula <- as.formula(paste(variable,'~','consensuscluster')) # defined variable by user
-        kwfit <- kruskal.test(formula, data = myresults) 
-        statisticalres[k-1,2] <- kwfit$p.value
-      }else if (analysistype == 'chi'){
-        chifit <- suppressWarnings(chisq.test(table(myresults[c('consensuscluster',variable)])))
-        statisticalres[k-1,2] <- chifit$p.value
-      }
-    }
-    statisticalres <- data.frame(statisticalres)
-    colnames(statisticalres)[1] <- 'K'
-    # sort out the column names
-    if (analysistype == 'survival'){
-      colnames(statisticalres)[2] <- 'logtest'
-    }else if (analysistype == 'kw'){
-      colnames(statisticalres)[2] <- 'kw'
-    }else if (analysistype == 'chi'){
-      colnames(statisticalres)[2] <- 'chi'
-    }
-  }
-  pac_res <- CDF(ml, printres=printres, x1=x1, x2=x2, removeplots=removeplots, fsize=fsize, 
-                 method=method, lambda=lambda) # this runs the new CDF function with PAC score
-  if (doanalysis == TRUE){
-    listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res, 'clinicalres' = statisticalres) 
-  }else{
-    listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res) # use a name list, one item is a list of results
-  }
+  pac_res <- CDF(ml, x1=x1, x2=x2, removeplots=removeplots, fsize=fsize, lthick=lthick, dotsize=dotsize,
+                 method=method, lambda=lambda,objective=objective,returnplots=TRUE) # this runs the new CDF function with PAC score
+  
+  listxyx <- list("allresults" = resultslist, 'pac_scores' = pac_res$data, 
+                  'plots' = pac_res$plots) # use a name list, one item is a list of results
   return(listxyx)
 }
 
@@ -625,9 +552,8 @@ M3Cref <- function( d=NULL, # function for reference data
                     corUse="everything",
                     x1=0.1,
                     x2=0.9,
-                    printres=FALSE, 
                     seed=NULL,
-                    silent=silent) {
+                    silent=silent,objective=objective) {
   if (is.null(seed) == FALSE){
     set.seed(seed)
   }
@@ -649,7 +575,8 @@ M3Cref <- function( d=NULL, # function for reference data
   if (silent != TRUE){
     message('done.')
   }
-  pac_res <- CDF(ml, printres=FALSE, x1=x1, x2=x2, removeplots=TRUE, fsize=18, method=1) # this runs the new CDF function with PAC score
+  pac_res <- CDF(ml, x1=x1, x2=x2, removeplots=TRUE, fsize=18, method=1,lthick=1, dotsize=1,
+                 objective=objective, returnplots=FALSE) # this runs the new CDF function with PAC score
   newList <- list('pac_scores' = pac_res) # now returning a fairly coherant list of results
   return(newList)
 }
@@ -806,9 +733,11 @@ sampleCols <- function( d,
                 subcols=sampCols ) )
 }
 
-CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
+CDF=function(ml,breaks=100,x1=x1,x2=x2,lthick=lthick, dotsize=dotsize,
              removeplots=removeplots,fsize=18,method=1,
-             lambda=0.1){ # calculate CDF and PAC score
+             lambda=0.1,objective=objective,returnplots=FALSE){ # calculate CDF and PAC score
+  
+  plist <- list() # list of plots to save
   
   ## calculate CDF
   maxK = length(ml) # match with max K
@@ -831,8 +760,8 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
   colnames(cdf_res2) <- c('consensusindex', 'CDF', 'k')
   cdf_res2 <- cdf_res2[complete.cases(cdf_res2),]
   
-  if (removeplots==FALSE){
-    p <- ggplot2::ggplot(cdf_res2, ggplot2::aes(x=consensusindex, y=CDF, group=k)) + ggplot2::geom_line(ggplot2::aes(colour = factor(k)), size = 2) + ggplot2::theme_bw() + 
+  if (returnplots == TRUE){
+    p <- ggplot2::ggplot(cdf_res2, ggplot2::aes(x=consensusindex, y=CDF, group=k)) + ggplot2::geom_line(ggplot2::aes(colour = factor(k)), size = lthick) + ggplot2::theme_bw() + 
       ggplot2::theme(axis.text.y = ggplot2::element_text(size = fsize, colour = 'black'),
                      axis.text.x = ggplot2::element_text(size = fsize, colour = 'black'),
                      axis.title.x = ggplot2::element_text(size = fsize),
@@ -842,38 +771,46 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
                      plot.title = ggplot2::element_text(size = fsize, colour = 'black', hjust = 0.5),
                      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
       ggplot2::labs(title = "Real Data")
-    if (printres == TRUE){
-      png('CDF.png', height = 14, width = 23, units = 'cm', 
-          type = 'cairo', res = 900)
+    if (removeplots == FALSE){
+      print(p)
     }
-    print(p) # print ggplot CDF in main plotting window
-    if (printres == TRUE){
-      dev.off()
-    }
+    plist[[1]] <- p
   }
   
-  ## vectorised PAC score calculation
-  cdf_res3 <- subset(cdf_res2, consensusindex %in% c(x1, x2)) # select the consensus index vals to determine the PAC score
-  value1 <- cdf_res3[seq(2, nrow(cdf_res3), 2), 2]
-  value2 <- cdf_res3[seq(1, nrow(cdf_res3), 2), 2]
-  PAC <- value1 - value2
-  
-  ## code for penalised PAC
-  if (method == 2){
-    ## PCSI calculation using penalty term
-    PAC[PAC==0] <- 0.0000001
-    ks <- seq(2,maxK)
-    PCSI <- log(PAC)+lambda*ks
-    ## make results data frame
-    PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC, PCSI=PCSI)
-  }else if (method == 1){ # same as before
-    ## make results data frame
-    PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC)
+  if (objective == 'PAC'){
+    ## vectorised PAC score calculation
+    cdf_res3 <- subset(cdf_res2, consensusindex %in% c(x1, x2)) # select the consensus index vals to determine the PAC score
+    value1 <- cdf_res3[seq(2, nrow(cdf_res3), 2), 2]
+    value2 <- cdf_res3[seq(1, nrow(cdf_res3), 2), 2]
+    PAC <- value1 - value2
   }
   
-  if (removeplots==FALSE){
-    # do PAC plot
-    p2 <- ggplot2::ggplot(data=PAC_res_df, ggplot2::aes(x=K, y=PAC_SCORE)) + ggplot2::geom_line(colour = "sky blue", size = 2) + ggplot2::geom_point(colour = "black", size = 3) +
+  if (objective == 'PAC'){
+    ccol <- 'skyblue'
+    llab <- 'PAC'
+    ## code for penalised PAC
+    if (method == 2){
+      ## make results data frame
+      PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC)
+    }else if (method == 1){ # same as before
+      ## make results data frame
+      PAC_res_df <- data.frame(K=seq(2, maxK), PAC_SCORE=PAC)
+    }
+  }else{
+    # entropy function
+    S <- c()
+    for (ccm in seq(2,maxK)){
+      cmm <- ml[[ccm]]
+      S <- c(S,entropy(cmm))
+    }
+    S <- data.frame(K=seq(2, maxK),PAC_SCORE=S)
+    PAC_res_df <- S
+    ccol <- 'black'
+    llab <- 'Entropy'
+  }
+  
+  if (returnplots == TRUE){
+    p2 <- ggplot2::ggplot(data=PAC_res_df, ggplot2::aes(x=K, y=PAC_SCORE)) + ggplot2::geom_line(colour = ccol, size = lthick) + ggplot2::geom_point(colour = "black", size = dotsize) +
       ggplot2::theme_bw() + 
       ggplot2::theme(axis.text.y = ggplot2::element_text(size = fsize, colour = 'black'),
                      axis.text.x = ggplot2::element_text(size = fsize, colour = 'black'),
@@ -884,55 +821,22 @@ CDF=function(ml,breaks=100,printres=printres,x1=x1,x2=x2,
                      plot.title = ggplot2::element_text(size = fsize, colour = 'black', hjust = 0.5),
                      panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
       ggplot2::scale_x_continuous(breaks=c(seq(0,maxK,1))) +
-      ggplot2::ylab('PAC') +
+      ggplot2::ylab(llab) +
       ggplot2::xlab('K') +
       ggplot2::labs(title = "Real Data")
-    if (printres == TRUE){
-      png('PACscore.png', height = 14, width = 20, units = 'cm', 
-          type = 'cairo', res = 900)
-    }
-    print(p2)
-    if (printres == TRUE){
-      dev.off()
-    }
-    if (printres == TRUE){
-      print(p)
+    if (removeplots == FALSE){
       print(p2)
     }
+    plist[[2]] <- p2
   }
   
-  if (method == 2){ # extra plot is penalised PAC score
-    if (removeplots==FALSE){
-      # do PAC plot
-      p3 <- ggplot2::ggplot(data=PAC_res_df, ggplot2::aes(x=K, y=PCSI)) + ggplot2::geom_line(colour = "tomato", size = 2) + ggplot2::geom_point(colour = "black", size = 3) +
-        ggplot2::theme_bw() + 
-        ggplot2::theme(axis.text.y = ggplot2::element_text(size = fsize, colour = 'black'),
-                       axis.text.x = ggplot2::element_text(size = fsize, colour = 'black'),
-                       axis.title.x = ggplot2::element_text(size = fsize),
-                       axis.title.y = ggplot2::element_text(size = fsize),
-                       legend.text = ggplot2::element_text(size = fsize),
-                       legend.title = ggplot2::element_text(size = fsize),
-                       plot.title = ggplot2::element_text(size = fsize, colour = 'black', hjust = 0.5),
-                       panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
-        ggplot2::scale_x_continuous(breaks=c(seq(0,maxK,1))) +
-        ggplot2::ylab('PCSI') +
-        ggplot2::xlab('K') +
-        ggplot2::labs(title = "Real Data")
-      if (printres == TRUE){
-        png('PCSI.png', height = 14, width = 23, units = 'cm', 
-            type = 'cairo', res = 900)
-      }
-      print(p3)
-      if (printres == TRUE){
-        dev.off()
-      }
-      if (printres == TRUE){
-        print(p3)
-      }
-    }
+  if (returnplots == TRUE){
+    cdfl <- list(data=PAC_res_df,plots=plist)
+  }else if (returnplots == FALSE){
+    cdfl <- PAC_res_df
   }
   
-  return(PAC_res_df)
+  return(cdfl)
 }
 
 triangle = function(m,mode=1){
@@ -953,123 +857,6 @@ triangle = function(m,mode=1){
   }else if(mode == 2){
     return(nm) #returns lower triangle and no diagonal. no double counts.
   }
-}
-
-M3Cdendcomputations <- function(optK, inputdata, realdataresults, printres=printres){
-  k <- optK
-  mydata <- inputdata
-  mydist = dist(t(mydata))
-  clusters <- realdataresults[[k]]$ordered_annotation$consensuscluster
-  tnames <- row.names(realdataresults[[k]]$ordered_annotation)
-  names(clusters) <- tnames
-  mydist = as.matrix(mydist)
-  mydist <- mydist[names(clusters),]
-  mydist <- mydist[,names(clusters)]
-  list <- sapply(unique(clusters), clust.medoid, mydist, clusters)
-  medoids <- mydata[,c(list)]
-  for (name in colnames(medoids)){ # get medoids of consensus clusters
-    ccid <- paste('CC_',clusters[names(clusters)==name],sep='')
-    colnames(medoids)[colnames(medoids)==name] <- ccid
-  }
-  mydist = dist(t(medoids))
-  hc <- hclust(mydist)
-  dend <- as.dendrogram(hc) 
-  dend <- dend %>% set("branches_k_color", k = k) %>% set("branches_lwd", k)
-  xy <- dend %>% get_nodes_xy()
-  is_internal_node <- is.na(dend %>% get_nodes_attr("leaf"))
-  xz <- xy[is_internal_node,,drop=FALSE]
-  annontemp <- realdataresults[[k]]$ordered_annotation
-  annontemp$consensuscluster <- paste('CC',annontemp$consensuscluster,sep='_')
-  datatemp <- realdataresults[[k]]$ordered_data
-  xzz <- round(xz,4)
-  tempmatrix <- as.matrix(mydist)
-  tempmatrix <- round(tempmatrix,4)
-  i = 1
-  xzz <- cbind(xzz,rep(NA,nrow(xzz))) # for p values
-  #
-  message('computing pairwise p values for optimal K with sigclust...')
-  namevector <- vector()
-  for (distval in xzz[,2]){ # looping over dendrogram distances, finding cc clusters, calculating p values
-    tempccnames <- row.names(which(tempmatrix==distval,arr.ind = TRUE))
-    tempannontemp <- subset(annontemp, annontemp$consensuscluster %in% tempccnames)
-    tempdatatemp <- datatemp[,row.names(tempannontemp)]
-    tempannontemp$consensuscluster <- gsub('CC_','',tempannontemp$consensuscluster)
-    tempannontemp$consensuscluster <- as.factor(tempannontemp$consensuscluster)
-    tempannontemp$consensuscluster <- droplevels(tempannontemp$consensuscluster)
-    tempannontemp$consensuscluster <- as.numeric(tempannontemp$consensuscluster)
-    if (length(tempannontemp$consensuscluster[tempannontemp$consensuscluster==1])==1 | length(tempannontemp$consensuscluster[tempannontemp$consensuscluster==2])==1){
-      message('there is a singleton cluster in the data... possible outlier')
-      xzz[i,3] <- NA
-    }else{ # if we do not have a singleton cluster
-      pvalue <- sigclust(t(tempdatatemp),nsim=1000,labflag=1,label=tempannontemp$consensuscluster,icovest=3)
-      xzz[i,3] <- pvalue@pvalnorm
-    }
-    namevector <- c(namevector,paste(tempccnames,collapse='-vs-'))
-    i = i + 1
-  }
-  # plotting code
-  dend <- as.dendrogram(hc) 
-  dend <- dend %>% set("branches_k_color", k = k) %>% set("branches_lwd", k)
-  xy <- dend %>% get_nodes_xy()
-  xz <- xzz
-  if (k > 2){
-    xx <- xz[which.max(xz[,2]),,drop=FALSE]
-    xy <- xz[-which.max(xz[,2]),,drop=FALSE]
-    if (max(xy[,2]) > 13){
-      xp <- xy[which.max(xy[,2]),,drop=FALSE]
-      xy <- xy[-which.max(xy[,2]),,drop=FALSE]
-      # b, l, t, r
-      par(mar = c(7, 2, 5, 2))
-      plot(dend, axes=FALSE)
-      text(xx[,1], xx[,2]-(max(xz[,2])/15), labels=format(xx[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-      text(xy[,1], xy[,2]-(max(xz[,2])/14), labels=format(xy[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-      text(xp[,1], xp[,2]-(max(xp[,2])/14), labels=format(xp[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-      if (printres == TRUE){
-        png('dendrogram.png', height = 10, width = 20, units = 'cm',
-            res = 900, type = 'cairo')
-        plot(dend, axes=FALSE)
-        text(xx[,1], xx[,2]-(max(xz[,2])/15), labels=format(xx[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-        text(xy[,1], xy[,2]-(max(xz[,2])/14), labels=format(xy[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-        text(xp[,1], xp[,2]-(max(xp[,2])/14), labels=format(xp[,3], digits=2), col="red",font=2 )
-        dev.off()
-      }
-    }else{
-      # b, l, t, r
-      par(mar = c(7, 2, 5, 2))
-      plot(dend, axes=FALSE)
-      text(xx[,1], xx[,2]-(max(xz[,2])/15), labels=format(xx[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-      text(xy[,1], xy[,2]-(max(xz[,2])/14), labels=format(xx[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-      if (printres == TRUE){
-        png('dendrogram.png', height = 10, width = 20, units = 'cm',
-            res = 900, type = 'cairo')
-        plot(dend, axes=FALSE)
-        text(xx[,1], xx[,2]-(max(xz[,2])/15), labels=format(xx[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-        text(xy[,1], xy[,2]-(max(xz[,2])/14), labels=format(xx[,3], digits=2), col="red",font=2 )
-        dev.off()
-      }
-    }
-  }
-  if (k == 2){
-    xx <- xz[which.max(xz[,2]),,drop=FALSE]
-    # b, l, t, r
-    par(mar = c(7, 2, 5, 2))
-    plot(dend, axes=FALSE)
-    text(xx[,1], xx[,2]-(max(xz[,2])/15), labels=format(xx[,3], digits=2), col="red",font=2 ) # needs to be done as a fraction/ auto
-    if (printres == TRUE){
-      png('dendrogram.png', height = 10, width = 20, units = 'cm',
-          res = 900, type = 'cairo')
-      plot(dend, axes=FALSE)
-      text(xx[,1], xx[,2]-(max(xz[,2])/15), labels=format(xx[,3], digits=2), col="red",font=2 )
-      dev.off()
-    }
-  }
-  # add the labels after plotting etc
-  xzzz <-  data.frame(xzz)
-  xzzz$labels <- namevector
-  xzzz$X1 <- NULL
-  colnames(xzzz) <- c('Distance','P_value','Contrast')
-  # return the pairwise dendrogram p values for the user
-  return(xzzz)
 }
 
 clust.medoid = function(i, distmat, clusters) {
@@ -1102,4 +889,96 @@ rbfkernel <- function (mat, K=3) { # calculate gaussian kernel with local sigma
   diag(out) <- 1
   ## return kernel
   return(out)
+}
+
+entropy <- function(m){
+  # Zhao, Feng, et al. "Spectral clustering with eigenvector selection 
+  # based on entropy ranking." Neurocomputing 73.10-12 (2010): 1704-1717.
+  m[m==1] <- NA
+  m[m==0] <- NA
+  m <- m[upper.tri(m)]
+  N <- length(m[!is.na(m)])
+  s <- -sum(m*log(m)+(1-m)*log(1-m),na.rm=TRUE)
+  if (is.na(s)){
+    s<-0
+  }
+  return(s)
+}
+
+PCSI_plot <- function(real,fsize=fsize,maxK=maxK,lthick=lthick, dotsize=dotsize){
+  p3 <- ggplot2::ggplot(data=real, ggplot2::aes(x=K, y=PCSI)) + ggplot2::geom_line(colour = "slateblue", size = lthick) + ggplot2::geom_point(colour = "black", size = dotsize) +
+    ggplot2::theme_bw() + 
+    ggplot2::theme(axis.text.y = ggplot2::element_text(size = fsize, colour = 'black'),
+                   axis.text.x = ggplot2::element_text(size = fsize, colour = 'black'),
+                   axis.title.x = ggplot2::element_text(size = fsize),
+                   axis.title.y = ggplot2::element_text(size = fsize),
+                   legend.text = ggplot2::element_text(size = fsize),
+                   legend.title = ggplot2::element_text(size = fsize),
+                   plot.title = ggplot2::element_text(size = fsize, colour = 'black', hjust = 0.5),
+                   panel.grid.major = ggplot2::element_blank(), panel.grid.minor = ggplot2::element_blank()) +
+    ggplot2::scale_x_continuous(breaks=c(seq(0,maxK,1))) +
+    ggplot2::ylab('PCSI') +
+    ggplot2::xlab('K') +
+    ggplot2::labs(title = "Real Data")
+}
+
+likelihood <- function(m,m2){
+  m <- m[upper.tri(m)]
+  m2 <- m2[upper.tri(m2)]
+  ma <- m[m==1]
+  m2a <- m2[m==1]
+  L <- sum(log(m2a*ma+(1-ma)*(1-m2a))) # m = ground truth probs, m2 = perturbed probs
+  return(L)
+}
+
+getl <- function(allresults,k,clusteralg=clusteralg){
+  ## get ground truth
+  if (clusteralg == 'pam'){
+    clust <- cluster::pam(t(allresults[[k]]$ordered_data),k=k)
+    clus <- clust$clustering
+  }else if (clusteralg == 'km'){
+    clus <- kmeans(t(allresults[[k]]$ordered_data),k,iter.max = 10,nstart = 1,
+                              algorithm = c("Hartigan-Wong") )$cluster
+  }else if (clusteralg == 'hc'){
+    this_dist <- dist(t(allresults[[k]]$ordered_data))
+    this_cluster <- hclust( this_dist, method='ward.D2')
+    clus <- cutree(this_cluster,k)
+  }else if (clusteralg == 'spectral'){
+    affinitymatrix <- rbfkernel(allresults[[k]]$ordered_data)
+    colnames(affinitymatrix) <- colnames(allresults[[k]]$ordered_data) # note the order may have changed here
+    rownames(affinitymatrix) <- colnames(allresults[[k]]$ordered_data)
+    centers <- k
+    m <- nrow(affinitymatrix)
+    nc <-  centers
+    dv <- 1/sqrt(rowSums(affinitymatrix))
+    l <- dv * affinitymatrix %*% diag(dv)
+    xi <- eigen(l)$vectors[,1:nc]
+    yi <- xi/sqrt(rowSums(xi^2))
+    if (any(is.na(yi))){ # fill in columns with column mean when NA
+      for(iii in 1:ncol(yi)){
+        yi[is.na(yi[,iii]), iii] <- mean(yi[,iii], na.rm = TRUE)
+      }
+    }
+    res <- NULL
+    while( is.null(res) ) { # this will hang if there is a problem
+      try(
+        res <- kmeans(yi, centers)
+      )
+    } 
+    #
+    clus <- res$cluster
+  }
+  ## end clustering of whole data
+  ## make judgement matrix
+  rowNum <- nrow(t(allresults[[k]]$ordered_data))
+  S <- matrix(0, rowNum, rowNum)
+  for (j in 1:k) {
+    X <- rep(0, rowNum)
+    X[which(clus == j)] <- 1
+    S <- S + X %*% t(X)
+  }
+  ## get perturbed probs
+  rm <- allresults[[k]]$consensus_matrix
+  rm <- as.matrix(rm)
+  return(likelihood(S,rm))
 }

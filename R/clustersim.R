@@ -14,7 +14,7 @@
 #' @export
 #'
 #' @examples
-#' res <- clustersim(225, 900, 8, 4, 0.75, 0.025, redp = NULL, print = TRUE, seed=123)
+#' res <- clustersim(225, 900, 8, 4, 0.75, 0.025, redp = NULL, seed=123)
 
 clustersim <- function(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE, seed=NULL){
   
@@ -133,14 +133,6 @@ clustersim <- function(n, n2, r, K, alpha, wobble, redp = NULL, print = FALSE, s
           axis.text.x = ggplot2::element_text(size = 18, colour = 'black'),
           axis.title.x = ggplot2::element_text(size = 18),
           axis.title.y = ggplot2::element_text(size = 18)) # 31 old
-  if (print == TRUE){ # width 22 for figure1, width xx for figure 2
-    png(paste('PCAsim',n,n2,r,K,alpha,wobble,'.png'), height = 20, width = 22, units = 'cm', # 16 old
-         res = 900, type="cairo")
-  }
-  print(p) # print ggplot CDF in main plotting window
-  if (print == TRUE){
-    dev.off()
-  }
   if (print == TRUE){
     print(p)
   }

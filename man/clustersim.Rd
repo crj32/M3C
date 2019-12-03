@@ -33,5 +33,5 @@ A list: containing 1) matrix with simulated data in it
 clustersim: A cluster simulator for testing clustering algorithms
 }
 \examples{
-res <- clustersim(225, 900, 8, 4, 0.75, 0.025, redp = NULL, print = TRUE, seed=123)
+res <- clustersim(225, 900, 8, 4, 0.75, 0.025, redp = NULL, seed=123)
 }

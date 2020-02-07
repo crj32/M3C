@@ -80,9 +80,6 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
   
   # error handling of input variables
   
-  if ( ! class( mydata ) %in% c( "data.frame", "matrix", "ExpressionSet" ) ) {
-    stop("mydata must be a data frame, matrix, or ExpressionSet (eset object)")
-  }
   if ( inherits( mydata,"ExpressionSet" ) ) {
     mydata <- exprs(mydata)
   }
@@ -115,7 +112,7 @@ M3C <- function(mydata, cores = 1, iters = 25, maxK = 10, pItem = 0.8,
       stop('the dimensions of your annotation object do not match data object')
     }
   }
-  if (class(mydata) == 'matrix'){
+  if (is(mydata,"matrix")){
     mydata <- data.frame(mydata)
     colnames(mydata) <- gsub('X', '', colnames(mydata))
   }
@@ -459,7 +456,7 @@ M3Creal <- function( d=NULL, # function for real data
     hc = hclust( as.dist( 1 - fm ), method=finalLinkage)
     ct = cutree(hc,tk)
     names(ct) = colnames(d)
-    if(class(d)=="dist"){
+    if(is(d,"dist")){
       names(ct) = colnames(as.matrix(d))
     }
     c = fm

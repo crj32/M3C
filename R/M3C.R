@@ -925,6 +925,7 @@ likelihood <- function(m,m2){
   ma <- m[m==1]
   m2a <- m2[m==1]
   L <- sum(log(m2a*ma+(1-ma)*(1-m2a))) # m = ground truth probs, m2 = perturbed probs
+  L <- L/length(ma)
   return(L)
 }
 

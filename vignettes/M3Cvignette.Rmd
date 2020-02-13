@@ -1,7 +1,7 @@
 ---
 title: "M3C: Monte Carlo Reference-based Consensus Clustering"
 author: "Christopher R John"
-date: "29/11/2019"
+date: "13/02/2020"
 output: 
   pdf_document: default
 vignette: >
@@ -191,21 +191,19 @@ Doing a visual check like this allows the user to ensure there are no obvious ar
 
 ## Running regularised consensus clustering
 
-The second method minimises log(PAC) subject to lambda*K to find the optimal K. The resultant metric is called the Penalised Cluster Stability Index (PCSI). To tune lambda, we use the log-likelihood and search a sequence of lambda to find the K with the higher log-likelihood. A good predefined lambda value to use is 0.1. 
+The second method minimises log(PAC) subject to lambda*K to find the optimal K. The resultant metric is called the Penalised Cluster Stability Index (PCSI). To tune lambda, we use the log-likelihood and search a sequence of lambda to find the K with the higher log-likelihood. A good predefined lambda value to use is 0.1, this can be used by setting tunelambda to FALSE, this is the fastest way of running M3C - without this tuning.
 
-The log-likelihood is calculated through clustering once from 2...maxK then this gives the ground truth probabilities, the perturbed probabilities for each K are those made from the resampling algorithm. Ultimately, the better K (or lambda) is that which gives the minimal distance between these two sets of probabilities.
+The log-likelihood is calculated through clustering once from 2...maxK then this gives the ground truth probabilities, the perturbed probabilities for each K are those made from the resampling algorithm. Ultimately, the better K (or lambda) is that which gives the minimal distance between these two sets of probabilities. We divide through by N to normalise the log-likelihood and only select the positive class because this reduces the bias of the algorithm.
 
 ```{r,fig.show = 'hide',results='hide'}
 res <- M3C(mydata, method = 2, objective='PAC',fsize=8, lthick=1, dotsize=1.25)
 ```
 
-Here we can see the PCSI is minimised at K=5, this is the optimal K using this method.
-
 ```{r,fig.width=4,fig.height=3}
 res$plots[[3]]
 ```
 
-For this method, it is faster than running a Monte Carlo simulation so we increase the 'repsreal' parameter to e.g. 250 for increased result stability.
+For this method, it is faster than running a Monte Carlo simulation so we could increase the 'repsreal' parameter to e.g. 250 for potential for increased result stability.
 
 # Example III: Entropy objective function
 
@@ -222,8 +220,6 @@ This is entropy not corrected for bias. We can see it is subject to the same pro
 ```{r,fig.width=4,fig.height=3}
 res$plots[[2]]
 ```
-
-This is the PCSI calculated from entropy, now K=5, so the bias has been eliminated.
 
 ```{r,fig.width=4,fig.height=3}
 res$plots[[3]]

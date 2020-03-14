@@ -24,94 +24,82 @@
 #' @export
 #'
 #' @examples
-#' filtered <- featurefilter(mydata,percentile=10)
+#' filtered <- featurefilter(mydata, percentile = 10)
 
-featurefilter <- function(mydata,percentile=10,method='MAD',topN=20){
+featurefilter <- function(mydata, percentile = 10, method= 'MAD', topN = 20){
   
-  message('***feature filter function***')
+  message(paste0('Extracting the top ', percentile, '% most variable features'))
   
-  message(paste('extracting the most variable: '),percentile,' percent')
-  message(paste('features to start with:',nrow(mydata)))
+  message(paste('Features to start with:', nrow(mydata)))
   
-  # percentile (convert to decimal below)
-  percentile <- 1-(percentile/100)
+
+# Convert Percent to Decimal ----------------------------------------------
+
+  percentile <- 1 - (percentile/100)
   
+
+# Calculate Mean and Variance ---------------------------------------------
+
+  u <- rowMeans(mydata)
+  sigma <- apply(mydata, 1, sd)
+  vars <- sigma^2
+
+  
+# Perform Method-Specific Calculation -------------------------------------
+
   if (method == 'A'){
-    message('performing calculations for co efficient of variation/A')
-    # calculate mean and variance
-    u <- rowMeans(mydata)
-    sigma <- apply(mydata,1,sd)
-    vars <- sigma^2
+    message('Performing calculations for coefficient of variation (A)')
     # calc coefficient of variation for all rows (features)
     CV <- sigma/u
     CV[is.na(CV)] <- 0
+  } else if (method == 'A2'){
+    message('Performing calculations for second order coefficient of variation (A2)')
+    CV <- sigma/u
+    CV[is.na(CV)] <- 0
     A <- CV
-    # get features with CV in the given percentile
-    CVthresh <- quantile(CV, percentile, na.rm = TRUE) 
-  }else if (method == 'A2'){
-    message('performing calculations for second order co efficient of variation/A2')
-    # calculations
-    u <- rowMeans(mydata)
-    sigma <- apply(mydata,1,sd)
-    vars <- sigma^2
-    A <- sigma/u
-    A[is.na(A)] <- 0
-    AA <- A^2
-    # get second order co efficient of variation
-    A2 <- sqrt((AA/(AA+1)))
+    AA <- CV^2
+    # get second order coefficient of variation
+    A2 <- sqrt((AA/(AA + 1)))
     CV <- A2
-    # get features with CV in the given percentile
-    CVthresh <- quantile(CV, percentile, na.rm = TRUE)
-  }else if (method == 'var'){
-    message('performing calculations for variance')
-    u <- rowMeans(mydata)
-    sigma <- apply(mydata,1,sd)
-    vars <- sigma^2
+  } else if (method == 'var'){
+    message('Performing calculations for variance')
     CV <- vars
-    CVthresh <- quantile(CV, percentile, na.rm = TRUE)
-  }else if (method == 'MAD'){
-    message('performing calculations for median absolute deviation')
-    u <- rowMeans(mydata)
-    MAD <- apply(mydata,1,mad)
-    sigma <- apply(mydata,1,sd)
-    vars <- sigma^2
+  } else if (method == 'MAD'){
+    message('Performing calculations for median absolute deviation')
+    MAD <- apply(mydata, 1, mad)
     CV <- MAD
-    CVthresh <- quantile(CV, percentile, na.rm = TRUE)
   }
   
-  ## filter data
-  names <- names(CV)[CV>=as.numeric(CVthresh)]
+
+# Filter Data -------------------------------------------------------------
+
+  # Get features with CV in the given percentile
+  CVthresh <- quantile(CV, percentile, na.rm = TRUE)
+  names <- names(CV)[CV >= as.numeric(CVthresh)]
   filtered_data <- subset(mydata, row.names(mydata) %in% names)
   
-  # make data frame of results
+
+# Make Data Frame of Results ----------------------------------------------
+
+  results <- data.frame('feature' = row.names(mydata), 'mean' = u, 'var' = vars, 'sd' = sigma)
+
   if (method == 'A'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma,'A'=A)
-    test <- test[order(-test[,5]), ]
-    message('printing topN most variable features with statistics...')
-    print(head(test,topN))
-  }else if (method == 'A2'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma,'A'=A,'A2'=A2)
-    test <- test[order(-test[,6]), ]
-    message('printing topN most variable features with statistics...')
-    print(head(test,topN))
-  }else if (method == 'var'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma)
-    test <- test[order(-test[,3]), ]
-    message('printing topN most variable features with statistics...')
-    print(head(test,topN))
-  }else if (method == 'MAD'){
-    test <- data.frame('feature'=row.names(mydata),'mean'=u,'var'=vars,'sd'=sigma,'MAD'=MAD)
-    test <- test[order(-test[,5]), ]
-    message('printing topN most variable features with statistics...')
-    print(head(test,topN))
+    results <- cbind(results, data.frame('A' = CV))
+  } else if (method == 'A2'){
+    results <- cbind(results, data.frame('A'= A, 'A2'= A2))
+  } else if (method == 'var'){
+  # Nothing needs to be done
+  } else if (method == 'MAD'){
+    results <- cbind(results, data.frame('MAD' = MAD))
   }
   
-  ## make results list
-  mylist <- list('filtered_data'=filtered_data,'statistics'=test)
+  results <- results[order(-results[, ncol(results)]), ]
+  message('Printing topN most variable features with statistics...')
+  print(head(results, topN))
   
-  ## message
-  message(paste('features remaining:',nrow(filtered_data)))
-  
-  ##
-  return(mylist)
+  output <- list('filtered_data' = filtered_data, 'statistics' = results)
+
+  message(paste('Features remaining:', nrow(filtered_data)))
+
+  return(output)
 }
